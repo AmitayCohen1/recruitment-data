@@ -1,202 +1,98 @@
-import {
-  Award,
-  Crosshair,
-  Star,
-  TrendingDown,
-  TrendingUp,
-  Users,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { TrendChart } from "@/components/dashboard/trend-chart";
-import { GenderBars } from "@/components/dashboard/gender-bars";
-import { CouncilChart } from "@/components/dashboard/council-chart";
-import { DistributionChart } from "@/components/dashboard/distribution-chart";
-import { BandCombatChart } from "@/components/dashboard/band-combat-chart";
-import { Movers } from "@/components/dashboard/movers";
+import { ShieldCheck } from "lucide-react";
+import { SectorRanking } from "@/components/sectors/sector-ranking";
+import { SectorTrend } from "@/components/sectors/sector-trend";
+import { SectorChange } from "@/components/sectors/sector-change";
+import { Subgroups } from "@/components/sectors/subgroups";
 import { Explorer } from "@/components/dashboard/explorer";
-import { DashboardTabs } from "@/components/dashboard/tabs";
-import {
-  compactRows,
-  distribution,
-  genderComparison,
-  highlights,
-  kpis,
-  combatByEnlistBand,
-  schoolMovers,
-  topCouncils,
-  trendByYear,
-  LATEST,
-  METRICS,
-  TOTAL_COUNCILS,
-  TOTAL_SCHOOLS,
-  YEARS,
-  type MetricKey,
-} from "@/lib/data";
-
-const KPI_ICONS: Record<MetricKey, LucideIcon> = {
-  enlist: Users,
-  combat: Crosshair,
-  officer: Star,
-  meaning: Award,
-};
+import { compactRows, TOTAL_SCHOOLS } from "@/lib/data";
+import { headline, SECTOR_EN, SFIRST, SLATEST } from "@/lib/sectors";
 
 export default function Home() {
-  const trend = trendByYear();
-  const kpiData = kpis();
-  const gender = genderComparison();
+  const cards = headline();
   const rows = compactRows();
-  const hl = highlights();
-  const bandCombat = combatByEnlistBand();
-
-  const byMetric = <T,>(fn: (m: MetricKey) => T) =>
-    Object.fromEntries(METRICS.map((m) => [m.key, fn(m.key)])) as Record<
-      MetricKey,
-      T
-    >;
-
-  const councilsByMetric = byMetric((m) => topCouncils(m, 12));
-  const distByMetric = byMetric((m) => distribution(m));
-  const moversByMetric = byMetric((m) => schoolMovers(m, YEARS[0], 8));
-
-  const highlightCards = [
-    {
-      label: "בתי ספר עם גיוס 90%+",
-      value: `${hl.highEnlist}%`,
-      hint: "מכלל בתי הספר",
-      tone: "text-emerald-400",
-    },
-    {
-      label: "בתי ספר עם גיוס מתחת ל-50%",
-      value: `${hl.lowEnlist}%`,
-      hint: "הזנב התחתון",
-      tone: "text-rose-400",
-    },
-    {
-      label: "פער גיוס בנים–בנות",
-      value: `${hl.genderGap} נק׳`,
-      hint: `לטובת ${(hl.genderGap ?? 0) >= 0 ? "הבנים" : "הבנות"}`,
-      tone: "text-sky-400",
-    },
-    {
-      label: "ממוצע לחימה ארצי",
-      value: `${hl.combatAvg}%`,
-      hint: `שנת ${LATEST}`,
-      tone: "text-violet-400",
-    },
-  ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
-      {/* header */}
-      <header className="mb-10">
-        <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-medium text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-emerald-400" />
-          נתוני גיוס לפי בתי ספר · צה״ל · {YEARS[0]}–{LATEST}
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-16">
+      {/* hero */}
+      <header className="mb-12">
+        <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
+          <ShieldCheck className="size-3.5" />
+          אומת מול נתוני משרד החינוך · {SFIRST}–{SLATEST}
         </p>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
-          לוח מחוונים — גיוס, לחימה וקצונה
+        <h1 className="max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
+          פערי הגיוס של החברה הישראלית
         </h1>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-          ניתוח אינטראקטיבי של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר
-          ב־{TOTAL_COUNCILS.toLocaleString("he")} מועצות. כל הנתונים מוצגים
-          כממוצע אחוזים של בתי הספר.
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
+          מ־<span className="font-semibold text-sky-400">91%</span> בקרב
+          חילונים ועד <span className="font-semibold text-amber-400">0.6%</span>{" "}
+          בקרב חרדיות — ניתוח של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר
+          לפי מגזר, מגדר ושנה. הנתונים מוצגים כממוצע אחוזים של בתי הספר.
         </p>
       </header>
 
-      {/* KPI stat tiles */}
-      <section className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kpiData.map((k) => {
-          const Icon = KPI_ICONS[k.key as MetricKey];
-          const up = (k.delta ?? 0) >= 0;
-          return (
-            <div
-              key={k.key}
-              className="rounded-2xl border border-white/10 bg-white/[0.025] p-5"
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <span className="flex size-9 items-center justify-center rounded-xl bg-white/[0.06] text-muted-foreground">
-                  <Icon className="size-[18px]" />
-                </span>
-                <span className="text-sm text-muted-foreground">{k.label}</span>
-              </div>
-              <p className="text-4xl font-bold tabular-nums tracking-tight">
-                {k.value}
-                <span className="text-xl font-medium text-muted-foreground">
-                  %
-                </span>
-              </p>
-              {k.delta !== null && (
-                <p
-                  className={`mt-1.5 flex items-center gap-1 text-xs font-medium ${
-                    up ? "text-emerald-400" : "text-rose-400"
-                  }`}
-                >
-                  {up ? (
-                    <TrendingUp className="size-3.5" />
-                  ) : (
-                    <TrendingDown className="size-3.5" />
-                  )}
-                  {up ? "+" : ""}
-                  {k.delta} נק׳ לעומת {k.prevYear}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </section>
-
-      {/* highlights strip */}
-      <section className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {highlightCards.map((h) => (
+      {/* headline sector cards */}
+      <section className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {cards.map((c) => (
           <div
-            key={h.label}
-            className="rounded-2xl border border-white/10 bg-white/[0.025] p-5"
+            key={c.sector}
+            className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-5"
           >
-            <p className={`text-3xl font-bold tabular-nums ${h.tone}`}>
-              {h.value}
+            <span
+              className="absolute inset-x-0 top-0 h-1"
+              style={{ background: c.color }}
+            />
+            <p className="text-base font-semibold" style={{ color: c.color }}>
+              {c.sector}
             </p>
-            <p className="mt-1 text-sm font-medium text-foreground">{h.label}</p>
-            <p className="text-xs text-muted-foreground">{h.hint}</p>
+            <p className="text-xs text-muted-foreground">{SECTOR_EN[c.sector]}</p>
+            <div className="mt-4 flex items-end justify-between gap-2">
+              <div>
+                <p className="text-3xl font-bold tabular-nums leading-none">
+                  {c.boys ?? "—"}
+                  <span className="text-base font-medium text-muted-foreground">%</span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">בנים · גיוס</p>
+              </div>
+              <div className="text-left">
+                <p className="text-2xl font-semibold tabular-nums leading-none text-muted-foreground">
+                  {c.girls ?? "—"}
+                  <span className="text-sm">%</span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">בנות</p>
+              </div>
+            </div>
           </div>
         ))}
       </section>
 
-      {/* charts, organized into tabs */}
-      <DashboardTabs
-        tabs={[
-          {
-            id: "trends",
-            label: "מגמות",
-            content: (
-              <>
-                <TrendChart data={trend} />
-                <DistributionChart data={distByMetric} year={LATEST} />
-                <Movers data={moversByMetric} />
-              </>
-            ),
-          },
-          {
-            id: "compare",
-            label: "השוואות",
-            content: (
-              <>
-                <GenderBars data={gender} year={LATEST} />
-                <BandCombatChart data={bandCombat} year={LATEST} />
-                <CouncilChart data={councilsByMetric} year={LATEST} />
-              </>
-            ),
-          },
-          {
-            id: "schools",
-            label: "בתי ספר",
-            content: <Explorer rows={rows} />,
-          },
-        ]}
-      />
+      {/* narrative sections */}
+      <div className="space-y-6">
+        <SectorRanking />
+        <SectorTrend />
+        <SectorChange />
+        <Subgroups />
 
-      <footer className="mt-10 border-t border-white/10 pt-6 text-center text-xs text-muted-foreground">
-        שנתון {LATEST} = שנת לידה 2003, שלוש שנים מסיום כיתה י״ב · המקור: מערכת
-        מוסדות וערים, לשכת רחט · שורות ללא נתוני גיוס/לחימה/קצונה הוסרו מהחישוב
+        <div className="pt-4">
+          <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
+            רמת בית הספר
+          </h2>
+          <p className="mb-5 text-sm text-muted-foreground">
+            צללו אל בתי הספר הבודדים מאחורי המספרים המגזריים.
+          </p>
+          <Explorer rows={rows} />
+        </div>
+      </div>
+
+      <footer className="mt-12 space-y-1 border-t border-white/10 pt-6 text-center text-xs text-muted-foreground">
+        <p>
+          שנתון {SLATEST} = שנת לידה 2003, שלוש שנים מסיום כיתה י״ב · מקור הגיוס:
+          מערכת מוסדות וערים, לשכת רחט · סיווג מגזרי: מאפייני מוסדות חינוך, משרד
+          החינוך (data.gov.il)
+        </p>
+        <p>
+          הסיווג המגזרי אומת: 99.4% התאמה לנתוני משרד החינוך · הנתונים מכסים את
+          המגזר היהודי והדרוזי. ממוצעים אינם משוקללים לפי גודל בית הספר.
+        </p>
       </footer>
     </div>
   );
