@@ -14,21 +14,23 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
 
   return (
     <div>
-      <div className="sticky top-0 z-20 -mx-4 mb-6 bg-background/70 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
+      <div className="sticky top-0 z-20 -mx-4 mb-6 flex justify-center bg-background/80 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
         <div
           role="tablist"
-          className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1"
+          className="no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1"
         >
           {tabs.map((t) => (
             <button
               key={t.id}
               role="tab"
+              id={`tab-${t.id}`}
               aria-selected={active === t.id}
+              aria-controls={`panel-${t.id}`}
               onClick={() => setActive(t.id)}
               className={cn(
-                "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                "flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-medium transition-colors",
                 active === t.id
-                  ? "bg-white/10 text-foreground shadow-sm"
+                  ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -42,6 +44,8 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
         <div
           key={t.id}
           role="tabpanel"
+          id={`panel-${t.id}`}
+          aria-labelledby={`tab-${t.id}`}
           hidden={active !== t.id}
           className="space-y-6"
         >

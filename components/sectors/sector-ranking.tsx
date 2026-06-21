@@ -32,7 +32,7 @@ export function SectorRanking() {
               <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">
                 {i + 1}
               </span>
-              <span className="w-36 shrink-0 truncate text-sm">
+              <span className="w-24 shrink-0 truncate text-sm sm:w-40">
                 <span style={{ color }}>{r.sector}</span>
                 <span className="text-muted-foreground"> · {r.gender}</span>
               </span>
@@ -46,7 +46,7 @@ export function SectorRanking() {
                   }}
                 />
               </div>
-              <span className="w-16 shrink-0 text-left text-sm font-semibold tabular-nums">
+              <span className="w-12 shrink-0 text-left text-sm font-semibold tabular-nums sm:w-16">
                 {r.value.toFixed(1)}%
               </span>
             </li>

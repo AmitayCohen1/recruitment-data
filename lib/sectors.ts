@@ -29,6 +29,18 @@ export const S_METRICS: { key: SMetric; label: string; short: string }[] = [
   { key: "officer", label: "אחוז קצונה", short: "קצונה" },
 ];
 
+export const METRIC_ICON: Record<SMetric, string> = {
+  enlist: "🪖",
+  combat: "⚔️",
+  officer: "🎖️",
+  meaning: "⭐",
+};
+
+export const GENDER_ICON: Record<SGender, string> = {
+  בנים: "👨",
+  בנות: "👩",
+};
+
 export const SECTOR_COLOR: Record<string, string> = {
   חילוני: "#38bdf8", // sky
   "דתי לאומי": "#34d399", // emerald
@@ -109,4 +121,36 @@ export function subgroups(sector: string, gender: SGender, metric: SMetric) {
   return SUBGROUPS.filter(
     (r) => r.sector === sector && r.gender === gender && r[metric] !== null,
   ).sort((a, b) => (b[metric] as number) - (a[metric] as number));
+}
+
+/** school_key -> sector, for tagging school-level rows. */
+export const SCHOOL_SECTOR = (data as { schoolSector?: Record<string, string> })
+  .schoolSector ?? {};
+
+/** Enlistment gender gap (boys − girls) per sector, latest year, sorted desc. */
+export function genderGap(metric: SMetric = "enlist", year = SLATEST) {
+  return SECTORS.flatMap((s) => {
+    const b = row(year, s, "בנים");
+    const g = row(year, s, "בנות");
+    if (!b || !g || b[metric] === null || g[metric] === null) return [];
+    return [
+      {
+        sector: s,
+        boys: b[metric] as number,
+        girls: g[metric] as number,
+        gap: Math.round(((b[metric] as number) - (g[metric] as number)) * 10) / 10,
+      },
+    ];
+  }).sort((a, b) => b.gap - a.gap);
+}
+
+/** All three metrics for one sector + gender, latest year (for the paradox panel). */
+export function profile(sector: string, gender: SGender, year = SLATEST) {
+  const r = row(year, sector, gender);
+  return {
+    enlist: r?.enlist ?? null,
+    combat: r?.combat ?? null,
+    officer: r?.officer ?? null,
+    n: r?.n ?? 0,
+  };
 }

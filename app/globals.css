@@ -97,3 +97,12 @@ body {
   scrollbar-width: thin;
   scrollbar-color: oklch(1 0 0 / 0.15) transparent;
 }
+
+/* hide scrollbar on the tab strip while keeping it scrollable */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -65,7 +65,7 @@ export function Subgroups() {
               : r.group;
             return (
               <li key={r.group} className="flex items-center gap-3">
-                <span className="w-32 shrink-0 truncate text-sm" title={`${r.group} · ${r.n} בתי ספר`}>
+                <span className="w-24 shrink-0 truncate text-sm sm:w-32" title={`${r.group} · ${r.n} בתי ספר`}>
                   {name}
                 </span>
                 <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">

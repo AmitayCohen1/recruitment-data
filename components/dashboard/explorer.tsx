@@ -16,10 +16,10 @@ type SortKey = "e" | "cb" | "o" | "m" | "s";
 
 const COLUMNS: { key: SortKey; label: string; metric: boolean }[] = [
   { key: "s", label: "בית ספר", metric: false },
-  { key: "e", label: "גיוס", metric: true },
-  { key: "cb", label: "לחימה", metric: true },
-  { key: "o", label: "קצונה", metric: true },
-  { key: "m", label: "משמעותי", metric: true },
+  { key: "e", label: "🪖 גיוס", metric: true },
+  { key: "cb", label: "⚔️ לחימה", metric: true },
+  { key: "o", label: "🎖️ קצונה", metric: true },
+  { key: "m", label: "⭐ משמעותי", metric: true },
 ];
 
 function pct(v: number | null) {
@@ -119,7 +119,7 @@ export function Explorer({ rows }: { rows: CompactRow[] }) {
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {g === "all" ? "הכל" : GENDER_LABEL[g]}
+              {g === "all" ? "👥 הכל" : g === "m" ? "👨 בנים" : "👩 בנות"}
             </button>
           ))}
         </div>

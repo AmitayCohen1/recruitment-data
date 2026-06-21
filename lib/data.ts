@@ -108,6 +108,54 @@ export function topCouncils(metric: MetricKey, n = 12, minSchools = 4) {
     .slice(0, n);
 }
 
+/** Council ranking for one gender + metric (latest year), top N with min schools. */
+export function councilRanking(
+  metric: MetricKey,
+  gender: Gender,
+  n = 15,
+  minSchools = 3,
+  year = LATEST,
+) {
+  const vals = new Map<string, (number | null)[]>();
+  for (const r of ROWS) {
+    if (r.year !== year || r.gender !== gender || !r.council) continue;
+    if (!vals.has(r.council)) vals.set(r.council, []);
+    vals.get(r.council)!.push(r[metric]);
+  }
+  return Array.from(vals.entries())
+    .map(([council, v]) => {
+      const nums = v.filter((x): x is number => x !== null);
+      return {
+        council,
+        value: nums.length ? r1(nums.reduce((a, b) => a + b, 0) / nums.length) : null,
+        schools: nums.length,
+      };
+    })
+    .filter((c) => c.value !== null && c.schools >= minSchools)
+    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+    .slice(0, n);
+}
+
+/** Top or bottom N schools for one gender + metric (latest year). */
+export function topSchools(
+  metric: MetricKey,
+  gender: Gender,
+  dir: "top" | "bottom" = "top",
+  n = 10,
+  year = LATEST,
+) {
+  const rows = ROWS.filter(
+    (r) => r.year === year && r.gender === gender && r[metric] !== null,
+  ).map((r) => ({
+    key: r.key,
+    school: r.school,
+    council: r.council,
+    value: r[metric] as number,
+  }));
+  rows.sort((a, b) => (dir === "top" ? b.value - a.value : a.value - b.value));
+  return rows.slice(0, n);
+}
+
 /** Compact rows for the client-side explorer table. */
 export type CompactRow = {
   k: number;

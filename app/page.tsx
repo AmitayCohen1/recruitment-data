@@ -3,7 +3,12 @@ import { SectorRanking } from "@/components/sectors/sector-ranking";
 import { SectorTrend } from "@/components/sectors/sector-trend";
 import { SectorChange } from "@/components/sectors/sector-change";
 import { Subgroups } from "@/components/sectors/subgroups";
+import { CombatParadox } from "@/components/sectors/combat-paradox";
+import { GenderGap } from "@/components/sectors/gender-gap";
+import { Leaderboards } from "@/components/sectors/leaderboards";
+import { CouncilCompare } from "@/components/sectors/council-compare";
 import { Explorer } from "@/components/dashboard/explorer";
+import { DashboardTabs } from "@/components/dashboard/tabs";
 import { compactRows, TOTAL_SCHOOLS } from "@/lib/data";
 import { headline, SECTOR_EN, SFIRST, SLATEST } from "@/lib/sectors";
 
@@ -51,37 +56,72 @@ export default function Home() {
                   {c.boys ?? "—"}
                   <span className="text-base font-medium text-muted-foreground">%</span>
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">בנים · גיוס</p>
+                <p className="mt-1 text-xs text-muted-foreground">👨 בנים · 🪖 גיוס</p>
               </div>
               <div className="text-left">
                 <p className="text-2xl font-semibold tabular-nums leading-none text-muted-foreground">
                   {c.girls ?? "—"}
                   <span className="text-sm">%</span>
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">בנות</p>
+                <p className="mt-1 text-xs text-muted-foreground">👩 בנות</p>
               </div>
             </div>
           </div>
         ))}
       </section>
 
-      {/* narrative sections */}
-      <div className="space-y-6">
-        <SectorRanking />
-        <SectorTrend />
-        <SectorChange />
-        <Subgroups />
-
-        <div className="pt-4">
-          <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
-            רמת בית הספר
-          </h2>
-          <p className="mb-5 text-sm text-muted-foreground">
-            צללו אל בתי הספר הבודדים מאחורי המספרים המגזריים.
-          </p>
-          <Explorer rows={rows} />
-        </div>
-      </div>
+      {/* narrative sections, organized into tabs */}
+      <DashboardTabs
+        tabs={[
+          {
+            id: "sectors",
+            label: "מגזרים",
+            content: (
+              <>
+                <SectorRanking />
+                <CombatParadox />
+                <GenderGap />
+              </>
+            ),
+          },
+          {
+            id: "trends",
+            label: "מגמות",
+            content: (
+              <>
+                <SectorTrend />
+                <SectorChange />
+              </>
+            ),
+          },
+          {
+            id: "breakdown",
+            label: "פילוח",
+            content: (
+              <>
+                <Subgroups />
+                <CouncilCompare />
+                <Leaderboards />
+              </>
+            ),
+          },
+          {
+            id: "schools",
+            label: "בתי ספר",
+            content: (
+              <div>
+                <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
+                  רמת בית הספר
+                </h2>
+                <p className="mb-5 text-sm text-muted-foreground">
+                  צללו אל בתי הספר הבודדים מאחורי המספרים המגזריים.
+                </p>
+                <Explorer rows={rows} />
+              </div>
+            ),
+          },
+        ]}
+      />
 
       <footer className="mt-12 space-y-1 border-t border-white/10 pt-6 text-center text-xs text-muted-foreground">
         <p>

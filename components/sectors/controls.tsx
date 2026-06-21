@@ -1,7 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { S_METRICS, type SGender, type SMetric } from "@/lib/sectors";
+import {
+  GENDER_ICON,
+  METRIC_ICON,
+  S_METRICS,
+  type SGender,
+  type SMetric,
+} from "@/lib/sectors";
 
 const pill =
   "inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1";
@@ -24,6 +30,7 @@ export function MetricTabsS({
     <div className={pill}>
       {S_METRICS.map((m) => (
         <button key={m.key} type="button" className={btn(value === m.key)} onClick={() => onChange(m.key)}>
+          <span aria-hidden className="me-1">{METRIC_ICON[m.key]}</span>
           {m.short}
         </button>
       ))}
@@ -42,6 +49,7 @@ export function GenderToggle({
     <div className={pill}>
       {(["בנים", "בנות"] as SGender[]).map((g) => (
         <button key={g} type="button" className={btn(value === g)} onClick={() => onChange(g)}>
+          <span aria-hidden className="me-1">{GENDER_ICON[g]}</span>
           {g}
         </button>
       ))}
