@@ -15,29 +15,34 @@ const config = {
   f: { label: "בנות", color: SERIES.girls },
 } satisfies ChartConfig;
 
-export function GenderBars({
+export function BandCombatChart({
   data,
   year,
 }: {
-  data: { metric: string; m: number | null; f: number | null }[];
+  data: { band: string; m: number | null; f: number | null }[];
   year: number;
 }) {
   return (
     <Panel>
       <PanelHeader
-        title="בנים מול בנות"
-        subtitle={`ממוצע בתי הספר לפי מדד, שנת ${year}`}
+        title="גיוס מול לחימה"
+        subtitle={`אחוז הלחימה הממוצע בכל טווח של אחוז גיוס, שנת ${year}. אילו אחוז הלחימה היה עולה עם הגיוס — היינו רואים מדרגות עולות. בפועל הוא די יציב, כלומר גיוס גבוה לא מנבא לחימה גבוהה.`}
       />
       <ChartContainer config={config} className="h-[360px] w-full">
         <BarChart data={data} margin={{ left: 4, right: 4, top: 8 }}>
           <CartesianGrid vertical={false} strokeOpacity={0.5} />
-          <XAxis dataKey="metric" tickLine={false} axisLine={false} tickMargin={8} />
+          <XAxis
+            dataKey="band"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+          />
           <YAxis
             tickLine={false}
             axisLine={false}
             width={40}
             orientation="right"
-            domain={[0, 100]}
+            domain={[0, "auto"]}
             tickFormatter={(v) => `${v}%`}
           />
           <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
@@ -51,6 +56,10 @@ export function GenderBars({
           { label: "בנות", color: SERIES.girls },
         ]}
       />
+      <p className="pt-3 text-center text-xs text-muted-foreground">
+        הציר האופקי = טווח אחוז הגיוס של בית הספר · הציר האנכי = אחוז הלחימה
+        הממוצע
+      </p>
     </Panel>
   );
 }

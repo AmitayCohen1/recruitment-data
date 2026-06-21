@@ -33,7 +33,7 @@ export function TrendChart({
       >
         <MetricTabs value={metric} onChange={setMetric} />
       </PanelHeader>
-      <ChartContainer config={config} className="h-[300px] w-full">
+      <ChartContainer config={config} className="h-[360px] w-full">
         <AreaChart data={data} margin={{ left: 4, right: 8, top: 8 }}>
           <defs>
             <linearGradient id="fillBoys" x1="0" y1="0" x2="0" y2="1">

@@ -38,7 +38,7 @@ export function DistributionChart({
       >
         <MetricTabs value={metric} onChange={setMetric} />
       </PanelHeader>
-      <ChartContainer config={config} className="h-[300px] w-full">
+      <ChartContainer config={config} className="h-[360px] w-full">
         <BarChart data={rows} margin={{ left: 4, right: 4, top: 8 }}>
           <CartesianGrid vertical={false} strokeOpacity={0.5} />
           <XAxis dataKey="band" tickLine={false} axisLine={false} tickMargin={8} />

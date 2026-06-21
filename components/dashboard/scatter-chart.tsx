@@ -2,6 +2,8 @@
 
 import {
   CartesianGrid,
+  ReferenceArea,
+  ReferenceLine,
   Scatter,
   ScatterChart,
   XAxis,
@@ -35,6 +37,10 @@ function Dot({ active, payload }: { active?: boolean; payload?: { payload: Pt }[
   );
 }
 
+function avg(arr: number[]) {
+  return arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : 0;
+}
+
 export function ScatterPlot({
   points,
   year,
@@ -42,15 +48,41 @@ export function ScatterPlot({
   points: { m: Pt[]; f: Pt[] };
   year: number;
 }) {
+  const all = [...points.m, ...points.f];
+  const avgX = avg(all.map((p) => p.x)); // ממוצע גיוס
+  const avgY = avg(all.map((p) => p.y)); // ממוצע לחימה
+
   return (
     <Panel>
       <PanelHeader
         title="גיוס מול לחימה"
-        subtitle={`כל נקודה היא בית ספר — אחוז גיוס מול אחוז לחימה, שנת ${year}. גיוס גבוה לא בהכרח מנבא לחימה גבוהה.`}
+        subtitle={`כל נקודה היא בית ספר, שנת ${year}. הקווים המקווקווים הם הממוצע הארצי — גיוס ${avgX}% ולחימה ${avgY}%. שימו לב: גיוס גבוה לא בהכרח מביא ללחימה גבוהה.`}
       />
-      <ChartContainer config={{}} className="h-[340px] w-full">
-        <ScatterChart margin={{ left: 8, right: 8, top: 8, bottom: 16 }}>
-          <CartesianGrid strokeOpacity={0.5} />
+      <ChartContainer config={{}} className="h-[460px] w-full">
+        <ScatterChart margin={{ left: 8, right: 8, top: 16, bottom: 24 }}>
+          <CartesianGrid strokeOpacity={0.35} />
+          {/* "sweet spot": above-average on both axes */}
+          <ReferenceArea
+            x1={avgX}
+            x2={100}
+            y1={avgY}
+            y2={100}
+            fill={SERIES.high}
+            fillOpacity={0.05}
+            stroke="none"
+          />
+          <ReferenceLine
+            x={avgX}
+            stroke="white"
+            strokeOpacity={0.3}
+            strokeDasharray="4 4"
+          />
+          <ReferenceLine
+            y={avgY}
+            stroke="white"
+            strokeOpacity={0.3}
+            strokeDasharray="4 4"
+          />
           <XAxis
             type="number"
             dataKey="x"
@@ -59,7 +91,13 @@ export function ScatterPlot({
             axisLine={false}
             tickMargin={6}
             tickFormatter={(v) => `${v}%`}
-            label={{ value: "אחוז גיוס", position: "bottom", offset: 0, fill: "var(--muted-foreground)", fontSize: 12 }}
+            label={{
+              value: "אחוז גיוס (0% משמאל ← 100% מימין)",
+              position: "bottom",
+              offset: 4,
+              fill: "var(--muted-foreground)",
+              fontSize: 12,
+            }}
           />
           <YAxis
             type="number"
@@ -68,16 +106,22 @@ export function ScatterPlot({
             orientation="right"
             tickLine={false}
             axisLine={false}
-            width={40}
+            width={44}
             tickFormatter={(v) => `${v}%`}
-            label={{ value: "אחוז לחימה", angle: -90, position: "left", fill: "var(--muted-foreground)", fontSize: 12 }}
           />
-          <ZAxis range={[26, 26]} />
+          <ZAxis range={[16, 16]} />
           <ChartTooltip cursor={{ strokeDasharray: "3 3" }} content={<Dot />} />
-          <Scatter data={points.m} fill={SERIES.boys} fillOpacity={0.45} />
-          <Scatter data={points.f} fill={SERIES.girls} fillOpacity={0.45} />
+          <Scatter data={points.m} fill={SERIES.boys} fillOpacity={0.4} />
+          <Scatter data={points.f} fill={SERIES.girls} fillOpacity={0.4} />
         </ScatterChart>
       </ChartContainer>
+      {/* quadrant key */}
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:grid-cols-4">
+        <span>↗ ימין־למעלה: גיוס גבוה ולחימה גבוהה</span>
+        <span>↘ ימין־למטה: גיוס גבוה, לחימה נמוכה</span>
+        <span>↖ שמאל־למעלה: גיוס נמוך, לחימה גבוהה</span>
+        <span>↙ שמאל־למטה: גיוס נמוך ולחימה נמוכה</span>
+      </div>
       <ChipLegend
         items={[
           { label: "בנים", color: SERIES.boys },

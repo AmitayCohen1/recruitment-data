@@ -11,16 +11,17 @@ import { TrendChart } from "@/components/dashboard/trend-chart";
 import { GenderBars } from "@/components/dashboard/gender-bars";
 import { CouncilChart } from "@/components/dashboard/council-chart";
 import { DistributionChart } from "@/components/dashboard/distribution-chart";
-import { ScatterPlot } from "@/components/dashboard/scatter-chart";
+import { BandCombatChart } from "@/components/dashboard/band-combat-chart";
 import { Movers } from "@/components/dashboard/movers";
 import { Explorer } from "@/components/dashboard/explorer";
+import { DashboardTabs } from "@/components/dashboard/tabs";
 import {
   compactRows,
   distribution,
   genderComparison,
   highlights,
   kpis,
-  scatter,
+  combatByEnlistBand,
   schoolMovers,
   topCouncils,
   trendByYear,
@@ -45,7 +46,7 @@ export default function Home() {
   const gender = genderComparison();
   const rows = compactRows();
   const hl = highlights();
-  const pts = scatter();
+  const bandCombat = combatByEnlistBand();
 
   const byMetric = <T,>(fn: (m: MetricKey) => T) =>
     Object.fromEntries(METRICS.map((m) => [m.key, fn(m.key)])) as Record<
@@ -160,24 +161,38 @@ export default function Home() {
         ))}
       </section>
 
-      {/* charts */}
-      <div className="space-y-6">
-        <section className="grid gap-6 lg:grid-cols-2">
-          <TrendChart data={trend} />
-          <GenderBars data={gender} year={LATEST} />
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-2">
-          <DistributionChart data={distByMetric} year={LATEST} />
-          <ScatterPlot points={pts} year={LATEST} />
-        </section>
-
-        <CouncilChart data={councilsByMetric} year={LATEST} />
-
-        <Movers data={moversByMetric} />
-
-        <Explorer rows={rows} />
-      </div>
+      {/* charts, organized into tabs */}
+      <DashboardTabs
+        tabs={[
+          {
+            id: "trends",
+            label: "מגמות",
+            content: (
+              <>
+                <TrendChart data={trend} />
+                <DistributionChart data={distByMetric} year={LATEST} />
+                <Movers data={moversByMetric} />
+              </>
+            ),
+          },
+          {
+            id: "compare",
+            label: "השוואות",
+            content: (
+              <>
+                <GenderBars data={gender} year={LATEST} />
+                <BandCombatChart data={bandCombat} year={LATEST} />
+                <CouncilChart data={councilsByMetric} year={LATEST} />
+              </>
+            ),
+          },
+          {
+            id: "schools",
+            label: "בתי ספר",
+            content: <Explorer rows={rows} />,
+          },
+        ]}
+      />
 
       <footer className="mt-10 border-t border-white/10 pt-6 text-center text-xs text-muted-foreground">
         שנתון {LATEST} = שנת לידה 2003, שלוש שנים מסיום כיתה י״ב · המקור: מערכת

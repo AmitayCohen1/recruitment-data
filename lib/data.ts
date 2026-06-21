@@ -174,6 +174,28 @@ export function distribution(metric: MetricKey = "enlist", year = LATEST) {
   });
 }
 
+/** Average combat % per enlistment band (latest year), split by gender.
+ *  Shows whether combat rate actually rises with enlistment. */
+export function combatByEnlistBand(year = LATEST) {
+  return BANDS.map((b) => {
+    const avgFor = (g: Gender) =>
+      r1(
+        mean(
+          ROWS.filter(
+            (r) =>
+              r.year === year &&
+              r.gender === g &&
+              r.enlist !== null &&
+              (r.enlist as number) > b.min &&
+              (r.enlist as number) <= b.max &&
+              r.combat !== null,
+          ).map((r) => r.combat),
+        ),
+      );
+    return { band: b.label, m: avgFor("m"), f: avgFor("f") };
+  });
+}
+
 /** Scatter points: enlistment (x) vs combat (y) per school, latest year. */
 export type ScatterPt = {
   x: number;
