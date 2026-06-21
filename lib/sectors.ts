@@ -116,6 +116,40 @@ export function headline() {
   }));
 }
 
+/** Matrix of all metrics per sector for one gender (for the heatmap). */
+export function matrix(gender: SGender, year = SLATEST) {
+  return SECTORS.map((s) => {
+    const p = profile(s, gender, year);
+    return { sector: s, gender, enlist: p.enlist, combat: p.combat, officer: p.officer };
+  });
+}
+
+/** "Per 100 youth" effective rate: enlist% × metric% (for combat/officer),
+ *  or enlist itself. Reframes contribution to the whole cohort, not just enlistees. */
+export function effective(metric: SMetric, gender: SGender, year = SLATEST) {
+  return SECTORS.map((s) => {
+    const p = profile(s, gender, year);
+    const e = p.enlist ?? 0;
+    const rate = (p[metric] as number) ?? 0;
+    const value =
+      metric === "enlist" ? e : Math.round(((e * rate) / 100) * 10) / 10;
+    return { sector: s, value, enlist: e, rate };
+  }).sort((a, b) => b.value - a.value);
+}
+
+/** Cascade per 100 youth for one sector + gender: enlist → combat → officer. */
+export function funnel(sector: string, gender: SGender, year = SLATEST) {
+  const p = profile(sector, gender, year);
+  const e = p.enlist ?? 0;
+  const per = (rate: number | null) =>
+    Math.round(((e * (rate ?? 0)) / 100) * 10) / 10;
+  return [
+    { stage: "מתגייסים", icon: "🪖", per100: Math.round(e * 10) / 10 },
+    { stage: "קרביים", icon: "⚔️", per100: per(p.combat) },
+    { stage: "קצינים", icon: "🎖️", per100: per(p.officer) },
+  ];
+}
+
 /** Subgroups for a sector + gender, sorted by metric (desc). */
 export function subgroups(sector: string, gender: SGender, metric: SMetric) {
   return SUBGROUPS.filter(

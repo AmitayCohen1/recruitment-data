@@ -1,11 +1,14 @@
 import { ShieldCheck } from "lucide-react";
 import { SectorDonuts } from "@/components/sectors/sector-donuts";
+import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorRanking } from "@/components/sectors/sector-ranking";
 import { SectorTrend } from "@/components/sectors/sector-trend";
 import { SectorChange } from "@/components/sectors/sector-change";
 import { Subgroups } from "@/components/sectors/subgroups";
 import { CombatParadox } from "@/components/sectors/combat-paradox";
 import { GenderGap } from "@/components/sectors/gender-gap";
+import { EffectiveRate } from "@/components/sectors/effective-rate";
+import { SectorFunnel } from "@/components/sectors/sector-funnel";
 import { Leaderboards } from "@/components/sectors/leaderboards";
 import { CouncilCompare } from "@/components/sectors/council-compare";
 import { Explorer } from "@/components/dashboard/explorer";
@@ -82,7 +85,18 @@ export default function Home() {
             content: (
               <>
                 <SectorDonuts />
+                <SectorHeatmap />
                 <SectorRanking />
+              </>
+            ),
+          },
+          {
+            id: "gaps",
+            label: "פערים",
+            content: (
+              <>
+                <EffectiveRate />
+                <SectorFunnel />
                 <CombatParadox />
                 <GenderGap />
               </>
