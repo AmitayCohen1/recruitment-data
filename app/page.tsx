@@ -82,6 +82,7 @@ export default function Home() {
           {
             id: "sectors",
             label: "מגזרים",
+            icon: "👥",
             content: (
               <>
                 <SectorDonuts />
@@ -93,6 +94,7 @@ export default function Home() {
           {
             id: "gaps",
             label: "פערים",
+            icon: "⚖️",
             content: (
               <>
                 <EffectiveRate />
@@ -105,6 +107,7 @@ export default function Home() {
           {
             id: "trends",
             label: "מגמות",
+            icon: "📈",
             content: (
               <>
                 <SectorTrend />
@@ -115,6 +118,7 @@ export default function Home() {
           {
             id: "breakdown",
             label: "פילוח",
+            icon: "🔍",
             content: (
               <>
                 <Subgroups />
@@ -126,6 +130,7 @@ export default function Home() {
           {
             id: "schools",
             label: "בתי ספר",
+            icon: "🏫",
             content: (
               <div>
                 <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
@@ -141,16 +146,51 @@ export default function Home() {
         ]}
       />
 
-      <footer className="mt-12 space-y-1 border-t border-white/10 pt-6 text-center text-xs text-muted-foreground">
-        <p>
-          שנתון {SLATEST} = שנת לידה 2003, שלוש שנים מסיום כיתה י״ב · מקור הגיוס:
-          מערכת מוסדות וערים, לשכת רחט · סיווג מגזרי: מאפייני מוסדות חינוך, משרד
-          החינוך (data.gov.il)
-        </p>
-        <p>
-          הסיווג המגזרי אומת: 99.4% התאמה לנתוני משרד החינוך · הנתונים מכסים את
-          המגזר היהודי והדרוזי. ממוצעים אינם משוקללים לפי גודל בית הספר.
-        </p>
+      <footer className="mt-12 border-t border-white/10 pt-6 text-xs text-muted-foreground">
+        <div className="mb-4">
+          <p className="mb-2 font-semibold text-foreground">מקורות והורדת נתונים</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            <a
+              href="/Recruitment-data-by-school.xlsx"
+              download
+              className="text-sky-400 underline-offset-2 hover:underline"
+            >
+              ⬇️ נתוני הגיוס הגולמיים (XLSX)
+            </a>
+            <a
+              href="/full_data_with_classification.csv"
+              download
+              className="text-sky-400 underline-offset-2 hover:underline"
+            >
+              ⬇️ נתונים עם סיווג מגזרי (CSV)
+            </a>
+            <a
+              href="/ARTICLE_SUMMARY_TABLES.xlsx"
+              download
+              className="text-sky-400 underline-offset-2 hover:underline"
+            >
+              ⬇️ טבלאות מסכמות (XLSX)
+            </a>
+            <a
+              href="https://data.gov.il/dataset/mosdot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sky-400 underline-offset-2 hover:underline"
+            >
+              🔗 סיווג מוסדות — משרד החינוך (data.gov.il)
+            </a>
+          </div>
+        </div>
+        <div className="space-y-1 text-center leading-5">
+          <p>
+            שנתון {SLATEST} = שנת לידה 2003, שלוש שנים מסיום כיתה י״ב · מקור
+            הגיוס: מערכת מוסדות וערים, לשכת רחט (חופש מידע)
+          </p>
+          <p>
+            הסיווג המגזרי אומת: 99.4% התאמה לנתוני משרד החינוך · הנתונים מכסים את
+            המגזר היהודי והדרוזי · ממוצעים אינם משוקללים לפי גודל בית הספר.
+          </p>
+        </div>
       </footer>
     </div>
   );

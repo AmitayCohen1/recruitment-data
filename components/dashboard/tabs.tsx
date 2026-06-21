@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 export type Tab = {
   id: string;
   label: string;
+  icon?: string;
   content: React.ReactNode;
 };
 
@@ -17,7 +18,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
       <div className="sticky top-0 z-20 -mx-4 mb-6 flex justify-center bg-background/80 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
         <div
           role="tablist"
-          className="no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1"
+          className="no-scrollbar flex max-w-full gap-1.5 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1.5"
         >
           {tabs.map((t) => (
             <button
@@ -28,12 +29,17 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
               aria-controls={`panel-${t.id}`}
               onClick={() => setActive(t.id)}
               className={cn(
-                "flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-medium transition-colors",
+                "flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 text-base font-semibold transition-colors",
                 active === t.id
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
               )}
             >
+              {t.icon && (
+                <span aria-hidden className="text-lg">
+                  {t.icon}
+                </span>
+              )}
               {t.label}
             </button>
           ))}
