@@ -1,0 +1,204 @@
+"use client";
+
+import * as React from "react";
+import { ArrowDown, ArrowUp, Search } from "lucide-react";
+import { Panel, PanelHeader } from "@/components/ui/panel";
+import { cn } from "@/lib/utils";
+import {
+  GENDER_LABEL,
+  YEARS,
+  LATEST,
+  type CompactRow,
+  type Gender,
+} from "@/lib/data";
+
+type SortKey = "e" | "cb" | "o" | "m" | "s";
+
+const COLUMNS: { key: SortKey; label: string; metric: boolean }[] = [
+  { key: "s", label: "בית ספר", metric: false },
+  { key: "e", label: "גיוס", metric: true },
+  { key: "cb", label: "לחימה", metric: true },
+  { key: "o", label: "קצונה", metric: true },
+  { key: "m", label: "משמעותי", metric: true },
+];
+
+function pct(v: number | null) {
+  return v === null ? "—" : `${v.toFixed(1)}%`;
+}
+
+function pctColor(v: number | null) {
+  if (v === null) return "text-muted-foreground";
+  if (v >= 80) return "text-emerald-400 font-medium";
+  if (v >= 50) return "text-foreground";
+  return "text-rose-400";
+}
+
+const LIMIT = 150;
+
+export function Explorer({ rows }: { rows: CompactRow[] }) {
+  const [year, setYear] = React.useState<number>(LATEST);
+  const [gender, setGender] = React.useState<Gender | "all">("all");
+  const [q, setQ] = React.useState("");
+  const [sort, setSort] = React.useState<SortKey>("e");
+  const [dir, setDir] = React.useState<"asc" | "desc">("desc");
+
+  const filtered = React.useMemo(() => {
+    const term = q.trim();
+    const out = rows.filter(
+      (r) =>
+        r.y === year &&
+        (gender === "all" || r.g === gender) &&
+        (term === "" ||
+          r.s.includes(term) ||
+          (r.c ? r.c.includes(term) : false)),
+    );
+    out.sort((a, b) => {
+      if (sort === "s") {
+        return dir === "asc"
+          ? a.s.localeCompare(b.s, "he")
+          : b.s.localeCompare(a.s, "he");
+      }
+      const av = a[sort] ?? -1;
+      const bv = b[sort] ?? -1;
+      return dir === "asc" ? av - bv : bv - av;
+    });
+    return out;
+  }, [rows, year, gender, q, sort, dir]);
+
+  const setSortKey = (k: SortKey) => {
+    if (k === sort) setDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSort(k);
+      setDir(k === "s" ? "asc" : "desc");
+    }
+  };
+
+  const inputCls =
+    "h-9 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
+
+  return (
+    <Panel>
+      <PanelHeader
+        title="מאתר בתי הספר"
+        subtitle={`${filtered.length.toLocaleString("he")} בתי ספר · שנת ${year}`}
+      />
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="חיפוש בית ספר או מועצה…"
+            className={cn(inputCls, "w-full pr-9")}
+          />
+        </div>
+
+        <select
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          className={inputCls}
+        >
+          {[...YEARS].reverse().map((y) => (
+            <option key={y} value={y} className="bg-popover">
+              {y}
+            </option>
+          ))}
+        </select>
+
+        <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
+          {(["all", "m", "f"] as const).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGender(g)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                gender === g
+                  ? "bg-white/10 text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {g === "all" ? "הכל" : GENDER_LABEL[g]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-white/10">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-white/10 bg-white/[0.03] text-muted-foreground">
+              {COLUMNS.map((c) => (
+                <th
+                  key={c.key}
+                  className={cn(
+                    "cursor-pointer select-none whitespace-nowrap px-3 py-2.5 font-medium",
+                    c.metric ? "text-center" : "text-right",
+                  )}
+                  onClick={() => setSortKey(c.key)}
+                >
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1",
+                      c.metric && "justify-center",
+                    )}
+                  >
+                    {c.label}
+                    {sort === c.key &&
+                      (dir === "asc" ? (
+                        <ArrowUp className="size-3" />
+                      ) : (
+                        <ArrowDown className="size-3" />
+                      ))}
+                  </span>
+                </th>
+              ))}
+              {gender === "all" && (
+                <th className="px-3 py-2.5 text-center font-medium">מגדר</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.slice(0, LIMIT).map((r) => (
+              <tr
+                key={`${r.k}-${r.g}`}
+                className="border-b border-white/5 last:border-0 hover:bg-white/[0.03]"
+              >
+                <td className="px-3 py-2.5 text-right">
+                  <div className="font-medium text-foreground">{r.s}</div>
+                  {r.c && (
+                    <div className="text-xs text-muted-foreground">{r.c}</div>
+                  )}
+                </td>
+                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.e))}>
+                  {pct(r.e)}
+                </td>
+                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.cb))}>
+                  {pct(r.cb)}
+                </td>
+                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.o))}>
+                  {pct(r.o)}
+                </td>
+                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.m))}>
+                  {pct(r.m)}
+                </td>
+                {gender === "all" && (
+                  <td className="px-3 py-2.5 text-center text-muted-foreground">
+                    {GENDER_LABEL[r.g]}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {filtered.length > LIMIT && (
+        <p className="pt-3 text-center text-xs text-muted-foreground">
+          מוצגים {LIMIT} מתוך {filtered.length.toLocaleString("he")} — צמצמו עם
+          חיפוש או סינון
+        </p>
+      )}
+    </Panel>
+  );
+}
