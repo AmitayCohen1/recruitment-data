@@ -19,7 +19,7 @@ const ROWS = raw as Row[];
 
 export const METRICS: { key: MetricKey; label: string; short: string }[] = [
   { key: "enlist", label: "אחוז גיוס", short: "גיוס" },
-  { key: "combat", label: "אחוז לחימה", short: "לחימה" },
+  { key: "combat", label: "אחוז קרבי", short: "קרבי" },
   { key: "officer", label: "אחוז קצונה", short: "קצונה" },
   { key: "meaning", label: "שירות משמעותי", short: "משמעותי" },
 ];

@@ -25,7 +25,7 @@ export const SUBGROUPS = data.subgroups as SubgroupRow[];
 
 export const S_METRICS: { key: SMetric; label: string; short: string }[] = [
   { key: "enlist", label: "אחוז גיוס", short: "גיוס" },
-  { key: "combat", label: "אחוז לחימה", short: "לחימה" },
+  { key: "combat", label: "אחוז קרבי", short: "קרבי" },
   { key: "officer", label: "אחוז קצונה", short: "קצונה" },
 ];
 
@@ -151,6 +151,7 @@ export function profile(sector: string, gender: SGender, year = SLATEST) {
     enlist: r?.enlist ?? null,
     combat: r?.combat ?? null,
     officer: r?.officer ?? null,
+    meaning: r?.meaning ?? null,
     n: r?.n ?? 0,
   };
 }

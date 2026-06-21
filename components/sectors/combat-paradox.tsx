@@ -14,7 +14,7 @@ const A = "דתי לאומי";
 const B = "חילוני";
 const METRICS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
   { key: "enlist", label: "🪖 גיוס" },
-  { key: "combat", label: "⚔️ לחימה" },
+  { key: "combat", label: "⚔️ קרבי" },
   { key: "officer", label: "🎖️ קצונה" },
 ];
 
@@ -40,7 +40,7 @@ export function CombatParadox() {
     <Panel>
       <PanelHeader
         title="הפרדוקס: פחות מתגייסים, יותר נלחמים"
-        subtitle={`${A} מול ${B}, ${gender}, ${SLATEST} — מתגייסים בשיעור נמוך יותר, אך מגיעים ללחימה ולקצונה בשיעור גבוה יותר.`}
+        subtitle={`${A} מול ${B}, ${gender}, ${SLATEST} — מתגייסים בשיעור נמוך יותר, אך מגיעים לתפקידים קרביים ולקצונה בשיעור גבוה יותר.`}
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>
@@ -84,7 +84,7 @@ export function CombatParadox() {
           <span className="font-semibold text-foreground">
             {Math.round((b.enlist ?? 0) - (a.enlist ?? 0))} נק׳
           </span>{" "}
-          מחילונים, אך אחוז הלחימה שלהם גבוה ב־
+          מחילונים, אך שיעור הקרביים שלהם גבוה ב־
           <span className="font-semibold text-emerald-400">
             {Math.round((a.combat ?? 0) - (b.combat ?? 0))} נק׳
           </span>

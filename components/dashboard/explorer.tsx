@@ -17,7 +17,7 @@ type SortKey = "e" | "cb" | "o" | "m" | "s";
 const COLUMNS: { key: SortKey; label: string; metric: boolean }[] = [
   { key: "s", label: "בית ספר", metric: false },
   { key: "e", label: "🪖 גיוס", metric: true },
-  { key: "cb", label: "⚔️ לחימה", metric: true },
+  { key: "cb", label: "⚔️ קרבי", metric: true },
   { key: "o", label: "🎖️ קצונה", metric: true },
   { key: "m", label: "⭐ משמעותי", metric: true },
 ];

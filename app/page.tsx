@@ -1,4 +1,5 @@
 import { ShieldCheck } from "lucide-react";
+import { SectorDonuts } from "@/components/sectors/sector-donuts";
 import { SectorRanking } from "@/components/sectors/sector-ranking";
 import { SectorTrend } from "@/components/sectors/sector-trend";
 import { SectorChange } from "@/components/sectors/sector-change";
@@ -10,7 +11,7 @@ import { CouncilCompare } from "@/components/sectors/council-compare";
 import { Explorer } from "@/components/dashboard/explorer";
 import { DashboardTabs } from "@/components/dashboard/tabs";
 import { compactRows, TOTAL_SCHOOLS } from "@/lib/data";
-import { headline, SECTOR_EN, SFIRST, SLATEST } from "@/lib/sectors";
+import { headline, SFIRST, SLATEST } from "@/lib/sectors";
 
 export default function Home() {
   const cards = headline();
@@ -36,6 +37,9 @@ export default function Home() {
       </header>
 
       {/* headline sector cards */}
+      <p className="mb-3 text-sm font-medium text-muted-foreground">
+        🪖 אחוז גיוס לפי מגזר · {SLATEST}
+      </p>
       <section className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {cards.map((c) => (
           <div
@@ -49,21 +53,20 @@ export default function Home() {
             <p className="text-base font-semibold" style={{ color: c.color }}>
               {c.sector}
             </p>
-            <p className="text-xs text-muted-foreground">{SECTOR_EN[c.sector]}</p>
             <div className="mt-4 flex items-end justify-between gap-2">
               <div>
-                <p className="text-3xl font-bold tabular-nums leading-none">
+                <p className="text-4xl font-bold tabular-nums leading-none">
                   {c.boys ?? "—"}
-                  <span className="text-base font-medium text-muted-foreground">%</span>
+                  <span className="text-lg font-medium text-muted-foreground">%</span>
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">👨 בנים · 🪖 גיוס</p>
+                <p className="mt-1.5 text-xs text-muted-foreground">בנים</p>
               </div>
               <div className="text-left">
                 <p className="text-2xl font-semibold tabular-nums leading-none text-muted-foreground">
                   {c.girls ?? "—"}
                   <span className="text-sm">%</span>
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">👩 בנות</p>
+                <p className="mt-1.5 text-xs text-muted-foreground">בנות</p>
               </div>
             </div>
           </div>
@@ -78,6 +81,7 @@ export default function Home() {
             label: "מגזרים",
             content: (
               <>
+                <SectorDonuts />
                 <SectorRanking />
                 <CombatParadox />
                 <GenderGap />
