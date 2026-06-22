@@ -34,11 +34,11 @@ export function RegionView() {
   return (
     <Panel>
       <PanelHeader
-        title="לפי אזור גאוגרפי"
+        title="אזורים"
         subtitle={
           def.util
-            ? `${def.label} — כמה ${metric === "combat" ? "קרביים" : "קצינים"} על כל 100 בני נוער (גיוס × שיעור התפקיד). ${sector === "הכל" ? "כל המגזרים" : sector}, ${gender}, ${RLATEST}.`
-            : `שיעור הגיוס לפי אזור. ${sector === "הכל" ? "כל המגזרים" : sector}, ${gender}, ${RLATEST}.`
+            ? `${def.label} · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`
+            : `שיעור גיוס · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`
         }
       >
         <div className="flex flex-wrap gap-2">
@@ -46,7 +46,7 @@ export function RegionView() {
           <div className={pill}>
             {(["בנים", "בנות"] as RGender[]).map((g) => (
               <button key={g} type="button" className={btn(gender === g)} onClick={() => setGender(g)}>
-                {g === "בנים" ? "👨" : "👩"} {g}
+                {g}
               </button>
             ))}
           </div>
@@ -54,7 +54,7 @@ export function RegionView() {
           <div className={pill}>
             {R_METRICS.map((m) => (
               <button key={m.key} type="button" className={btn(metric === m.key)} onClick={() => setMetric(m.key)}>
-                {m.icon} {m.label}
+                {m.label}
               </button>
             ))}
           </div>
@@ -107,8 +107,8 @@ export function RegionView() {
       )}
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
         {def.util
-          ? "מיצוי = אחוז הגיוס × שיעור התפקיד מבין המתגייסים, כלומר התפקידים שמומשו מתוך כלל בני הנוער באזור. רוחב העמודה יחסי למוביל."
-          : "רוחב העמודה יחסי למוביל בקטגוריה."}
+          ? "קרבי וקצונה מוצגים ל־100 בני נוער."
+          : "רוחב העמודה יחסי לערך הגבוה בתצוגה."}
       </p>
     </Panel>
   );

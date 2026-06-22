@@ -34,17 +34,24 @@ export const R_METRICS: {
   /** how to compute the displayed value */
   util: boolean;
   label: string;
-  icon: string;
 }[] = [
-  { key: "enlist", util: false, label: "אחוז גיוס", icon: "🪖" },
-  { key: "combat", util: true, label: "מיצוי קרבי", icon: "⚔️" },
-  { key: "officer", util: true, label: "מיצוי קצונה", icon: "🎖️" },
+  { key: "enlist", util: false, label: "שיעור גיוס" },
+  {
+    key: "combat",
+    util: true,
+    label: "קרביים ל־100",
+  },
+  {
+    key: "officer",
+    util: true,
+    label: "קצינים ל־100",
+  },
 ];
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
 
 /** Region ranking for a sector + gender + metric.
- *  For combat/officer the value is "מיצוי" — per 100 youth (enlist × rate / 100). */
+ *  For combat/officer the value is per 100 youth (enlist × rate / 100). */
 export function regionView(
   sector: string,
   gender: RGender,

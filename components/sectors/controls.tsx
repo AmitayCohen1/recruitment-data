@@ -2,8 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import {
-  GENDER_ICON,
-  METRIC_ICON,
   S_METRICS,
   type SGender,
   type SMetric,
@@ -30,7 +28,6 @@ export function MetricTabsS({
     <div className={pill}>
       {S_METRICS.map((m) => (
         <button key={m.key} type="button" className={btn(value === m.key)} onClick={() => onChange(m.key)}>
-          <span aria-hidden className="me-1">{METRIC_ICON[m.key]}</span>
           {m.short}
         </button>
       ))}
@@ -49,7 +46,6 @@ export function GenderToggle({
     <div className={pill}>
       {(["בנים", "בנות"] as SGender[]).map((g) => (
         <button key={g} type="button" className={btn(value === g)} onClick={() => onChange(g)}>
-          <span aria-hidden className="me-1">{GENDER_ICON[g]}</span>
           {g}
         </button>
       ))}

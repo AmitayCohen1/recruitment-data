@@ -18,13 +18,13 @@ export function SectorChange() {
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const [gender, setGender] = React.useState<SGender>("בנות");
   const rows = change(metric, gender).sort((a, b) => b.to - a.to);
-  const label = S_METRICS.find((m) => m.key === metric)!.short;
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
-        title={`מה השתנה? ${SFIRST} ← ${SLATEST}`}
-        subtitle={`השינוי באחוז ${label} לכל מגזר, ${gender}`}
+        title="שינוי לפי מגזר"
+        subtitle={`${label} · ${gender} · ${SFIRST}–${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -86,7 +86,7 @@ export function SectorChange() {
         })}
       </div>
       <p className="pt-5 text-xs text-muted-foreground">
-        עיגול חלול = {SFIRST} · עיגול מלא = {SLATEST}. הציר 0–100% מימין לשמאל.
+        עיגול חלול = {SFIRST}. עיגול מלא = {SLATEST}.
       </p>
     </Panel>
   );

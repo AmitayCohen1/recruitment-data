@@ -14,13 +14,13 @@ import { MetricTabsS } from "./controls";
 export function SectorRanking() {
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const rows = ranking(metric);
-  const label = S_METRICS.find((m) => m.key === metric)!.short;
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
-        title="הדירוג: מי מתגייס?"
-        subtitle={`ממוצע אחוז ${label} לפי מגזר ומגדר, שנת ${SLATEST}`}
+        title="דירוג מגזרים"
+        subtitle={`${label} · ממוצע משוקלל · ${SLATEST}`}
       >
         <MetricTabsS value={metric} onChange={setMetric} />
       </PanelHeader>
@@ -35,8 +35,11 @@ export function SectorRanking() {
               <span className="w-24 shrink-0 truncate text-sm sm:w-40">
                 <span style={{ color }}>{r.sector}</span>
                 <span className="text-muted-foreground"> · {r.gender}</span>
+                <span className="block text-xs text-muted-foreground">
+                  {r.n.toLocaleString("he")} בתי ספר
+                </span>
               </span>
-              <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
+              <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/4">
                 <div
                   className="absolute inset-y-0 right-0 rounded-lg transition-all"
                   style={{
@@ -54,7 +57,7 @@ export function SectorRanking() {
         })}
       </ul>
       <p className="pt-4 text-xs text-muted-foreground">
-        העמודות בקנה מידה מלא של 0–100%. גוון בהיר = בנות, גוון מלא = בנים.
+        סולם מלא: 0–100%. גוון בהיר = בנות.
       </p>
     </Panel>
   );

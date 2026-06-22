@@ -17,8 +17,8 @@ export function SectorFunnel() {
   return (
     <Panel>
       <PanelHeader
-        title="מהשנתון אל הקרב: המסננת"
-        subtitle={`מתוך 100 בני נוער בכל מגזר — כמה מתגייסים, מתוכם כמה קרביים, ומתוכם כמה קצינים. ${gender}, ${SLATEST}.`}
+        title="גיוס, קרבי וקצונה"
+        subtitle={`ערכים ל־100 בני נוער · ${gender} · ${SLATEST}`}
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>
@@ -40,7 +40,7 @@ export function SectorFunnel() {
                   <div key={st.stage}>
                     <div className="mb-1 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">
-                        {st.icon} {st.stage}
+                        {st.stage}
                       </span>
                       <span className="font-bold tabular-nums">{st.per100}</span>
                     </div>
@@ -62,7 +62,7 @@ export function SectorFunnel() {
         })}
       </div>
       <p className="pt-4 text-xs text-muted-foreground">
-        כל הערכים הם «מתוך 100» — כך אפשר להשוות תרומה בין מגזרים בקנה מידה אחיד.
+        כל הערכים מוצגים ביחס ל־100 בני נוער.
       </p>
     </Panel>
   );

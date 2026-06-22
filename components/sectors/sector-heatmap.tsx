@@ -4,9 +4,9 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { matrix, SECTOR_COLOR, SLATEST } from "@/lib/sectors";
 
 const COLS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
-  { key: "enlist", label: "🪖 גיוס" },
-  { key: "combat", label: "⚔️ קרבי" },
-  { key: "officer", label: "🎖️ קצונה" },
+  { key: "enlist", label: "שיעור גיוס" },
+  { key: "combat", label: "קרביים מתוך המתגייסים" },
+  { key: "officer", label: "קצינים מתוך המתגייסים" },
 ];
 
 function heat(t: number) {
@@ -27,10 +27,46 @@ export function SectorHeatmap() {
   return (
     <Panel>
       <PanelHeader
-        title="כל ההשוואות במבט אחד"
-        subtitle={`מפת חום של כל המגזרים והמדדים, ${SLATEST}. ככל שהתא כהה/חזק יותר — הערך גבוה יותר (יחסית לעמודה).`}
+        title="השוואת מדדים"
+        subtitle={`${SLATEST} · צבע כהה יותר = ערך גבוה יותר באותה עמודה`}
       />
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 md:hidden">
+        {rows.map((r) => (
+          <div
+            key={`${r.sector}-${r.gender}-card`}
+            className="rounded-xl border border-white/10 bg-white/2 p-3"
+          >
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <span className="font-medium" style={{ color: SECTOR_COLOR[r.sector] }}>
+                {r.sector}
+              </span>
+              <span className="text-xs text-muted-foreground">{r.gender}</span>
+            </div>
+            <div className="grid gap-1.5">
+              {COLS.map((c) => {
+                const v = (r[c.key] as number) ?? null;
+                const t = v === null ? 0 : v / maxes[c.key];
+                return (
+                  <div
+                    key={c.key}
+                    className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg px-2 py-1.5"
+                    style={{
+                      background: heat(t),
+                      color: t > 0.5 ? "white" : "var(--foreground)",
+                    }}
+                  >
+                    <span className="text-xs font-medium">{c.label}</span>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {v === null ? "—" : `${v}%`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table className="w-full border-separate border-spacing-1 text-sm">
           <thead>
             <tr className="text-muted-foreground">
@@ -71,8 +107,7 @@ export function SectorHeatmap() {
         </table>
       </div>
       <p className="pt-3 text-xs text-muted-foreground">
-        עוצמת הצבע מנורמלת לכל עמודה בנפרד (קצונה בטווח נמוך מגיוס, ולכן צבעיה כהים
-        יחסית לערכים שלה).
+        הצבע מחושב בנפרד לכל עמודה.
       </p>
     </Panel>
   );

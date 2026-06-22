@@ -49,6 +49,9 @@ function ChartContainer({
   // recharts' ResponsiveContainer never measures a 0-sized box (which logs
   // a "width(-1)/height(-1)" warning during SSR and the first paint).
   const [mounted, setMounted] = React.useState(false);
+  // Intentional mount gate: defer recharts render until the container is laid out,
+  // avoiding its width(-1)/height(-1) warning on SSR and first paint.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
   return (

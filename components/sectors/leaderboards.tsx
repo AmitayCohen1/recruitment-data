@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { cn } from "@/lib/utils";
 import { topSchools, LATEST, type Gender, type MetricKey } from "@/lib/data";
 import { SCHOOL_SECTOR, SECTOR_COLOR, S_METRICS, type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
@@ -58,14 +57,14 @@ function List({
 export function Leaderboards() {
   const [metric, setMetric] = React.useState<SMetric>("combat");
   const [gender, setGender] = React.useState<SGender>("בנים");
-  const label = S_METRICS.find((m) => m.key === metric)!.short;
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
   const g = toG(gender);
 
   return (
     <Panel>
       <PanelHeader
-        title="טבלאות המובילים"
-        subtitle={`בתי הספר עם אחוז ${label} הגבוה והנמוך ביותר, ${gender}, ${LATEST}`}
+        title="בתי ספר"
+        subtitle={`${label} · ${gender} · ${LATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -73,8 +72,8 @@ export function Leaderboards() {
         </div>
       </PanelHeader>
       <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
-        <List metric={metric} gender={g} dir="top" title={`הכי גבוה — ${label}`} />
-        <List metric={metric} gender={g} dir="bottom" title={`הכי נמוך — ${label}`} />
+        <List metric={metric} gender={g} dir="top" title="הערכים הגבוהים ביותר" />
+        <List metric={metric} gender={g} dir="bottom" title="הערכים הנמוכים ביותר" />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
         <span>הנקודה הצבעונית = מגזר:</span>

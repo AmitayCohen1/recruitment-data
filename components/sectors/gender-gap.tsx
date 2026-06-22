@@ -15,13 +15,13 @@ export function GenderGap() {
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const rows = genderGap(metric);
   const max = Math.max(...rows.map((r) => Math.abs(r.gap)), 1);
-  const label = S_METRICS.find((m) => m.key === metric)!.short;
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
-        title="הפער המגדרי, לפי מגזר"
-        subtitle={`ההפרש באחוז ${label} בין בנים לבנות, ${SLATEST}. ככל שהפס ארוך יותר — הפער גדול יותר.`}
+        title="הפער בין בנים לבנות"
+        subtitle={`${label} · בנים פחות בנות · ${SLATEST}`}
       >
         <MetricTabsS value={metric} onChange={setMetric} />
       </PanelHeader>
@@ -36,7 +36,7 @@ export function GenderGap() {
                   {r.sector}
                 </span>
                 <span className="text-xs tabular-nums text-muted-foreground sm:text-sm">
-                  👨 {r.boys}% · 👩 {r.girls}% ·{" "}
+                  בנים {r.boys}% · בנות {r.girls}% ·{" "}
                   <span className="font-semibold text-foreground">
                     פער {r.gap} נק׳
                   </span>
@@ -53,7 +53,7 @@ export function GenderGap() {
         })}
       </ul>
       <p className="pt-4 text-xs text-muted-foreground">
-        בחילונים הפער זניח; אצל הדתיים-לאומיים מדובר בתהום של עשרות נקודות.
+        ערך חיובי = גבוה יותר אצל בנים.
       </p>
     </Panel>
   );

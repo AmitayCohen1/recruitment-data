@@ -13,9 +13,9 @@ import { GenderToggle } from "./controls";
 const A = "דתי לאומי";
 const B = "חילוני";
 const METRICS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
-  { key: "enlist", label: "🪖 גיוס" },
-  { key: "combat", label: "⚔️ קרבי" },
-  { key: "officer", label: "🎖️ קצונה" },
+  { key: "enlist", label: "שיעור גיוס" },
+  { key: "combat", label: "קרביים מתוך המתגייסים" },
+  { key: "officer", label: "קצינים מתוך המתגייסים" },
 ];
 
 function Bar({ value, color }: { value: number | null; color: string }) {
@@ -39,8 +39,8 @@ export function CombatParadox() {
   return (
     <Panel>
       <PanelHeader
-        title="הפרדוקס: פחות מתגייסים, יותר נלחמים"
-        subtitle={`${A} מול ${B}, ${gender}, ${SLATEST} — מתגייסים בשיעור נמוך יותר, אך מגיעים לתפקידים קרביים ולקצונה בשיעור גבוה יותר.`}
+        title="דתי לאומי וחילוני"
+        subtitle={`${gender} · ${SLATEST} · גיוס מכלל בני הנוער; קרבי וקצונה מתוך מתגייסים`}
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>
@@ -80,15 +80,16 @@ export function CombatParadox() {
 
       {gender === "בנים" && (
         <p className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm leading-6 text-muted-foreground">
-          בנים דתיים-לאומיים מתגייסים בשיעור נמוך ב־
+          הפרש דתי לאומי פחות חילוני: גיוס
           <span className="font-semibold text-foreground">
-            {Math.round((b.enlist ?? 0) - (a.enlist ?? 0))} נק׳
+            {" "}
+            {Math.round((a.enlist ?? 0) - (b.enlist ?? 0))} נק׳
           </span>{" "}
-          מחילונים, אך שיעור הקרביים שלהם גבוה ב־
+          · קרבי
           <span className="font-semibold text-emerald-400">
+            {" "}
             {Math.round((a.combat ?? 0) - (b.combat ?? 0))} נק׳
           </span>
-          .
         </p>
       )}
     </Panel>

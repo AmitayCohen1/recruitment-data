@@ -27,13 +27,13 @@ export function SectorTrend() {
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const [gender, setGender] = React.useState<SGender>("בנים");
   const data = trend(metric, gender);
-  const label = S_METRICS.find((m) => m.key === metric)!.short;
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
-        title="מגמות לאורך זמן"
-        subtitle={`אחוז ${label} לפי מגזר, ${gender}, ${data[0]?.year}–${data[data.length - 1]?.year}`}
+        title="מגמה לאורך זמן"
+        subtitle={`${label} · ${gender} · ${data[0]?.year}–${data[data.length - 1]?.year}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -52,7 +52,25 @@ export function SectorTrend() {
             domain={[0, 100]}
             tickFormatter={(v) => `${v}%`}
           />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(_, payload) => {
+                  const year = payload[0]?.payload?.year;
+                  return typeof year === "number" ? `שנת ${year}` : null;
+                }}
+                formatter={(value, name) => (
+                  <>
+                    <span className="text-muted-foreground">{name}</span>
+                    <span className="font-mono font-medium tabular-nums text-foreground">
+                      {value.toLocaleString("he")}%
+                    </span>
+                  </>
+                )}
+              />
+            }
+          />
           {SECTORS.map((s) => (
             <Line
               key={s}

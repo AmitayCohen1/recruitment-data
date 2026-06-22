@@ -7,9 +7,9 @@ import { effective, SECTOR_COLOR, SLATEST, type SGender } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 
 type EffMetric = "combat" | "officer";
-const META: Record<EffMetric, { icon: string; noun: string }> = {
-  combat: { icon: "⚔️", noun: "לוחמים קרביים" },
-  officer: { icon: "🎖️", noun: "קצינים" },
+const META: Record<EffMetric, { noun: string }> = {
+  combat: { noun: "לוחמים" },
+  officer: { noun: "קצינים" },
 };
 
 export function EffectiveRate() {
@@ -22,8 +22,8 @@ export function EffectiveRate() {
   return (
     <Panel>
       <PanelHeader
-        title="התרומה האמיתית: על כל 100 בני נוער"
-        subtitle={`כמה ${m.noun} יוצאים מכל 100 בני נוער במגזר (גיוס × שיעור התפקיד) — מדד התרומה לכלל השנתון, לא רק מבין המתגייסים. ${gender}, ${SLATEST}.`}
+        title="מתוך 100 בני נוער"
+        subtitle={`${m.noun} ל־100 בני נוער · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -40,7 +40,7 @@ export function EffectiveRate() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {META[k].icon} {k === "combat" ? "קרביים" : "קצינים"}
+                {k === "combat" ? "קרבי" : "קצונה"}
               </button>
             ))}
           </div>
@@ -75,9 +75,7 @@ export function EffectiveRate() {
         })}
       </ul>
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        המספר הימני = אחוז הגיוס × שיעור התפקיד מבין המתגייסים. הנתון השמאלי ={" "}
-        {m.noun} לכל 100 בני נוער במגזר. כך, למשל, מגזר שמתגייס פחות אך עם שיעור
-        קרבי גבוה יכול לתרום יותר לוחמים פר נפש.
+        חישוב: שיעור גיוס × שיעור תפקיד מתוך המתגייסים.
       </p>
     </Panel>
   );

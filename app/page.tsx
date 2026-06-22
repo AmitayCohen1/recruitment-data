@@ -30,25 +30,41 @@ export default function Home() {
           אומת מול נתוני משרד החינוך · {SFIRST}–{SLATEST}
         </p>
         <h1 className="max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
-          פערי הגיוס של החברה הישראלית
+          נתוני גיוס לפי בתי ספר ומגזרים
         </h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-          מ־<span className="font-semibold text-sky-400">92%</span> בקרב
-          חילונים ועד <span className="font-semibold text-amber-400">0.4%</span>{" "}
-          בקרב חרדיות — ניתוח של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר
-          לפי מגזר, מגדר ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.
+          ניתוח של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר לפי מגזר, מגדר
+          ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.
         </p>
       </header>
 
+      <section className="mb-10 rounded-2xl border border-white/10 bg-white/2.5 p-4 text-sm text-muted-foreground">
+        <p className="mb-3 font-semibold text-foreground">מקרא קצר</p>
+        <dl className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <dt className="font-medium text-foreground">גיוס</dt>
+            <dd>מתוך כלל בני הנוער בשכבה.</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-foreground">קרבי וקצונה</dt>
+            <dd>מתוך מי שהתגייסו.</dd>
+          </div>
+          <div>
+            <dt className="font-medium text-foreground">ל־100 בני נוער</dt>
+            <dd>שיעור גיוס × שיעור התפקיד.</dd>
+          </div>
+        </dl>
+      </section>
+
       {/* headline sector cards */}
       <p className="mb-3 text-sm font-medium text-muted-foreground">
-        🪖 אחוז גיוס לפי מגזר · {SLATEST}
+        שיעור גיוס לפי מגזר · {SLATEST}
       </p>
       <section className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {cards.map((c) => (
           <div
             key={c.sector}
-            className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] p-5"
+            className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/2.5 p-5"
           >
             <span
               className="absolute inset-x-0 top-0 h-1"
@@ -83,7 +99,6 @@ export default function Home() {
           {
             id: "sectors",
             label: "מגזרים",
-            icon: "👥",
             content: (
               <>
                 <SectorDonuts />
@@ -94,8 +109,7 @@ export default function Home() {
           },
           {
             id: "gaps",
-            label: "פערים",
-            icon: "⚖️",
+            label: "השוואות",
             content: (
               <>
                 <EffectiveRate />
@@ -108,13 +122,11 @@ export default function Home() {
           {
             id: "regions",
             label: "אזורים",
-            icon: "🗺️",
             content: <RegionView />,
           },
           {
             id: "trends",
             label: "מגמות",
-            icon: "📈",
             content: (
               <>
                 <SectorTrend />
@@ -125,7 +137,6 @@ export default function Home() {
           {
             id: "breakdown",
             label: "פילוח",
-            icon: "🔍",
             content: (
               <>
                 <Subgroups />
@@ -137,14 +148,13 @@ export default function Home() {
           {
             id: "schools",
             label: "בתי ספר",
-            icon: "🏫",
             content: (
               <div>
                 <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
-                  רמת בית הספר
+                  בתי ספר
                 </h2>
                 <p className="mb-5 text-sm text-muted-foreground">
-                  צללו אל בתי הספר הבודדים מאחורי המספרים המגזריים.
+                  חיפוש לפי בית ספר או רשות.
                 </p>
                 <Explorer rows={rows} />
               </div>
@@ -162,14 +172,14 @@ export default function Home() {
               download
               className="text-sky-400 underline-offset-2 hover:underline"
             >
-              ⬇️ נתוני הגיוס הגולמיים (XLSX)
+              נתוני הגיוס הגולמיים (XLSX)
             </a>
             <a
               href="/mosdot-education-ministry.xlsx"
               download
               className="text-sky-400 underline-offset-2 hover:underline"
             >
-              ⬇️ סיווג מוסדות — משרד החינוך, data.gov.il (XLSX)
+              סיווג מוסדות — משרד החינוך, data.gov.il (XLSX)
             </a>
           </div>
         </div>

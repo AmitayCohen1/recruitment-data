@@ -24,22 +24,18 @@ export const ROWS_S = data.byYearSector as SectorRow[];
 export const SUBGROUPS = data.subgroups as SubgroupRow[];
 
 export const S_METRICS: { key: SMetric; label: string; short: string }[] = [
-  { key: "enlist", label: "אחוז גיוס", short: "גיוס" },
-  { key: "combat", label: "אחוז קרבי", short: "קרבי" },
-  { key: "officer", label: "אחוז קצונה", short: "קצונה" },
+  { key: "enlist", label: "שיעור גיוס", short: "גיוס" },
+  {
+    key: "combat",
+    label: "קרביים מתוך מתגייסים",
+    short: "קרבי",
+  },
+  {
+    key: "officer",
+    label: "קצינים מתוך מתגייסים",
+    short: "קצונה",
+  },
 ];
-
-export const METRIC_ICON: Record<SMetric, string> = {
-  enlist: "🪖",
-  combat: "⚔️",
-  officer: "🎖️",
-  meaning: "⭐",
-};
-
-export const GENDER_ICON: Record<SGender, string> = {
-  בנים: "👨",
-  בנות: "👩",
-};
 
 export const SECTOR_COLOR: Record<string, string> = {
   חילוני: "#38bdf8", // sky
@@ -144,9 +140,9 @@ export function funnel(sector: string, gender: SGender, year = SLATEST) {
   const per = (rate: number | null) =>
     Math.round(((e * (rate ?? 0)) / 100) * 10) / 10;
   return [
-    { stage: "מתגייסים", icon: "🪖", per100: Math.round(e * 10) / 10 },
-    { stage: "קרביים", icon: "⚔️", per100: per(p.combat) },
-    { stage: "קצינים", icon: "🎖️", per100: per(p.officer) },
+    { stage: "מתגייסים", per100: Math.round(e * 10) / 10 },
+    { stage: "קרביים", per100: per(p.combat) },
+    { stage: "קצינים", per100: per(p.officer) },
   ];
 }
 

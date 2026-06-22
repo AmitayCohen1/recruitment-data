@@ -67,13 +67,13 @@ function Donut({
 export function SectorDonuts() {
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const [gender, setGender] = React.useState<SGender>("בנים");
-  const label = S_METRICS.find((m) => m.key === metric)!.short;
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
-        title="מבט מהיר"
-        subtitle={`אחוז ${label} בכל מגזר, ${gender}, ${SLATEST}`}
+        title="מבט לפי מגזר"
+        subtitle={`${label} · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
