@@ -9,6 +9,7 @@ import { CombatParadox } from "@/components/sectors/combat-paradox";
 import { GenderGap } from "@/components/sectors/gender-gap";
 import { EffectiveRate } from "@/components/sectors/effective-rate";
 import { SectorFunnel } from "@/components/sectors/sector-funnel";
+import { RegionView } from "@/components/sectors/region-view";
 import { Leaderboards } from "@/components/sectors/leaderboards";
 import { CouncilCompare } from "@/components/sectors/council-compare";
 import { Explorer } from "@/components/dashboard/explorer";
@@ -32,10 +33,10 @@ export default function Home() {
           פערי הגיוס של החברה הישראלית
         </h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-          מ־<span className="font-semibold text-sky-400">91%</span> בקרב
-          חילונים ועד <span className="font-semibold text-amber-400">0.6%</span>{" "}
+          מ־<span className="font-semibold text-sky-400">92%</span> בקרב
+          חילונים ועד <span className="font-semibold text-amber-400">0.4%</span>{" "}
           בקרב חרדיות — ניתוח של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר
-          לפי מגזר, מגדר ושנה. הנתונים מוצגים כממוצע אחוזים של בתי הספר.
+          לפי מגזר, מגדר ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.
         </p>
       </header>
 
@@ -105,6 +106,12 @@ export default function Home() {
             ),
           },
           {
+            id: "regions",
+            label: "אזורים",
+            icon: "🗺️",
+            content: <RegionView />,
+          },
+          {
             id: "trends",
             label: "מגמות",
             icon: "📈",
@@ -158,18 +165,11 @@ export default function Home() {
               ⬇️ נתוני הגיוס הגולמיים (XLSX)
             </a>
             <a
-              href="/full_data_with_classification.csv"
+              href="/mosdot-education-ministry.xlsx"
               download
               className="text-sky-400 underline-offset-2 hover:underline"
             >
-              ⬇️ נתונים עם סיווג מגזרי (CSV)
-            </a>
-            <a
-              href="/ARTICLE_SUMMARY_TABLES.xlsx"
-              download
-              className="text-sky-400 underline-offset-2 hover:underline"
-            >
-              ⬇️ טבלאות מסכמות (XLSX)
+              ⬇️ סיווג מוסדות — משרד החינוך (XLSX)
             </a>
             <a
               href="https://data.gov.il/dataset/mosdot"
@@ -177,7 +177,7 @@ export default function Home() {
               rel="noopener noreferrer"
               className="text-sky-400 underline-offset-2 hover:underline"
             >
-              🔗 סיווג מוסדות — משרד החינוך (data.gov.il)
+              🔗 מקור מקוון — data.gov.il
             </a>
           </div>
         </div>
@@ -188,7 +188,8 @@ export default function Home() {
           </p>
           <p>
             הסיווג המגזרי אומת: 99.4% התאמה לנתוני משרד החינוך · הנתונים מכסים את
-            המגזר היהודי והדרוזי · ממוצעים אינם משוקללים לפי גודל בית הספר.
+            המגזר היהודי והדרוזי · ממוצעים משוקללים לפי מספר תלמידי י״ב (בסיס
+            2015; שנת 2018 מדויקת, שנים מאוחרות יותר בקירוב).
           </p>
         </div>
       </footer>
