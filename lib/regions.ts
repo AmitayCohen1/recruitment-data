@@ -35,16 +35,16 @@ export const R_METRICS: {
   util: boolean;
   label: string;
 }[] = [
-  { key: "enlist", util: false, label: "שיעור גיוס" },
+  { key: "enlist", util: false, label: "🪖 שיעור גיוס" },
   {
     key: "combat",
     util: true,
-    label: "קרביים ל־100",
+    label: "⚔️ קרביים ל־100",
   },
   {
     key: "officer",
     util: true,
-    label: "קצינים ל־100",
+    label: "🎖️ קצינים ל־100",
   },
 ];
 

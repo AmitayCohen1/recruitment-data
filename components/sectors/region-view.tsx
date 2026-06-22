@@ -46,7 +46,7 @@ export function RegionView() {
           <div className={pill}>
             {(["בנים", "בנות"] as RGender[]).map((g) => (
               <button key={g} type="button" className={btn(gender === g)} onClick={() => setGender(g)}>
-                {g}
+                {g === "בנים" ? "👨" : "👩"} {g}
               </button>
             ))}
           </div>

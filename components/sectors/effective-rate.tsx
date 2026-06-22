@@ -40,7 +40,7 @@ export function EffectiveRate() {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {k === "combat" ? "קרבי" : "קצונה"}
+                {k === "combat" ? "⚔️ קרבי" : "🎖️ קצונה"}
               </button>
             ))}
           </div>

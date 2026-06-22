@@ -24,16 +24,16 @@ export const ROWS_S = data.byYearSector as SectorRow[];
 export const SUBGROUPS = data.subgroups as SubgroupRow[];
 
 export const S_METRICS: { key: SMetric; label: string; short: string }[] = [
-  { key: "enlist", label: "שיעור גיוס", short: "גיוס" },
+  { key: "enlist", label: "שיעור גיוס", short: "🪖 גיוס" },
   {
     key: "combat",
     label: "קרביים מתוך מתגייסים",
-    short: "קרבי",
+    short: "⚔️ קרבי",
   },
   {
     key: "officer",
     label: "קצינים מתוך מתגייסים",
-    short: "קצונה",
+    short: "🎖️ קצונה",
   },
 ];
 

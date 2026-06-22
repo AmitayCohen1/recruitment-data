@@ -16,9 +16,9 @@ type SortKey = "e" | "cb" | "o" | "m" | "s";
 
 const COLUMNS: { key: SortKey; label: string; metric: boolean }[] = [
   { key: "s", label: "בית ספר", metric: false },
-  { key: "e", label: "שיעור גיוס", metric: true },
-  { key: "cb", label: "קרבי", metric: true },
-  { key: "o", label: "קצונה", metric: true },
+  { key: "e", label: "🪖 שיעור גיוס", metric: true },
+  { key: "cb", label: "⚔️ קרבי", metric: true },
+  { key: "o", label: "🎖️ קצונה", metric: true },
   { key: "m", label: "שירות משמעותי", metric: true },
 ];
 
@@ -119,7 +119,7 @@ export function Explorer({ rows }: { rows: CompactRow[] }) {
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {g === "all" ? "הכל" : g === "m" ? "בנים" : "בנות"}
+              {g === "all" ? "הכל" : g === "m" ? "👨 בנים" : "👩 בנות"}
             </button>
           ))}
         </div>

@@ -13,9 +13,9 @@ import { GenderToggle } from "./controls";
 const A = "דתי לאומי";
 const B = "חילוני";
 const METRICS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
-  { key: "enlist", label: "שיעור גיוס" },
-  { key: "combat", label: "קרביים מתוך המתגייסים" },
-  { key: "officer", label: "קצינים מתוך המתגייסים" },
+  { key: "enlist", label: "🪖 שיעור גיוס" },
+  { key: "combat", label: "⚔️ קרביים מתוך המתגייסים" },
+  { key: "officer", label: "🎖️ קצינים מתוך המתגייסים" },
 ];
 
 function Bar({ value, color }: { value: number | null; color: string }) {

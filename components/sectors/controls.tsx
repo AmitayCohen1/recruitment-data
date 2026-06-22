@@ -46,7 +46,7 @@ export function GenderToggle({
     <div className={pill}>
       {(["בנים", "בנות"] as SGender[]).map((g) => (
         <button key={g} type="button" className={btn(value === g)} onClick={() => onChange(g)}>
-          {g}
+          {g === "בנים" ? "👨" : "👩"} {g}
         </button>
       ))}
     </div>

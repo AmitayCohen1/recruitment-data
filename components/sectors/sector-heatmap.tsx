@@ -4,9 +4,9 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { matrix, SECTOR_COLOR, SLATEST } from "@/lib/sectors";
 
 const COLS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
-  { key: "enlist", label: "שיעור גיוס" },
-  { key: "combat", label: "קרביים מתוך המתגייסים" },
-  { key: "officer", label: "קצינים מתוך המתגייסים" },
+  { key: "enlist", label: "🪖 שיעור גיוס" },
+  { key: "combat", label: "⚔️ קרביים מתוך המתגייסים" },
+  { key: "officer", label: "🎖️ קצינים מתוך המתגייסים" },
 ];
 
 function heat(t: number) {

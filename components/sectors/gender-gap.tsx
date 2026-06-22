@@ -36,7 +36,7 @@ export function GenderGap() {
                   {r.sector}
                 </span>
                 <span className="text-xs tabular-nums text-muted-foreground sm:text-sm">
-                  בנים {r.boys}% · בנות {r.girls}% ·{" "}
+                  👨 {r.boys}% · 👩 {r.girls}% ·{" "}
                   <span className="font-semibold text-foreground">
                     פער {r.gap} נק׳
                   </span>

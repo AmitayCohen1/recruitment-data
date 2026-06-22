@@ -38,27 +38,9 @@ export default function Home() {
         </p>
       </header>
 
-      <section className="mb-10 rounded-2xl border border-white/10 bg-white/2.5 p-4 text-sm text-muted-foreground">
-        <p className="mb-3 font-semibold text-foreground">מקרא קצר</p>
-        <dl className="grid gap-3 sm:grid-cols-3">
-          <div>
-            <dt className="font-medium text-foreground">גיוס</dt>
-            <dd>מתוך כלל בני הנוער בשכבה.</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-foreground">קרבי וקצונה</dt>
-            <dd>מתוך מי שהתגייסו.</dd>
-          </div>
-          <div>
-            <dt className="font-medium text-foreground">ל־100 בני נוער</dt>
-            <dd>שיעור גיוס × שיעור התפקיד.</dd>
-          </div>
-        </dl>
-      </section>
-
       {/* headline sector cards */}
       <p className="mb-3 text-sm font-medium text-muted-foreground">
-        שיעור גיוס לפי מגזר · {SLATEST}
+        🪖 שיעור גיוס לפי מגזר · {SLATEST}
       </p>
       <section className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {cards.map((c) => (
@@ -79,14 +61,14 @@ export default function Home() {
                   {c.boys ?? "—"}
                   <span className="text-lg font-medium text-muted-foreground">%</span>
                 </p>
-                <p className="mt-1.5 text-xs text-muted-foreground">בנים</p>
+                <p className="mt-1.5 text-xs text-muted-foreground">👨 בנים</p>
               </div>
               <div className="text-left">
                 <p className="text-2xl font-semibold tabular-nums leading-none text-muted-foreground">
                   {c.girls ?? "—"}
                   <span className="text-sm">%</span>
                 </p>
-                <p className="mt-1.5 text-xs text-muted-foreground">בנות</p>
+                <p className="mt-1.5 text-xs text-muted-foreground">👩 בנות</p>
               </div>
             </div>
           </div>
