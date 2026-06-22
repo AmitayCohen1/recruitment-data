@@ -28,7 +28,7 @@ export function SectorHeatmap() {
     <Panel>
       <PanelHeader
         title="השוואת מדדים"
-        subtitle={`${SLATEST} · צבע כהה יותר = ערך גבוה יותר באותה עמודה`}
+        subtitle={`כל המגזרים וכל המדדים יחד · ${SLATEST} · צבע כהה יותר = ערך גבוה יותר`}
       />
       <div className="grid gap-3 md:hidden">
         {rows.map((r) => (

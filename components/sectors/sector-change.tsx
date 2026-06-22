@@ -24,7 +24,7 @@ export function SectorChange() {
     <Panel>
       <PanelHeader
         title="שינוי לפי מגזר"
-        subtitle={`${label} · ${gender} · ${SFIRST}–${SLATEST}`}
+        subtitle={`כמה עלה או ירד כל מגזר · ${label} · ${gender} · ${SFIRST}–${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

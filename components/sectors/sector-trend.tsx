@@ -33,7 +33,7 @@ export function SectorTrend() {
     <Panel>
       <PanelHeader
         title="מגמה לאורך זמן"
-        subtitle={`${label} · ${gender} · ${data[0]?.year}–${data[data.length - 1]?.year}`}
+        subtitle={`איך השתנו הנתונים משנה לשנה · ${label} · ${gender} · ${data[0]?.year}–${data[data.length - 1]?.year}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

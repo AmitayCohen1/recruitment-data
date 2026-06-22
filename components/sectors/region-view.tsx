@@ -35,11 +35,7 @@ export function RegionView() {
     <Panel>
       <PanelHeader
         title="אזורים"
-        subtitle={
-          def.util
-            ? `${def.label} · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`
-            : `שיעור גיוס · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`
-        }
+        subtitle={`השוואה בין אזורים שונים · ${def.label} · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           {/* gender */}

@@ -73,7 +73,7 @@ export function SectorDonuts() {
     <Panel>
       <PanelHeader
         title="מבט לפי מגזר"
-        subtitle={`${label} · ${gender} · ${SLATEST}`}
+        subtitle={`הערך של כל מגזר במדד שנבחר · ${label} · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

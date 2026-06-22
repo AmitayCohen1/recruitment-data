@@ -21,7 +21,7 @@ export function GenderGap() {
     <Panel>
       <PanelHeader
         title="הפער בין בנים לבנות"
-        subtitle={`${label} · בנים פחות בנות · ${SLATEST}`}
+        subtitle={`כמה גבוה כל מדד אצל בנים בהשוואה לבנות · ${label} · ${SLATEST}`}
       >
         <MetricTabsS value={metric} onChange={setMetric} />
       </PanelHeader>

@@ -19,15 +19,15 @@ export function Subgroups() {
   const [gender, setGender] = React.useState<SGender>("בנים");
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const color = SECTOR_COLOR[sector];
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
   const rows = subgroups(sector, gender, metric);
   const max = Math.max(...rows.map((r) => (r[metric] as number) ?? 0), 1);
-  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
         title="תת-קבוצות"
-        subtitle={`${label} · ${sector} · ${gender} · ${SLATEST}`}
+        subtitle={`איך כל מגזר מתפלג לתת-קבוצות · ${label} · ${sector} · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

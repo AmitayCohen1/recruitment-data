@@ -57,14 +57,14 @@ function List({
 export function Leaderboards() {
   const [metric, setMetric] = React.useState<SMetric>("combat");
   const [gender, setGender] = React.useState<SGender>("בנים");
-  const label = S_METRICS.find((m) => m.key === metric)!.label;
   const g = toG(gender);
+  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
         title="בתי ספר"
-        subtitle={`${label} · ${gender} · ${LATEST}`}
+        subtitle={`בתי הספר הבולטים בכל מגזר · ${label} · ${gender} · ${LATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

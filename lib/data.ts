@@ -1,4 +1,5 @@
 import raw from "@/app/data/recruitment.json";
+import zeroRaw from "@/app/data/zero-schools.json";
 
 export type Gender = "m" | "f";
 export type MetricKey = "enlist" | "combat" | "officer" | "meaning";
@@ -105,3 +106,22 @@ export function compactRows(): CompactRow[] {
 }
 
 export const TOTAL_SCHOOLS = new Set(ROWS.map((r) => r.key)).size;
+
+/** Zero-enlistment schools (filtered out of the main analysis). Surfaced as an
+ *  opt-in layer in the explorer for full transparency; combat/officer/meaning
+ *  are undefined since there are no recruits. */
+type ZeroRaw = { y: number; g: Gender; k: number; s: string; c: string | null };
+
+export function zeroRows(): CompactRow[] {
+  return (zeroRaw as ZeroRaw[]).map((r) => ({
+    k: r.k,
+    y: r.y,
+    g: r.g,
+    s: r.s,
+    c: r.c,
+    e: 0,
+    cb: null,
+    o: null,
+    m: null,
+  }));
+}

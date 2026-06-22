@@ -19,7 +19,7 @@ export function CouncilCompare() {
     <Panel>
       <PanelHeader
         title="רשויות מקומיות"
-        subtitle={`${label} · ${gender} · ${LATEST} · 3 בתי ספר ומעלה`}
+        subtitle={`השוואה בין ערים ורשויות מקומיות · ${label} · ${gender} · ${LATEST} · 3 בתי ספר ומעלה`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

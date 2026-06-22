@@ -35,16 +35,24 @@ function pctColor(v: number | null) {
 
 const LIMIT = 150;
 
-export function Explorer({ rows }: { rows: CompactRow[] }) {
+export function Explorer({
+  rows,
+  zeroRows = [],
+}: {
+  rows: CompactRow[];
+  zeroRows?: CompactRow[];
+}) {
   const [year, setYear] = React.useState<number>(LATEST);
   const [gender, setGender] = React.useState<Gender | "all">("all");
   const [q, setQ] = React.useState("");
   const [sort, setSort] = React.useState<SortKey>("e");
   const [dir, setDir] = React.useState<"asc" | "desc">("desc");
+  const [showZero, setShowZero] = React.useState(false);
 
   const filtered = React.useMemo(() => {
     const term = q.trim();
-    const out = rows.filter(
+    const source = showZero ? [...rows, ...zeroRows] : rows;
+    const out = source.filter(
       (r) =>
         r.y === year &&
         (gender === "all" || r.g === gender) &&
@@ -63,7 +71,7 @@ export function Explorer({ rows }: { rows: CompactRow[] }) {
       return dir === "asc" ? av - bv : bv - av;
     });
     return out;
-  }, [rows, year, gender, q, sort, dir]);
+  }, [rows, zeroRows, showZero, year, gender, q, sort, dir]);
 
   const setSortKey = (k: SortKey) => {
     if (k === sort) setDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -123,6 +131,22 @@ export function Explorer({ rows }: { rows: CompactRow[] }) {
             </button>
           ))}
         </div>
+
+        {zeroRows.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowZero((v) => !v)}
+            aria-pressed={showZero}
+            className={cn(
+              "h-9 rounded-lg border px-3 text-sm font-medium transition-colors",
+              showZero
+                ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
+                : "border-white/10 bg-white/[0.03] text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {showZero ? "☑" : "☐"} כולל בתי ספר ללא מתגייסים
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-white/10">

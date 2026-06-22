@@ -5,8 +5,8 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import {
   ranking,
   SECTOR_COLOR,
-  S_METRICS,
   SLATEST,
+  S_METRICS,
   type SMetric,
 } from "@/lib/sectors";
 import { MetricTabsS } from "./controls";
@@ -20,7 +20,7 @@ export function SectorRanking() {
     <Panel>
       <PanelHeader
         title="דירוג מגזרים"
-        subtitle={`${label} · ממוצע משוקלל · ${SLATEST}`}
+        subtitle={`המגזרים מדורגים מהגבוה לנמוך · ${label} · ${SLATEST}`}
       >
         <MetricTabsS value={metric} onChange={setMetric} />
       </PanelHeader>

@@ -18,7 +18,7 @@ export function SectorFunnel() {
     <Panel>
       <PanelHeader
         title="גיוס, קרבי וקצונה"
-        subtitle={`ערכים ל־100 בני נוער · ${gender} · ${SLATEST}`}
+        subtitle={`מתוך כל 100 בני נוער — מתגייסים → לוחמים → קצינים · ${gender} · ${SLATEST}`}
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>

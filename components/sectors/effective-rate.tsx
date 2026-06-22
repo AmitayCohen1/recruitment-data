@@ -7,23 +7,18 @@ import { effective, SECTOR_COLOR, SLATEST, type SGender } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 
 type EffMetric = "combat" | "officer";
-const META: Record<EffMetric, { noun: string }> = {
-  combat: { noun: "לוחמים" },
-  officer: { noun: "קצינים" },
-};
-
 export function EffectiveRate() {
   const [metric, setMetric] = React.useState<EffMetric>("combat");
   const [gender, setGender] = React.useState<SGender>("בנים");
   const rows = effective(metric, gender);
   const max = Math.max(...rows.map((r) => r.value), 1);
-  const m = META[metric];
+  const noun = metric === "combat" ? "קרביים" : "קצינים";
 
   return (
     <Panel>
       <PanelHeader
         title="מתוך 100 בני נוער"
-        subtitle={`${m.noun} ל־100 בני נוער · ${gender} · ${SLATEST}`}
+        subtitle={`מתוך כל 100 בני נוער — ${noun} · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

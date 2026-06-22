@@ -40,7 +40,7 @@ export function CombatParadox() {
     <Panel>
       <PanelHeader
         title="דתי לאומי וחילוני"
-        subtitle={`${gender} · ${SLATEST} · גיוס מכלל בני הנוער; קרבי וקצונה מתוך מתגייסים`}
+        subtitle={`שני מגזרים עם גיוס דומה — תמונה שונה בלחימה ובקצונה · ${gender} · ${SLATEST}`}
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>
