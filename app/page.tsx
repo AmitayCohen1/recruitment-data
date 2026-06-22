@@ -15,10 +15,9 @@ import { CouncilCompare } from "@/components/sectors/council-compare";
 import { Explorer } from "@/components/dashboard/explorer";
 import { DashboardTabs } from "@/components/dashboard/tabs";
 import { compactRows, TOTAL_SCHOOLS } from "@/lib/data";
-import { headline, SFIRST, SLATEST } from "@/lib/sectors";
+import { SFIRST, SLATEST } from "@/lib/sectors";
 
 export default function Home() {
-  const cards = headline();
   const rows = compactRows();
 
   return (
@@ -37,43 +36,6 @@ export default function Home() {
           ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.
         </p>
       </header>
-
-      {/* headline sector cards */}
-      <p className="mb-3 text-sm font-medium text-muted-foreground">
-        🪖 שיעור גיוס לפי מגזר · {SLATEST}
-      </p>
-      <section className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {cards.map((c) => (
-          <div
-            key={c.sector}
-            className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/2.5 p-5"
-          >
-            <span
-              className="absolute inset-x-0 top-0 h-1"
-              style={{ background: c.color }}
-            />
-            <p className="text-base font-semibold" style={{ color: c.color }}>
-              {c.sector}
-            </p>
-            <div className="mt-4 flex items-end justify-between gap-2">
-              <div>
-                <p className="text-4xl font-bold tabular-nums leading-none">
-                  {c.boys ?? "—"}
-                  <span className="text-lg font-medium text-muted-foreground">%</span>
-                </p>
-                <p className="mt-1.5 text-xs text-muted-foreground">👨 בנים</p>
-              </div>
-              <div className="text-left">
-                <p className="text-2xl font-semibold tabular-nums leading-none text-muted-foreground">
-                  {c.girls ?? "—"}
-                  <span className="text-sm">%</span>
-                </p>
-                <p className="mt-1.5 text-xs text-muted-foreground">👩 בנות</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </section>
 
       {/* narrative sections, organized into tabs */}
       <DashboardTabs
