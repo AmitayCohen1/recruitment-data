@@ -14,6 +14,7 @@ import { SectorFunnel } from "@/components/sectors/sector-funnel";
 import { RegionView } from "@/components/sectors/region-view";
 import { Leaderboards } from "@/components/sectors/leaderboards";
 import { CouncilCompare } from "@/components/sectors/council-compare";
+import { FullData } from "@/components/sectors/full-data";
 import { Explorer } from "@/components/dashboard/explorer";
 import { DashboardTabs } from "@/components/dashboard/tabs";
 import { compactRows, TOTAL_SCHOOLS } from "@/lib/data";
@@ -117,6 +118,11 @@ export default function Home() {
                 <Explorer rows={rows} />
               </div>
             ),
+          },
+          {
+            id: "downloads",
+            label: "מקורות",
+            content: <FullData />,
           },
         ]}
       />
