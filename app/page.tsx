@@ -169,15 +169,7 @@ export default function Home() {
               download
               className="text-sky-400 underline-offset-2 hover:underline"
             >
-              ⬇️ סיווג מוסדות — משרד החינוך (XLSX)
-            </a>
-            <a
-              href="https://data.gov.il/dataset/mosdot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sky-400 underline-offset-2 hover:underline"
-            >
-              🔗 מקור מקוון — data.gov.il
+              ⬇️ סיווג מוסדות — משרד החינוך, data.gov.il (XLSX)
             </a>
           </div>
         </div>
