@@ -51,25 +51,34 @@ export function EffectiveRate() {
         {rows.map((r, i) => {
           const color = SECTOR_COLOR[r.sector];
           return (
-            <li key={r.sector} className="flex items-center gap-3">
-              <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">
-                {i + 1}
-              </span>
-              <span className="w-24 shrink-0 truncate text-sm sm:w-28" style={{ color }}>
-                {r.sector}
-              </span>
-              <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
+            <li
+              key={r.sector}
+              className="rounded-xl border border-white/5 bg-white/[0.02] p-3"
+            >
+              <div className="mb-2 flex items-baseline justify-between gap-3">
+                <span className="flex items-baseline gap-2 truncate text-sm font-medium">
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <span className="truncate" style={{ color }}>
+                    {r.sector}
+                  </span>
+                </span>
+                <span className="flex shrink-0 items-baseline gap-2">
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {r.enlist}% × {r.rate}%
+                  </span>
+                  <span className="text-lg font-bold tabular-nums">
+                    {r.value}
+                  </span>
+                </span>
+              </div>
+              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
                 <div
-                  className="absolute inset-y-0 right-0 rounded-lg"
+                  className="absolute inset-y-0 right-0 rounded-full"
                   style={{ width: `${(r.value / max) * 100}%`, background: color }}
                 />
               </div>
-              <span className="w-28 shrink-0 text-left text-xs tabular-nums text-muted-foreground">
-                {r.enlist}% × {r.rate}%
-              </span>
-              <span className="w-12 shrink-0 text-left text-base font-bold tabular-nums">
-                {r.value}
-              </span>
             </li>
           );
         })}

@@ -12,6 +12,19 @@ export const metadata: Metadata = {
   title: "גיוס לפי בתי ספר | נתוני צה״ל",
   description:
     "לוח מחוונים אינטראקטיבי לנתוני גיוס, שירות קרבי, קצונה ושירות משמעותי לפי בתי ספר, מועצות, שנים ומגדר.",
+  openGraph: {
+    title: "גיוס לפי בתי ספר | נתוני צה״ל",
+    description:
+      "לוח מחוונים אינטראקטיבי לנתוני גיוס, שירות קרבי, קצונה ושירות משמעותי לפי בתי ספר, מועצות, שנים ומגדר.",
+    images: [{ url: "/og.jpg", width: 1200, height: 669 }],
+    locale: "he_IL",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "גיוס לפי בתי ספר | נתוני צה״ל",
+    images: ["/og.jpg"],
+  },
 };
 
 export default function RootLayout({

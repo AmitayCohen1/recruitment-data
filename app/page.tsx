@@ -1,4 +1,6 @@
+import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
+import cover from "@/public/cover.png";
 import { SectorDonuts } from "@/components/sectors/sector-donuts";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorRanking } from "@/components/sectors/sector-ranking";
@@ -21,20 +23,32 @@ export default function Home() {
   const rows = compactRows();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-16">
-      {/* hero */}
-      <header className="mb-12">
-        <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
-          <ShieldCheck className="size-3.5" />
-          אומת מול נתוני משרד החינוך · {SFIRST}–{SLATEST}
-        </p>
-        <h1 className="max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
-          נתוני גיוס לפי בתי ספר ומגזרים
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-muted-foreground">
-          ניתוח של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר לפי מגזר, מגדר
-          ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.
-        </p>
+    <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-6 sm:pb-10">
+      {/* hero — contained width, touching the top, rounded only at bottom */}
+      <header className="relative mb-8 h-[32vh] min-h-[240px] w-full overflow-hidden rounded-b-2xl border-x border-b border-white/10 sm:h-[36vh]">
+        <Image
+          src={cover}
+          alt="נתוני גיוס לפי בתי ספר ומגזרים"
+          fill
+          priority
+          placeholder="blur"
+          sizes="(max-width: 1024px) 100vw, 1024px"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
+          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/15 px-3 py-1 text-xs font-medium text-emerald-200 backdrop-blur-sm">
+            <ShieldCheck className="size-3.5" />
+            אומת מול נתוני משרד החינוך · {SFIRST}–{SLATEST}
+          </p>
+          <h1 className="max-w-3xl text-2xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
+            נתוני גיוס לפי בתי ספר ומגזרים
+          </h1>
+          <p className="mt-2.5 max-w-2xl text-sm leading-6 text-white/80 drop-shadow-md sm:text-base sm:leading-7">
+            ניתוח של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר לפי מגזר, מגדר
+            ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.
+          </p>
+        </div>
       </header>
 
       {/* narrative sections, organized into tabs */}
@@ -108,34 +122,21 @@ export default function Home() {
       />
 
       <footer className="mt-12 border-t border-white/10 pt-6 text-xs text-muted-foreground">
-        <div className="mb-4">
-          <p className="mb-2 font-semibold text-foreground">מקורות והורדת נתונים</p>
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
-            <a
-              href="/Recruitment-data-by-school.xlsx"
-              download
-              className="text-sky-400 underline-offset-2 hover:underline"
-            >
-              נתוני הגיוס הגולמיים (XLSX)
-            </a>
-            <a
-              href="/mosdot-education-ministry.xlsx"
-              download
-              className="text-sky-400 underline-offset-2 hover:underline"
-            >
-              סיווג מוסדות — משרד החינוך, data.gov.il (XLSX)
-            </a>
-          </div>
-        </div>
         <div className="space-y-1 text-center leading-5">
           <p>
             שנתון {SLATEST} = שנת לידה 2003, שלוש שנים מסיום כיתה י״ב · מקור
             הגיוס: מערכת מוסדות וערים, לשכת רחט (חופש מידע)
           </p>
           <p>
-            הסיווג המגזרי אומת: 99.4% התאמה לנתוני משרד החינוך · הנתונים מכסים את
-            המגזר היהודי והדרוזי · ממוצעים משוקללים לפי מספר תלמידי י״ב (בסיס
-            2015; שנת 2018 מדויקת, שנים מאוחרות יותר בקירוב).
+            built by{" "}
+            <a
+              href="https://www.linkedin.com/in/amitay-cohen-461481168/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sky-400 underline-offset-2 hover:underline"
+            >
+              Amitay Cohen
+            </a>
           </p>
         </div>
       </footer>
