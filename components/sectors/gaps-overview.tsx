@@ -16,10 +16,7 @@ export function GapsOverview() {
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-        <span className="text-sm font-semibold text-foreground">
-          סינון משותף לקטע זה
-        </span>
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
         <GenderToggle value={gender} onChange={setGender} />
       </div>
       <Contribution gender={gender} />

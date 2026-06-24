@@ -63,21 +63,16 @@ const row = (year: number, sector: string, gender: SGender) =>
     (r) => r.year === year && r.sector === sector && r.gender === gender,
   );
 
-/** 2018 → 2024 change per sector × gender for one metric. */
-export function change(metric: SMetric, gender: SGender) {
-  return SECTORS.flatMap((s) => {
-    const a = row(SFIRST, s, gender);
-    const b = row(SLATEST, s, gender);
-    if (!a || !b || a[metric] === null || b[metric] === null) return [];
-    return [
-      {
-        sector: s,
-        gender,
-        from: a[metric] as number,
-        to: b[metric] as number,
-        delta: Math.round(((b[metric] as number) - (a[metric] as number)) * 10) / 10,
-      },
-    ];
+/** Trend across the available years for one gender + metric:
+ *  [{ year, <sector>: value, ... }] — one row per year, one key per sector. */
+export function trend(metric: SMetric, gender: SGender) {
+  return SYEARS.map((year) => {
+    const o: Record<string, number | null> & { year: number } = { year };
+    for (const s of SECTORS) {
+      const r = row(year, s, gender);
+      o[s] = r ? r[metric] : null;
+    }
+    return o;
   });
 }
 
