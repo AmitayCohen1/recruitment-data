@@ -12,7 +12,14 @@ export type SectorRow = {
   combat: number | null;
   officer: number | null;
   meaning: number | null;
+  /** absolute (estimated) counts: cohort, enlistees, combat soldiers, officers */
+  nCohort?: number;
+  nEnlistees?: number;
+  nFighters?: number;
+  nOfficers?: number;
 };
+
+export type AbsMetric = "nEnlistees" | "nFighters" | "nOfficers";
 
 export type SubgroupRow = SectorRow & { group: string };
 
@@ -70,18 +77,6 @@ export function ranking(metric: SMetric, year = SLATEST) {
   return out.sort((a, b) => b.value - a.value);
 }
 
-/** Trend over years for one gender: [{year, <sector>: value, ...}]. */
-export function trend(metric: SMetric, gender: SGender) {
-  return SYEARS.map((year) => {
-    const o: Record<string, number | null> & { year: number } = { year };
-    for (const s of SECTORS) {
-      const r = row(year, s, gender);
-      o[s] = r ? r[metric] : null;
-    }
-    return o;
-  });
-}
-
 /** 2018 → 2024 change per sector × gender for one metric. */
 export function change(metric: SMetric, gender: SGender) {
   return SECTORS.flatMap((s) => {
@@ -100,16 +95,30 @@ export function change(metric: SMetric, gender: SGender) {
   });
 }
 
-/** Latest-year headline numbers per sector (both genders). */
-export function headline() {
-  return SECTORS.map((s) => ({
-    sector: s,
-    en: SECTOR_EN[s],
-    color: SECTOR_COLOR[s],
-    boys: row(SLATEST, s, "בנים")?.enlist ?? null,
-    girls: row(SLATEST, s, "בנות")?.enlist ?? null,
-    boysCombat: row(SLATEST, s, "בנים")?.combat ?? null,
-  }));
+export const ABS_METRICS: { key: AbsMetric; label: string; rate: SMetric }[] = [
+  { key: "nFighters", label: "⚔️ לוחמים", rate: "combat" },
+  { key: "nOfficers", label: "🎖️ קצינים", rate: "officer" },
+  { key: "nEnlistees", label: "🪖 מתגייסים", rate: "enlist" },
+];
+
+/** Absolute contribution per sector for one gender + metric (default latest year):
+ *  the real count each sector produces, plus its share of the total and the
+ *  underlying rate — to contrast "rate" with "who actually fills the army". */
+export function contribution(metric: AbsMetric, gender: SGender, year = SLATEST) {
+  const def = ABS_METRICS.find((m) => m.key === metric)!;
+  const rows = SECTORS.flatMap((s) => {
+    const r = row(year, s, gender);
+    const value = r?.[metric];
+    if (!r || value == null) return [];
+    return [{ sector: s, value, rate: r[def.rate] ?? null }];
+  });
+  const total = rows.reduce((a, b) => a + b.value, 0);
+  return rows
+    .map((r) => ({
+      ...r,
+      share: total ? Math.round((100 * r.value) / total) : 0,
+    }))
+    .sort((a, b) => b.value - a.value);
 }
 
 /** Matrix of all metrics per sector for one gender (for the heatmap). */

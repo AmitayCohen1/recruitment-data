@@ -1,21 +1,21 @@
 import Image from "next/image";
 import cover from "@/public/cover.png";
-import { SectorDonuts } from "@/components/sectors/sector-donuts";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorRanking } from "@/components/sectors/sector-ranking";
 import { SectorChange } from "@/components/sectors/sector-change";
 import { Subgroups } from "@/components/sectors/subgroups";
 import { CombatParadox } from "@/components/sectors/combat-paradox";
 import { GenderGap } from "@/components/sectors/gender-gap";
+import { Contribution } from "@/components/sectors/contribution";
 import { EffectiveRate } from "@/components/sectors/effective-rate";
 import { SectorFunnel } from "@/components/sectors/sector-funnel";
 import { RegionView } from "@/components/sectors/region-view";
 import { Leaderboards } from "@/components/sectors/leaderboards";
 import { FullData } from "@/components/sectors/full-data";
 import { Explorer } from "@/components/dashboard/explorer";
+import { Notes } from "@/components/dashboard/notes";
 import { DashboardTabs } from "@/components/dashboard/tabs";
 import { compactRows, zeroRows, TOTAL_SCHOOLS } from "@/lib/data";
-import { SLATEST } from "@/lib/sectors";
 
 export default function Home() {
   const rows = compactRows();
@@ -54,7 +54,6 @@ export default function Home() {
             label: "מגזרים",
             content: (
               <>
-                <SectorDonuts />
                 <SectorHeatmap />
                 <SectorRanking />
               </>
@@ -65,6 +64,7 @@ export default function Home() {
             label: "השוואות",
             content: (
               <>
+                <Contribution />
                 <EffectiveRate />
                 <SectorFunnel />
                 <CombatParadox />
@@ -79,7 +79,7 @@ export default function Home() {
           },
           {
             id: "trends",
-            label: "שינוי",
+            label: "מגמות",
             content: <SectorChange />,
           },
           {
@@ -115,26 +115,10 @@ export default function Home() {
         ]}
       />
 
+      <Notes />
+
       <footer className="mt-12 border-t border-white/10 pt-6 text-xs text-muted-foreground">
         <div className="space-y-1 text-center leading-5">
-          <p>
-            שנתון {SLATEST} = שנת לידה 2003, שלוש שנים מסיום כיתה י״ב · מקור
-            הגיוס: מערכת מוסדות וערים, לשכת רחט (חופש מידע)
-          </p>
-          <p>
-            הנתונים התקבלו מצה״ל במסגרת חוק חופש המידע, באדיבות התנועה לחופש
-            המידע.
-          </p>
-          <p>
-            שיעור גיוס מחושב מתוך המחזור (תלמידי י״ב); שיעורי קרבי וקצונה מתוך
-            המתגייסים (סך הלוחמים/קצינים מתוך סך המתגייסים). הנתונים המצרפיים
-            תואמים לקובץ ״נתוני גיוס מלאים״ להורדה (לשונית ״מקורות״).
-          </p>
-          <p>
-            בתי ספר ללא מתגייסים כלל (142 ב־2024) אינם נכללים בממוצעים; הכללתם
-            הייתה מורידה את שיעור הגיוס, בעיקר במגזר החרדי. הם מופיעים בקובץ המלא
-            להורדה (לשונית ״מקורות״).
-          </p>
           <p>
             built by{" "}
             <a
