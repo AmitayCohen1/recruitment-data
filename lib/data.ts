@@ -28,36 +28,6 @@ export const YEARS = Array.from(new Set(ROWS.map((r) => r.year))).sort(
 );
 export const LATEST = YEARS[YEARS.length - 1];
 
-const r1 = (n: number | null) => (n === null ? null : Math.round(n * 10) / 10);
-
-/** Council ranking for one gender + metric (latest year), top N with min schools. */
-export function councilRanking(
-  metric: MetricKey,
-  gender: Gender,
-  n = 15,
-  minSchools = 3,
-  year = LATEST,
-) {
-  const vals = new Map<string, (number | null)[]>();
-  for (const r of ROWS) {
-    if (r.year !== year || r.gender !== gender || !r.council) continue;
-    if (!vals.has(r.council)) vals.set(r.council, []);
-    vals.get(r.council)!.push(r[metric]);
-  }
-  return Array.from(vals.entries())
-    .map(([council, v]) => {
-      const nums = v.filter((x): x is number => x !== null);
-      return {
-        council,
-        value: nums.length ? r1(nums.reduce((a, b) => a + b, 0) / nums.length) : null,
-        schools: nums.length,
-      };
-    })
-    .filter((c) => c.value !== null && c.schools >= minSchools)
-    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
-    .slice(0, n);
-}
-
 /** Top or bottom N schools for one gender + metric (latest year). */
 export function topSchools(
   metric: MetricKey,

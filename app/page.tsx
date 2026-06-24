@@ -3,7 +3,6 @@ import cover from "@/public/cover.png";
 import { SectorDonuts } from "@/components/sectors/sector-donuts";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorRanking } from "@/components/sectors/sector-ranking";
-import { SectorTrend } from "@/components/sectors/sector-trend";
 import { SectorChange } from "@/components/sectors/sector-change";
 import { Subgroups } from "@/components/sectors/subgroups";
 import { CombatParadox } from "@/components/sectors/combat-paradox";
@@ -12,7 +11,6 @@ import { EffectiveRate } from "@/components/sectors/effective-rate";
 import { SectorFunnel } from "@/components/sectors/sector-funnel";
 import { RegionView } from "@/components/sectors/region-view";
 import { Leaderboards } from "@/components/sectors/leaderboards";
-import { CouncilCompare } from "@/components/sectors/council-compare";
 import { FullData } from "@/components/sectors/full-data";
 import { Explorer } from "@/components/dashboard/explorer";
 import { DashboardTabs } from "@/components/dashboard/tabs";
@@ -81,13 +79,8 @@ export default function Home() {
           },
           {
             id: "trends",
-            label: "מגמות",
-            content: (
-              <>
-                <SectorTrend />
-                <SectorChange />
-              </>
-            ),
+            label: "שינוי",
+            content: <SectorChange />,
           },
           {
             id: "breakdown",
@@ -95,7 +88,6 @@ export default function Home() {
             content: (
               <>
                 <Subgroups />
-                <CouncilCompare />
                 <Leaderboards />
               </>
             ),
@@ -134,8 +126,9 @@ export default function Home() {
             המידע.
           </p>
           <p>
-            שיעורי קרבי וקצונה מחושבים כממוצע משוקלל של שיעורי בתי״ס; במגזרים עם
-            גיוס נמוך הם עשויים להבדל מיחס מצרפי (סך הלוחמים מתוך סך המתגייסים).
+            שיעור גיוס מחושב מתוך המחזור (תלמידי י״ב); שיעורי קרבי וקצונה מתוך
+            המתגייסים (סך הלוחמים/קצינים מתוך סך המתגייסים). הנתונים המצרפיים
+            תואמים לקובץ ״נתוני גיוס מלאים״ להורדה (לשונית ״מקורות״).
           </p>
           <p>
             בתי ספר ללא מתגייסים כלל (142 ב־2024) אינם נכללים בממוצעים; הכללתם
