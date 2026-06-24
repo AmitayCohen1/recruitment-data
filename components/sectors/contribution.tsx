@@ -12,20 +12,29 @@ import {
 } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 
-export function Contribution() {
+export function Contribution({
+  gender: genderProp,
+}: { gender?: SGender } = {}) {
+  const controlled = genderProp !== undefined;
   const [metric, setMetric] = React.useState<AbsMetric>("nFighters");
-  const [gender, setGender] = React.useState<SGender>("בנים");
+  const [genderState, setGender] = React.useState<SGender>("בנים");
+  const gender = genderProp ?? genderState;
   const rows = contribution(metric, gender);
-  const max = Math.max(...rows.map((r) => r.value), 1);
+  const noun = ABS_METRICS.find((m) => m.key === metric)!.label.replace(
+    /^\S+\s/,
+    "",
+  );
 
   return (
     <Panel>
       <PanelHeader
         title="תרומה בפועל במספרים מוחלטים"
-        subtitle="כמה מתגייסים, לוחמים וקצינים מגיעים מכל מגזר ומה חלקם מכלל הסך הארצי."
+        subtitle={`חלקו של כל מגזר מכלל ה${noun} בארץ — שיעור גבוה אינו בהכרח תרומה גדולה.`}
       >
         <div className="flex flex-wrap gap-2">
-          <GenderToggle value={gender} onChange={setGender} />
+          {!controlled && (
+            <GenderToggle value={gender} onChange={setGender} />
+          )}
           <div className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
             {ABS_METRICS.map((m) => (
               <button
@@ -46,48 +55,61 @@ export function Contribution() {
         </div>
       </PanelHeader>
 
-      <ul className="space-y-3">
-        {rows.map((r) => {
-          const color = SECTOR_COLOR[r.sector];
-          return (
-            <li
-              key={r.sector}
-              className="rounded-xl border border-white/5 bg-white/[0.02] p-3"
-            >
-              <div className="mb-2 flex items-baseline justify-between gap-3">
-                <span className="flex items-baseline gap-2 truncate text-sm font-medium">
-                  <span className="truncate" style={{ color }}>
-                    {r.sector}
-                  </span>
-                  {r.rate != null && (
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      ({r.rate}% מתוך המתגייסים)
-                    </span>
-                  )}
+      {/* 100% stacked composition bar — each sector's share of the national total */}
+      <div className="flex h-10 w-full overflow-hidden rounded-xl border border-white/10">
+        {rows.map((r) => (
+          <div
+            key={r.sector}
+            className="flex items-center justify-center"
+            style={{ width: `${r.share}%`, background: SECTOR_COLOR[r.sector] }}
+            title={`${r.sector}: ${r.value.toLocaleString("he")} (${r.share}%)`}
+          >
+            {r.share >= 8 && (
+              <span className="text-xs font-bold tabular-nums text-black/75">
+                {r.share}%
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* legend: absolute count + share + underlying rate */}
+      <ul className="mt-4 space-y-2">
+        {rows.map((r) => (
+          <li
+            key={r.sector}
+            className="flex items-baseline justify-between gap-3 text-sm"
+          >
+            <span className="flex items-baseline gap-2 truncate font-medium">
+              <span
+                className="size-2.5 shrink-0 translate-y-0.5 rounded-full"
+                style={{ background: SECTOR_COLOR[r.sector] }}
+              />
+              <span
+                className="truncate"
+                style={{ color: SECTOR_COLOR[r.sector] }}
+              >
+                {r.sector}
+              </span>
+              {r.rate != null && (
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  ({r.rate}% מהמתגייסים)
                 </span>
-                <span className="flex shrink-0 items-baseline gap-2">
-                  <span className="text-lg font-bold tabular-nums">
-                    {r.value.toLocaleString("he")}
-                  </span>
-                  <span className="w-10 text-sm font-semibold tabular-nums text-muted-foreground">
-                    {r.share}%
-                  </span>
-                </span>
-              </div>
-              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
-                <div
-                  className="absolute inset-y-0 right-0 rounded-full"
-                  style={{ width: `${(r.value / max) * 100}%`, background: color }}
-                />
-              </div>
-            </li>
-          );
-        })}
+              )}
+            </span>
+            <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
+              <span className="font-bold">{r.value.toLocaleString("he")}</span>
+              <span className="w-9 font-semibold text-muted-foreground">
+                {r.share}%
+              </span>
+            </span>
+          </li>
+        ))}
       </ul>
+
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        שיעור גבוה אינו בהכרח תרומה מוחלטת גבוהה: מגזר גדול עם שיעור בינוני עשוי
-        לספק יותר לוחמים ממגזר קטן עם שיעור גבוה. המספרים המוחלטים מוערכים לפי
-        גודל המחזור ושיעור המדד.
+        מגזר גדול עם שיעור בינוני עשוי לספק יותר לוחמים ממגזר קטן עם שיעור גבוה.
+        המספרים המוחלטים מוערכים לפי גודל המחזור ושיעור המדד.
       </p>
     </Panel>
   );

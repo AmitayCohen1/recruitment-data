@@ -107,6 +107,24 @@ export function contribution(metric: AbsMetric, gender: SGender, year = SLATEST)
     .sort((a, b) => b.value - a.value);
 }
 
+/** Per-sector points for the rate-vs-reality scatter: enlist% (x), combat% (y),
+ *  and absolute combat soldiers (bubble size). */
+export function sectorScatter(gender: SGender, year = SLATEST) {
+  return SECTORS.flatMap((s) => {
+    const r = row(year, s, gender);
+    if (!r || r.enlist === null || r.combat === null) return [];
+    return [
+      {
+        sector: s,
+        enlist: r.enlist,
+        combat: r.combat,
+        fighters: r.nFighters ?? 0,
+        color: SECTOR_COLOR[s],
+      },
+    ];
+  });
+}
+
 /** Matrix of all metrics per sector for one gender (for the heatmap). */
 export function matrix(gender: SGender, year = SLATEST) {
   return SECTORS.map((s) => {

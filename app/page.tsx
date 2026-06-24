@@ -3,11 +3,8 @@ import cover from "@/public/cover.png";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorOverview } from "@/components/sectors/sector-overview";
 import { Subgroups } from "@/components/sectors/subgroups";
-import { CombatParadox } from "@/components/sectors/combat-paradox";
 import { GenderGap } from "@/components/sectors/gender-gap";
-import { Contribution } from "@/components/sectors/contribution";
-import { EffectiveRate } from "@/components/sectors/effective-rate";
-import { SectorFunnel } from "@/components/sectors/sector-funnel";
+import { GapsOverview } from "@/components/sectors/gaps-overview";
 import { RegionView } from "@/components/sectors/region-view";
 import { Leaderboards } from "@/components/sectors/leaderboards";
 import { FullData } from "@/components/sectors/full-data";
@@ -64,10 +61,7 @@ export default function Home() {
             label: "פערים והשוואות",
             content: (
               <>
-                <Contribution />
-                <EffectiveRate />
-                <SectorFunnel />
-                <CombatParadox />
+                <GapsOverview />
                 <GenderGap />
               </>
             ),

@@ -7,9 +7,13 @@ import { effective, SECTOR_COLOR, type SGender } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 
 type EffMetric = "combat" | "officer";
-export function EffectiveRate() {
+export function EffectiveRate({
+  gender: genderProp,
+}: { gender?: SGender } = {}) {
+  const controlled = genderProp !== undefined;
   const [metric, setMetric] = React.useState<EffMetric>("combat");
-  const [gender, setGender] = React.useState<SGender>("בנים");
+  const [genderState, setGender] = React.useState<SGender>("בנים");
+  const gender = genderProp ?? genderState;
   const rows = effective(metric, gender);
   const max = Math.max(...rows.map((r) => r.value), 1);
 
@@ -20,7 +24,9 @@ export function EffectiveRate() {
         subtitle="כמה מכל 100 בני נוער מגיעים בפועל לשירות קרבי או לקצונה בכל מגזר."
       >
         <div className="flex flex-wrap gap-2">
-          <GenderToggle value={gender} onChange={setGender} />
+          {!controlled && (
+            <GenderToggle value={gender} onChange={setGender} />
+          )}
           <div className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
             {(["combat", "officer"] as EffMetric[]).map((k) => (
               <button

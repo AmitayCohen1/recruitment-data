@@ -10,8 +10,12 @@ import {
 } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 
-export function SectorFunnel() {
-  const [gender, setGender] = React.useState<SGender>("בנים");
+export function SectorFunnel({
+  gender: genderProp,
+}: { gender?: SGender } = {}) {
+  const controlled = genderProp !== undefined;
+  const [genderState, setGender] = React.useState<SGender>("בנים");
+  const gender = genderProp ?? genderState;
 
   return (
     <Panel>
@@ -19,7 +23,7 @@ export function SectorFunnel() {
         title="מסלול הגיוס בכל מגזר"
         subtitle="כמה מתוך 100 בני נוער עוברים מגיוס ללחימה ולקצונה בכל מגזר."
       >
-        <GenderToggle value={gender} onChange={setGender} />
+        {!controlled && <GenderToggle value={gender} onChange={setGender} />}
       </PanelHeader>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

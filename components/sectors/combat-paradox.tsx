@@ -1,96 +1,135 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
 import {
-  profile,
-  SECTOR_COLOR,
-  type SGender,
-} from "@/lib/sectors";
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+  ZAxis,
+} from "recharts";
+import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartContainer } from "@/components/ui/chart";
+import { sectorScatter, type SGender } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 
-const A = "דתי לאומי";
-const B = "חילוני";
-const METRICS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
-  { key: "enlist", label: "🪖 שיעור גיוס" },
-  { key: "combat", label: "⚔️ שירות קרבי מתוך המתגייסים" },
-  { key: "officer", label: "🎖️ קצונה מתוך המתגייסים" },
-];
+type Pt = {
+  sector: string;
+  enlist: number;
+  combat: number;
+  fighters: number;
+  color: string;
+};
 
-function Bar({ value, color }: { value: number | null; color: string }) {
+function ScatterTip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: Pt }[];
+}) {
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
   return (
-    <div className="relative h-6 flex-1 overflow-hidden rounded-md bg-white/[0.04]">
-      <div
-        className="absolute inset-y-0 right-0 rounded-md"
-        style={{ width: `${value ?? 0}%`, background: color }}
-      />
+    <div className="rounded-lg border border-white/10 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur-sm">
+      <p className="mb-1 font-semibold" style={{ color: d.color }}>
+        {d.sector}
+      </p>
+      <p className="text-muted-foreground">
+        שיעור גיוס: <b className="text-foreground tabular-nums">{d.enlist}%</b>
+      </p>
+      <p className="text-muted-foreground">
+        שיעור קרבי: <b className="text-foreground tabular-nums">{d.combat}%</b>
+      </p>
+      <p className="text-muted-foreground">
+        לוחמים בפועל:{" "}
+        <b className="text-foreground tabular-nums">
+          {d.fighters.toLocaleString("he")}
+        </b>
+      </p>
     </div>
   );
 }
 
-export function CombatParadox() {
-  const [gender, setGender] = React.useState<SGender>("בנים");
-  const a = profile(A, gender);
-  const b = profile(B, gender);
-  const cA = SECTOR_COLOR[A];
-  const cB = SECTOR_COLOR[B];
+export function CombatParadox({
+  gender: genderProp,
+}: { gender?: SGender } = {}) {
+  const controlled = genderProp !== undefined;
+  const [genderState, setGender] = React.useState<SGender>("בנים");
+  const gender = genderProp ?? genderState;
+  const data = sectorScatter(gender);
 
   return (
     <Panel>
       <PanelHeader
-        title="גיוס דומה, שירות שונה"
-        subtitle="השוואה בין דתי לאומי לחילוני: שיעור גיוס דומה, אך פערים בלחימה ובקצונה."
+        title="גיוס מול שירות קרבי"
+        subtitle="כל בועה היא מגזר — מיקום לפי שיעור גיוס (אופקי) ושיעור קרבי (אנכי), וגודל הבועה לפי מספר הלוחמים בפועל."
       >
-        <GenderToggle value={gender} onChange={setGender} />
+        {!controlled && <GenderToggle value={gender} onChange={setGender} />}
       </PanelHeader>
 
-      <div className="mb-4 flex items-center justify-end gap-5 text-sm">
-        <span className="flex items-center gap-1.5">
-          <span className="size-3 rounded-full" style={{ background: cA }} />
-          {A}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="size-3 rounded-full" style={{ background: cB }} />
-          {B}
-        </span>
-      </div>
+      <ChartContainer config={{}} className="h-[360px] w-full">
+        <ScatterChart margin={{ top: 16, right: 16, bottom: 24, left: 8 }}>
+          <CartesianGrid strokeOpacity={0.15} />
+          <XAxis
+            type="number"
+            dataKey="enlist"
+            domain={[0, 100]}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(v) => `${v}%`}
+            tick={{ fontSize: 11 }}
+            label={{
+              value: "שיעור גיוס",
+              position: "insideBottom",
+              offset: -12,
+              fontSize: 12,
+              fill: "var(--color-muted-foreground)",
+            }}
+          />
+          <YAxis
+            type="number"
+            dataKey="combat"
+            domain={[0, 100]}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(v) => `${v}%`}
+            tick={{ fontSize: 11 }}
+            width={40}
+            label={{
+              value: "שיעור קרבי",
+              angle: -90,
+              position: "insideLeft",
+              fontSize: 12,
+              fill: "var(--color-muted-foreground)",
+            }}
+          />
+          <ZAxis type="number" dataKey="fighters" range={[120, 1400]} />
+          <Tooltip
+            cursor={{ strokeDasharray: "3 3", strokeOpacity: 0.3 }}
+            content={<ScatterTip />}
+          />
+          <Scatter data={data} fillOpacity={0.7}>
+            {data.map((d) => (
+              <Cell key={d.sector} fill={d.color} />
+            ))}
+            <LabelList
+              dataKey="sector"
+              position="top"
+              style={{ fontSize: 11, fill: "var(--color-foreground)" }}
+            />
+          </Scatter>
+        </ScatterChart>
+      </ChartContainer>
 
-      <div className="space-y-5">
-        {METRICS.map((m) => (
-          <div key={m.key}>
-            <p className="mb-1.5 text-sm font-medium text-muted-foreground">
-              {m.label}
-            </p>
-            <div className="flex items-center gap-3">
-              <Bar value={a[m.key]} color={cA} />
-              <span className="w-14 shrink-0 text-sm font-semibold tabular-nums" style={{ color: cA }}>
-                {a[m.key] ?? "—"}%
-              </span>
-            </div>
-            <div className="mt-1.5 flex items-center gap-3">
-              <Bar value={b[m.key]} color={cB} />
-              <span className="w-14 shrink-0 text-sm font-semibold tabular-nums" style={{ color: cB }}>
-                {b[m.key] ?? "—"}%
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {gender === "בנים" && (
-        <p className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm leading-6 text-muted-foreground">
-          הפרש דתי לאומי פחות חילוני: גיוס
-          <span className="font-semibold text-foreground">
-            {" "}
-            {Math.round((a.enlist ?? 0) - (b.enlist ?? 0))} נק׳
-          </span>{" "}
-          · קרבי
-          <span className="font-semibold text-emerald-400">
-            {" "}
-            {Math.round((a.combat ?? 0) - (b.combat ?? 0))} נק׳
-          </span>
-        </p>
-      )}
+      <p className="pt-2 text-xs leading-5 text-muted-foreground">
+        מגזר יכול להציג שיעור קרבי גבוה אך לתרום מעט לוחמים בפועל (בועה קטנה),
+        ולהפך — שיעור בינוני עם תרומה גדולה (בועה גדולה).
+      </p>
     </Panel>
   );
 }
