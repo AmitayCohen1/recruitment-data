@@ -3,63 +3,53 @@
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
-import {
-  R_METRICS,
-  R_SECTORS,
-  REGION_COLOR,
-  regionView,
-  type RGender,
-  type RMetric,
-} from "@/lib/regions";
+import { R_SECTORS, REGION_COLOR, regionView } from "@/lib/regions";
+import { S_METRICS, type SGender, type SMetric } from "@/lib/sectors";
+import { GenderToggle, MetricTabsS } from "./controls";
 
-const pill =
-  "inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1";
-const btn = (active: boolean) =>
-  cn(
-    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-    active
-      ? "bg-white/10 text-foreground shadow-sm"
-      : "text-muted-foreground hover:text-foreground",
-  );
-
-export function RegionView() {
+export function RegionView({
+  metric: metricProp,
+  gender: genderProp,
+}: { metric?: SMetric; gender?: SGender } = {}) {
+  const controlled = metricProp !== undefined && genderProp !== undefined;
+  const [metricState, setMetric] = React.useState<SMetric>("enlist");
+  const [genderState, setGender] = React.useState<SGender>("בנים");
+  const metric = metricProp ?? metricState;
+  const gender = genderProp ?? genderState;
   const [sector, setSector] = React.useState<string>("הכל");
-  const [gender, setGender] = React.useState<RGender>("בנים");
-  const [metric, setMetric] = React.useState<RMetric>("combat");
-  const def = R_METRICS.find((m) => m.key === metric)!;
+
   const rows = regionView(sector, gender, metric);
   const max = Math.max(...rows.map((r) => r.value), 1);
+  const label = S_METRICS.find((m) => m.key === metric)?.label ?? "";
 
   return (
     <Panel>
       <PanelHeader
         title="דירוג אזורים לפי מדד"
-        subtitle="השוואה בין אזורים גאוגרפיים לפי מדדי גיוס, שירות קרבי וקצונה."
+        subtitle={`השוואה בין אזורים גאוגרפיים · ${label}`}
       >
-        <div className="flex flex-wrap gap-2">
-          {/* gender */}
-          <div className={pill}>
-            {(["בנים", "בנות"] as RGender[]).map((g) => (
-              <button key={g} type="button" className={btn(gender === g)} onClick={() => setGender(g)}>
-                {g === "בנים" ? "👨" : "👩"} {g}
-              </button>
-            ))}
+        {!controlled && (
+          <div className="flex flex-wrap gap-2">
+            <GenderToggle value={gender} onChange={setGender} />
+            <MetricTabsS value={metric} onChange={setMetric} />
           </div>
-          {/* metric */}
-          <div className={pill}>
-            {R_METRICS.map((m) => (
-              <button key={m.key} type="button" className={btn(metric === m.key)} onClick={() => setMetric(m.key)}>
-                {m.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
       </PanelHeader>
 
-      {/* sector filter */}
+      {/* which sector's regions — this chart's own axis selector */}
       <div className="mb-4 inline-flex flex-wrap gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
         {R_SECTORS.map((s) => (
-          <button key={s} type="button" className={btn(sector === s)} onClick={() => setSector(s)}>
+          <button
+            key={s}
+            type="button"
+            onClick={() => setSector(s)}
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              sector === s
+                ? "bg-white/10 text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
             {s}
           </button>
         ))}
@@ -78,22 +68,23 @@ export function RegionView() {
                 <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">
                   {i + 1}
                 </span>
-                <span className="w-24 shrink-0 truncate text-sm sm:w-32" style={{ color }}>
+                <span
+                  className="w-24 shrink-0 truncate text-sm sm:w-32"
+                  style={{ color }}
+                >
                   {r.region}
                 </span>
                 <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
                   <div
                     className="absolute inset-y-0 right-0 rounded-lg"
-                    style={{ width: `${(r.value / max) * 100}%`, background: color }}
+                    style={{
+                      width: `${(r.value / max) * 100}%`,
+                      background: color,
+                    }}
                   />
                 </div>
-                {def.util && (
-                  <span className="hidden w-24 shrink-0 text-left text-xs tabular-nums text-muted-foreground sm:block">
-                    {r.enlist}% × {r.rate}%
-                  </span>
-                )}
                 <span className="w-12 shrink-0 text-left text-base font-bold tabular-nums">
-                  {def.util ? r.value : `${r.value}%`}
+                  {r.value}%
                 </span>
               </li>
             );
@@ -101,9 +92,7 @@ export function RegionView() {
         </ul>
       )}
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        {def.util
-          ? "קרבי וקצונה מחושבים מתוך 100 בני נוער במחזור, כדי להשוות בין אזורים על בסיס דומה."
-          : "רוחב העמודה יחסי לערך הגבוה ביותר בתצוגה הנוכחית."}
+        רוחב העמודה יחסי לערך הגבוה ביותר בתצוגה הנוכחית.
       </p>
     </Panel>
   );

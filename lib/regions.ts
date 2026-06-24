@@ -1,13 +1,11 @@
 import data from "@/app/data/regions.json";
-
-export type RGender = "בנים" | "בנות";
-export type RMetric = "enlist" | "combat" | "officer";
+import type { SGender, SMetric } from "@/lib/sectors";
 
 export type RRow = {
   year: number;
   region: string;
   sector: string;
-  gender: RGender;
+  gender: SGender;
   n: number;
   enlist: number | null;
   combat: number | null;
@@ -29,36 +27,14 @@ export const REGION_COLOR: Record<string, string> = {
   ירושלים: "#f472b6", // pink
 };
 
-export const R_METRICS: {
-  key: RMetric;
-  /** how to compute the displayed value */
-  util: boolean;
-  label: string;
-}[] = [
-  { key: "enlist", util: false, label: "🪖 שיעור גיוס" },
-  {
-    key: "combat",
-    util: true,
-    label: "⚔️ לוחמים ל־100 בני נוער",
-  },
-  {
-    key: "officer",
-    util: true,
-    label: "🎖️ קצינים ל־100 בני נוער",
-  },
-];
-
-const r1 = (n: number) => Math.round(n * 10) / 10;
-
-/** Region ranking for a sector + gender + metric.
- *  For combat/officer the value is per 100 youth (enlist × rate / 100). */
+/** Region ranking for a sector + gender by the chosen rate metric (raw %),
+ *  using the same metric vocabulary as the rest of the dashboard. */
 export function regionView(
   sector: string,
-  gender: RGender,
-  metric: RMetric,
+  gender: SGender,
+  metric: SMetric,
   year = RLATEST,
 ) {
-  const def = R_METRICS.find((m) => m.key === metric)!;
   return REGIONS.flatMap((region) => {
     const row = RROWS.find(
       (x) =>
@@ -67,11 +43,8 @@ export function regionView(
         x.sector === sector &&
         x.gender === gender,
     );
-    if (!row || row.enlist === null) return [];
-    const e = row.enlist;
-    const rate = row[metric];
-    if (rate === null && metric !== "enlist") return [];
-    const value = def.util ? r1((e * (rate ?? 0)) / 100) : e;
-    return [{ region, value, enlist: e, rate: rate ?? 0, n: row.n }];
+    const value = row ? row[metric] : null;
+    if (!row || value === null) return [];
+    return [{ region, value, n: row.n }];
   }).sort((a, b) => b.value - a.value);
 }

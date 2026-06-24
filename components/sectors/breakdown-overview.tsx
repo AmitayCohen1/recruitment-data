@@ -1,15 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { SectorDonuts } from "./sector-donuts";
-import { SectorTrend } from "./sector-trend";
+import { Subgroups } from "./subgroups";
+import { RegionView } from "./region-view";
+import { Leaderboards } from "./leaderboards";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { FilterBar, FilterField } from "./filter-bar";
 import type { SGender, SMetric } from "@/lib/sectors";
 
-/** Sector overview: a top toolbar of controls drives both the per-sector
- *  snapshot (donuts) and the 2018→2024 trend line — filter once. */
-export function SectorOverview() {
+/** Breakdowns & regions: one shared gender+metric filter drives the subgroup,
+ *  region, and school-extremes views. Each view keeps only its own axis
+ *  selector (e.g. which sector to drill into) where it genuinely needs one. */
+export function BreakdownOverview() {
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const [gender, setGender] = React.useState<SGender>("בנים");
 
@@ -23,8 +25,9 @@ export function SectorOverview() {
           <MetricTabsS value={metric} onChange={setMetric} />
         </FilterField>
       </FilterBar>
-      <SectorDonuts metric={metric} gender={gender} />
-      <SectorTrend metric={metric} gender={gender} />
+      <Subgroups metric={metric} gender={gender} />
+      <RegionView metric={metric} gender={gender} />
+      <Leaderboards metric={metric} gender={gender} />
     </>
   );
 }

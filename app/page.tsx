@@ -2,11 +2,9 @@ import Image from "next/image";
 import cover from "@/public/cover.png";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorOverview } from "@/components/sectors/sector-overview";
-import { Subgroups } from "@/components/sectors/subgroups";
 import { GenderGap } from "@/components/sectors/gender-gap";
 import { GapsOverview } from "@/components/sectors/gaps-overview";
-import { RegionView } from "@/components/sectors/region-view";
-import { Leaderboards } from "@/components/sectors/leaderboards";
+import { BreakdownOverview } from "@/components/sectors/breakdown-overview";
 import { FullData } from "@/components/sectors/full-data";
 import { Explorer } from "@/components/dashboard/explorer";
 import { Notes } from "@/components/dashboard/notes";
@@ -69,13 +67,7 @@ export default function Home() {
           {
             id: "breakdown",
             label: "פילוחים ואזורים",
-            content: (
-              <>
-                <Subgroups />
-                <RegionView />
-                <Leaderboards />
-              </>
-            ),
+            content: <BreakdownOverview />,
           },
           {
             id: "schools",

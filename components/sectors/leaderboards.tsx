@@ -54,9 +54,15 @@ function List({
   );
 }
 
-export function Leaderboards() {
-  const [metric, setMetric] = React.useState<SMetric>("combat");
-  const [gender, setGender] = React.useState<SGender>("בנים");
+export function Leaderboards({
+  metric: metricProp,
+  gender: genderProp,
+}: { metric?: SMetric; gender?: SGender } = {}) {
+  const controlled = metricProp !== undefined && genderProp !== undefined;
+  const [metricState, setMetric] = React.useState<SMetric>("combat");
+  const [genderState, setGender] = React.useState<SGender>("בנים");
+  const metric = metricProp ?? metricState;
+  const gender = genderProp ?? genderState;
   const g = toG(gender);
 
   return (
@@ -65,10 +71,12 @@ export function Leaderboards() {
         title="בתי ספר בקצוות המדד"
         subtitle="עשרת בתי הספר עם הערכים הגבוהים והנמוכים ביותר במדד שנבחר."
       >
-        <div className="flex flex-wrap gap-2">
-          <GenderToggle value={gender} onChange={setGender} />
-          <MetricTabsS value={metric} onChange={setMetric} />
-        </div>
+        {!controlled && (
+          <div className="flex flex-wrap gap-2">
+            <GenderToggle value={gender} onChange={setGender} />
+            <MetricTabsS value={metric} onChange={setMetric} />
+          </div>
+        )}
       </PanelHeader>
       <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
         <List metric={metric} gender={g} dir="top" title="עשרת הערכים הגבוהים ביותר" />

@@ -12,10 +12,16 @@ import {
 } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 
-export function Subgroups() {
+export function Subgroups({
+  metric: metricProp,
+  gender: genderProp,
+}: { metric?: SMetric; gender?: SGender } = {}) {
+  const controlled = metricProp !== undefined && genderProp !== undefined;
+  const [metricState, setMetric] = React.useState<SMetric>("enlist");
+  const [genderState, setGender] = React.useState<SGender>("בנים");
+  const metric = metricProp ?? metricState;
+  const gender = genderProp ?? genderState;
   const [sector, setSector] = React.useState<string>("חרדי");
-  const [gender, setGender] = React.useState<SGender>("בנים");
-  const [metric, setMetric] = React.useState<SMetric>("enlist");
   const color = SECTOR_COLOR[sector];
   const rows = subgroups(sector, gender, metric);
   const max = Math.max(...rows.map((r) => (r[metric] as number) ?? 0), 1);
@@ -26,10 +32,12 @@ export function Subgroups() {
         title="תת-קבוצות בתוך כל מגזר"
         subtitle="השוואה בין תתי-הקבוצות בתוך כל מגזר לפי מדדי הגיוס המרכזיים."
       >
-        <div className="flex flex-wrap gap-2">
-          <GenderToggle value={gender} onChange={setGender} />
-          <MetricTabsS value={metric} onChange={setMetric} />
-        </div>
+        {!controlled && (
+          <div className="flex flex-wrap gap-2">
+            <GenderToggle value={gender} onChange={setGender} />
+            <MetricTabsS value={metric} onChange={setMetric} />
+          </div>
+        )}
       </PanelHeader>
 
       <div className="mb-4 inline-flex flex-wrap gap-1 rounded-xl border border-white/10 bg-white/3 p-1">
