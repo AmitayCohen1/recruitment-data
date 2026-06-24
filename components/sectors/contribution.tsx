@@ -7,7 +7,6 @@ import {
   contribution,
   ABS_METRICS,
   SECTOR_COLOR,
-  SLATEST,
   type AbsMetric,
   type SGender,
 } from "@/lib/sectors";
@@ -17,15 +16,13 @@ export function Contribution() {
   const [metric, setMetric] = React.useState<AbsMetric>("nFighters");
   const [gender, setGender] = React.useState<SGender>("בנים");
   const rows = contribution(metric, gender);
-  const def = ABS_METRICS.find((m) => m.key === metric)!;
   const max = Math.max(...rows.map((r) => r.value), 1);
-  const noun = def.label.replace(/^\S+\s/, ""); // strip emoji
 
   return (
     <Panel>
       <PanelHeader
         title="תרומה בפועל במספרים מוחלטים"
-        subtitle={`כמה ${noun} מגיעים מכל מגזר ומה חלקם מכלל הסך הארצי · ${gender} · ${SLATEST}`}
+        subtitle="כמה מתגייסים, לוחמים וקצינים מגיעים מכל מגזר ומה חלקם מכלל הסך הארצי."
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
