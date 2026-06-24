@@ -41,14 +41,14 @@ export const SECTOR_COLOR: Record<string, string> = {
   חילוני: "#38bdf8", // sky
   "דתי לאומי": "#34d399", // emerald
   חרדי: "#fbbf24", // amber
-  דרוזי: "#c084fc", // purple
+  "דרוזי וערבי": "#c084fc", // purple
 };
 
 export const SECTOR_EN: Record<string, string> = {
   חילוני: "Secular",
   "דתי לאומי": "Religious-Zionist",
   חרדי: "Haredi",
-  דרוזי: "Druze",
+  "דרוזי וערבי": "Druze & Arab",
 };
 
 const row = (year: number, sector: string, gender: SGender) =>
