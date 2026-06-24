@@ -23,8 +23,8 @@ export function SectorChange() {
   return (
     <Panel>
       <PanelHeader
-        title="שינוי לפי מגזר"
-        subtitle={`כמה עלה או ירד כל מגזר · ${label} · ${gender} · ${SFIRST}–${SLATEST}`}
+        title="מה השתנה מאז 2018"
+        subtitle={`השינוי בכל מגזר בין ${SFIRST} ל־${SLATEST} · ${label} · ${gender}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -97,7 +97,8 @@ export function SectorChange() {
         })}
       </div>
       <p className="pt-5 text-xs text-muted-foreground">
-        עיגול חלול = {SFIRST}. עיגול מלא = {SLATEST}.
+        עיגול חלול מסמן את {SFIRST}; עיגול מלא מסמן את {SLATEST}. המספר ליד
+        כל מגזר הוא שינוי בנקודות אחוז.
       </p>
     </Panel>
   );

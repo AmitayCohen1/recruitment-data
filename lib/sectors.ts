@@ -34,12 +34,12 @@ export const S_METRICS: { key: SMetric; label: string; short: string }[] = [
   { key: "enlist", label: "שיעור גיוס", short: "🪖 גיוס" },
   {
     key: "combat",
-    label: "קרביים מתוך מתגייסים",
+    label: "שירות קרבי מתוך מתגייסים",
     short: "⚔️ קרבי",
   },
   {
     key: "officer",
-    label: "קצינים מתוך מתגייסים",
+    label: "קצונה מתוך מתגייסים",
     short: "🎖️ קצונה",
   },
 ];
@@ -62,20 +62,6 @@ const row = (year: number, sector: string, gender: SGender) =>
   ROWS_S.find(
     (r) => r.year === year && r.sector === sector && r.gender === gender,
   );
-
-/** Sector × gender rows for one year, sorted by a metric (desc). */
-export function ranking(metric: SMetric, year = SLATEST) {
-  const out: { sector: string; gender: SGender; value: number; n: number }[] =
-    [];
-  for (const s of SECTORS) {
-    for (const g of ["בנים", "בנות"] as SGender[]) {
-      const r = row(year, s, g);
-      if (r && r[metric] !== null)
-        out.push({ sector: s, gender: g, value: r[metric] as number, n: r.n });
-    }
-  }
-  return out.sort((a, b) => b.value - a.value);
-}
 
 /** 2018 → 2024 change per sector × gender for one metric. */
 export function change(metric: SMetric, gender: SGender) {

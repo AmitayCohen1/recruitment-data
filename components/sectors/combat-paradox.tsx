@@ -14,8 +14,8 @@ const A = "דתי לאומי";
 const B = "חילוני";
 const METRICS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
   { key: "enlist", label: "🪖 שיעור גיוס" },
-  { key: "combat", label: "⚔️ קרביים מתוך המתגייסים" },
-  { key: "officer", label: "🎖️ קצינים מתוך המתגייסים" },
+  { key: "combat", label: "⚔️ שירות קרבי מתוך המתגייסים" },
+  { key: "officer", label: "🎖️ קצונה מתוך המתגייסים" },
 ];
 
 function Bar({ value, color }: { value: number | null; color: string }) {
@@ -39,8 +39,8 @@ export function CombatParadox() {
   return (
     <Panel>
       <PanelHeader
-        title="דתי לאומי וחילוני"
-        subtitle={`שני מגזרים עם גיוס דומה — תמונה שונה בלחימה ובקצונה · ${gender} · ${SLATEST}`}
+        title="גיוס דומה, שירות שונה"
+        subtitle={`השוואה בין דתי לאומי לחילוני: שיעור גיוס דומה, אך פערים בלחימה ובקצונה · ${gender} · ${SLATEST}`}
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>

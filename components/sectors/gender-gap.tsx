@@ -20,8 +20,8 @@ export function GenderGap() {
   return (
     <Panel>
       <PanelHeader
-        title="הפער בין בנים לבנות"
-        subtitle={`כמה גבוה כל מדד אצל בנים בהשוואה לבנות · ${label} · ${SLATEST}`}
+        title="פערי מגדר לפי מגזר"
+        subtitle={`הפרש נקודות האחוז בין בנים לבנות בכל מגזר · ${label} · ${SLATEST}`}
       >
         <MetricTabsS value={metric} onChange={setMetric} />
       </PanelHeader>
@@ -53,7 +53,7 @@ export function GenderGap() {
         })}
       </ul>
       <p className="pt-4 text-xs text-muted-foreground">
-        ערך חיובי = גבוה יותר אצל בנים.
+        ערך חיובי מציין שהמדד גבוה יותר אצל בנים; ערך שלילי מציין יתרון לבנות.
       </p>
     </Panel>
   );

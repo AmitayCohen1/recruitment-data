@@ -17,8 +17,8 @@ export function SectorFunnel() {
   return (
     <Panel>
       <PanelHeader
-        title="גיוס, קרבי וקצונה"
-        subtitle={`מתוך כל 100 בני נוער — מתגייסים → לוחמים → קצינים · ${gender} · ${SLATEST}`}
+        title="מסלול הגיוס בכל מגזר"
+        subtitle={`כמה מתוך 100 בני נוער עוברים מגיוס ללחימה ולקצונה · ${gender} · ${SLATEST}`}
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>
@@ -62,7 +62,7 @@ export function SectorFunnel() {
         })}
       </div>
       <p className="pt-4 text-xs text-muted-foreground">
-        כל הערכים מוצגים ביחס ל־100 בני נוער.
+        כל שלב מוצג ביחס ל־100 בני נוער במחזור, לא רק ביחס למתגייסים.
       </p>
     </Panel>
   );

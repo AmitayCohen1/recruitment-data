@@ -63,8 +63,8 @@ export function Leaderboards() {
   return (
     <Panel>
       <PanelHeader
-        title="בתי ספר"
-        subtitle={`בתי הספר הבולטים בכל מגזר · ${label} · ${gender} · ${LATEST}`}
+        title="בתי ספר בקצוות המדד"
+        subtitle={`עשרת בתי הספר עם הערכים הגבוהים והנמוכים ביותר · ${label} · ${gender} · ${LATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -72,11 +72,11 @@ export function Leaderboards() {
         </div>
       </PanelHeader>
       <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
-        <List metric={metric} gender={g} dir="top" title="הערכים הגבוהים ביותר" />
-        <List metric={metric} gender={g} dir="bottom" title="הערכים הנמוכים ביותר" />
+        <List metric={metric} gender={g} dir="top" title="עשרת הערכים הגבוהים ביותר" />
+        <List metric={metric} gender={g} dir="bottom" title="עשרת הערכים הנמוכים ביותר" />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-        <span>הנקודה הצבעונית = מגזר:</span>
+        <span>הנקודה הצבעונית מציינת את המגזר:</span>
         {Object.entries(SECTOR_COLOR).map(([s, c]) => (
           <span key={s} className="flex items-center gap-1">
             <span className="size-2 rounded-full" style={{ background: c }} />

@@ -17,8 +17,8 @@ type SortKey = "e" | "cb" | "o" | "m" | "s";
 const COLUMNS: { key: SortKey; label: string; metric: boolean }[] = [
   { key: "s", label: "בית ספר", metric: false },
   { key: "e", label: "🪖 שיעור גיוס", metric: true },
-  { key: "cb", label: "⚔️ קרבי", metric: true },
-  { key: "o", label: "🎖️ קצונה", metric: true },
+  { key: "cb", label: "⚔️ שירות קרבי מתוך מתגייסים", metric: true },
+  { key: "o", label: "🎖️ קצונה מתוך מתגייסים", metric: true },
   { key: "m", label: "שירות משמעותי", metric: true },
 ];
 
@@ -87,8 +87,8 @@ export function Explorer({
   return (
     <Panel>
       <PanelHeader
-        title="טבלת בתי ספר"
-        subtitle={`${filtered.length.toLocaleString("he")} תוצאות · ${year}`}
+        title="טבלת השוואה לפי בית ספר"
+        subtitle={`${filtered.length.toLocaleString("he")} תוצאות אחרי סינון · ${year}`}
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -97,7 +97,7 @@ export function Explorer({
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="חיפוש בית ספר או מועצה…"
+            placeholder="חיפוש לפי שם בית ספר או רשות…"
             className={cn(inputCls, "w-full pr-9")}
           />
         </div>
@@ -114,7 +114,7 @@ export function Explorer({
           ))}
         </select>
 
-        <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
+        <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/3 p-1">
           {(["all", "m", "f"] as const).map((g) => (
             <button
               key={g}
@@ -141,10 +141,10 @@ export function Explorer({
               "h-9 rounded-lg border px-3 text-sm font-medium transition-colors",
               showZero
                 ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
-                : "border-white/10 bg-white/[0.03] text-muted-foreground hover:text-foreground",
+                : "border-white/10 bg-white/3 text-muted-foreground hover:text-foreground",
             )}
           >
-            {showZero ? "☑" : "☐"} כולל בתי ספר ללא מתגייסים
+            {showZero ? "☑" : "☐"} הצגת בתי ספר ללא מתגייסים
           </button>
         )}
       </div>
@@ -152,7 +152,7 @@ export function Explorer({
       <div className="overflow-x-auto rounded-xl border border-white/10">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10 bg-white/[0.03] text-muted-foreground">
+            <tr className="border-b border-white/10 bg-white/3 text-muted-foreground">
               {COLUMNS.map((c) => (
                 <th
                   key={c.key}
@@ -187,7 +187,7 @@ export function Explorer({
             {filtered.slice(0, LIMIT).map((r) => (
               <tr
                 key={`${r.k}-${r.g}`}
-                className="border-b border-white/5 last:border-0 hover:bg-white/[0.03]"
+                className="border-b border-white/5 last:border-0 hover:bg-white/3"
               >
                 <td className="px-3 py-2.5 text-right">
                   <div className="font-medium text-foreground">{r.s}</div>
@@ -219,8 +219,8 @@ export function Explorer({
       </div>
       {filtered.length > LIMIT && (
         <p className="pt-3 text-center text-xs text-muted-foreground">
-          מוצגים {LIMIT} מתוך {filtered.length.toLocaleString("he")} — צמצמו עם
-          חיפוש או סינון
+          מוצגים {LIMIT} מתוך {filtered.length.toLocaleString("he")} תוצאות.
+          צמצמו באמצעות חיפוש, שנה או מגדר.
         </p>
       )}
     </Panel>

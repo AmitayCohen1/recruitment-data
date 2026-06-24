@@ -39,12 +39,12 @@ export const R_METRICS: {
   {
     key: "combat",
     util: true,
-    label: "⚔️ קרביים ל־100",
+    label: "⚔️ לוחמים ל־100 בני נוער",
   },
   {
     key: "officer",
     util: true,
-    label: "🎖️ קצינים ל־100",
+    label: "🎖️ קצינים ל־100 בני נוער",
   },
 ];
 

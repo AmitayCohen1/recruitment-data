@@ -26,8 +26,8 @@ export function Subgroups() {
   return (
     <Panel>
       <PanelHeader
-        title="תת-קבוצות"
-        subtitle={`איך כל מגזר מתפלג לתת-קבוצות · ${label} · ${sector} · ${gender} · ${SLATEST}`}
+        title="תת-קבוצות בתוך כל מגזר"
+        subtitle={`השוואה בין תתי-הקבוצות של ${sector} לפי ${label} · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -85,7 +85,9 @@ export function Subgroups() {
           })}
         </ul>
       )}
-      <p className="pt-4 text-xs text-muted-foreground">רוחב העמודה יחסי לערך הגבוה בתצוגה.</p>
+      <p className="pt-4 text-xs text-muted-foreground">
+        רוחב העמודה יחסי לערך הגבוה ביותר בתת-הקבוצות שמוצגות כעת.
+      </p>
     </Panel>
   );
 }

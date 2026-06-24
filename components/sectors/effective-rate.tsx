@@ -12,13 +12,13 @@ export function EffectiveRate() {
   const [gender, setGender] = React.useState<SGender>("בנים");
   const rows = effective(metric, gender);
   const max = Math.max(...rows.map((r) => r.value), 1);
-  const noun = metric === "combat" ? "קרביים" : "קצינים";
+  const destination = metric === "combat" ? "לשירות קרבי" : "לקצונה";
 
   return (
     <Panel>
       <PanelHeader
-        title="מתוך 100 בני נוער"
-        subtitle={`מתוך כל 100 בני נוער — ${noun} · ${gender} · ${SLATEST}`}
+        title="לוחמים וקצינים מתוך 100 בני נוער"
+        subtitle={`כמה מכל 100 בני נוער מגיעים בפועל ${destination} בכל מגזר · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -79,7 +79,7 @@ export function EffectiveRate() {
         })}
       </ul>
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        חישוב: שיעור גיוס × שיעור תפקיד מתוך המתגייסים.
+        חישוב המדד: שיעור גיוס מתוך המחזור × שיעור התפקיד מתוך המתגייסים.
       </p>
     </Panel>
   );

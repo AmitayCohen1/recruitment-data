@@ -34,8 +34,8 @@ export function RegionView() {
   return (
     <Panel>
       <PanelHeader
-        title="אזורים"
-        subtitle={`השוואה בין אזורים שונים · ${def.label} · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`}
+        title="דירוג אזורים לפי מדד"
+        subtitle={`השוואה בין אזורים גאוגרפיים לפי ${def.label} · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           {/* gender */}
@@ -103,8 +103,8 @@ export function RegionView() {
       )}
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
         {def.util
-          ? "קרבי וקצונה מוצגים ל־100 בני נוער."
-          : "רוחב העמודה יחסי לערך הגבוה בתצוגה."}
+          ? "קרבי וקצונה מחושבים מתוך 100 בני נוער במחזור, כדי להשוות בין אזורים על בסיס דומה."
+          : "רוחב העמודה יחסי לערך הגבוה ביותר בתצוגה הנוכחית."}
       </p>
     </Panel>
   );

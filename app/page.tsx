@@ -1,7 +1,7 @@
 import Image from "next/image";
 import cover from "@/public/cover.png";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
-import { SectorRanking } from "@/components/sectors/sector-ranking";
+import { SectorDonuts } from "@/components/sectors/sector-donuts";
 import { SectorChange } from "@/components/sectors/sector-change";
 import { Subgroups } from "@/components/sectors/subgroups";
 import { CombatParadox } from "@/components/sectors/combat-paradox";
@@ -34,13 +34,14 @@ export default function Home() {
           sizes="(max-width: 1024px) 100vw, 1024px"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-black/10" />
         <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
           <h1 className="max-w-3xl text-2xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
-            נתוני גיוס לפי בתי ספר ומגזרים
+            מפת גיוס לפי בתי ספר, מגזרים ואזורים
           </h1>
           <p className="mt-2.5 max-w-2xl text-sm leading-6 text-white/80 drop-shadow-md sm:text-base sm:leading-7">
-            ניתוח של {TOTAL_SCHOOLS.toLocaleString("he")} בתי ספר לפי מגזר, מגדר
+            השוואה אינטראקטיבית של {TOTAL_SCHOOLS.toLocaleString("he")} בתי
+            ספר: שיעורי גיוס, שירות קרבי, קצונה ושירות משמעותי לפי מגזר, מגדר
             ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.
           </p>
         </div>
@@ -51,17 +52,18 @@ export default function Home() {
         tabs={[
           {
             id: "sectors",
-            label: "מגזרים",
+            label: "מפת מגזרים",
             content: (
               <>
                 <SectorHeatmap />
-                <SectorRanking />
+                <SectorDonuts />
+                <SectorChange />
               </>
             ),
           },
           {
             id: "gaps",
-            label: "השוואות",
+            label: "פערים והשוואות",
             content: (
               <>
                 <Contribution />
@@ -73,35 +75,27 @@ export default function Home() {
             ),
           },
           {
-            id: "regions",
-            label: "אזורים",
-            content: <RegionView />,
-          },
-          {
-            id: "trends",
-            label: "מגמות",
-            content: <SectorChange />,
-          },
-          {
             id: "breakdown",
-            label: "פילוח",
+            label: "פילוחים ואזורים",
             content: (
               <>
                 <Subgroups />
+                <RegionView />
                 <Leaderboards />
               </>
             ),
           },
           {
             id: "schools",
-            label: "בתי ספר",
+            label: "חיפוש בתי ספר",
             content: (
               <div>
                 <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
-                  בתי ספר
+                  חיפוש והשוואת בתי ספר
                 </h2>
                 <p className="mb-5 text-sm text-muted-foreground">
-                  חיפוש לפי בית ספר או רשות.
+                  מצאו בית ספר או רשות והשוו שיעורי גיוס, קרבי, קצונה ושירות
+                  משמעותי לפי שנה ומגדר.
                 </p>
                 <Explorer rows={rows} zeroRows={zeros} />
               </div>
@@ -109,7 +103,7 @@ export default function Home() {
           },
           {
             id: "downloads",
-            label: "מקורות",
+            label: "מקורות נתונים",
             content: <FullData />,
           },
         ]}

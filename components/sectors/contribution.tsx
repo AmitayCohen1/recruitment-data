@@ -24,8 +24,8 @@ export function Contribution() {
   return (
     <Panel>
       <PanelHeader
-        title="כמה באמת — מספרים מוחלטים"
-        subtitle={`כמה ${noun} כל מגזר מספק בפועל, וחלקו מהסך הכל · ${gender} · ${SLATEST}`}
+        title="תרומה בפועל במספרים מוחלטים"
+        subtitle={`כמה ${noun} מגיעים מכל מגזר ומה חלקם מכלל הסך הארצי · ${gender} · ${SLATEST}`}
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />
@@ -88,9 +88,9 @@ export function Contribution() {
         })}
       </ul>
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        שיעור גבוה אינו אומר תרומה מוחלטת גבוהה — מגזר גדול עם שיעור בינוני עשוי
-        לספק יותר לוחמים ממגזר קטן עם שיעור גבוה. מספרים מוחלטים מוערכים (מחזור ×
-        שיעור).
+        שיעור גבוה אינו בהכרח תרומה מוחלטת גבוהה: מגזר גדול עם שיעור בינוני עשוי
+        לספק יותר לוחמים ממגזר קטן עם שיעור גבוה. המספרים המוחלטים מוערכים לפי
+        גודל המחזור ושיעור המדד.
       </p>
     </Panel>
   );

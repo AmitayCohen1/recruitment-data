@@ -5,8 +5,8 @@ import { matrix, SECTOR_COLOR, SLATEST } from "@/lib/sectors";
 
 const COLS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
   { key: "enlist", label: "🪖 שיעור גיוס" },
-  { key: "combat", label: "⚔️ קרביים מתוך המתגייסים" },
-  { key: "officer", label: "🎖️ קצינים מתוך המתגייסים" },
+  { key: "combat", label: "⚔️ שירות קרבי מתוך המתגייסים" },
+  { key: "officer", label: "🎖️ קצונה מתוך המתגייסים" },
 ];
 
 function heat(t: number) {
@@ -27,8 +27,8 @@ export function SectorHeatmap() {
   return (
     <Panel>
       <PanelHeader
-        title="השוואת מדדים"
-        subtitle={`כל המגזרים וכל המדדים יחד · ${SLATEST} · צבע כהה יותר = ערך גבוה יותר`}
+        title="מפת מדדים לפי מגזר ומגדר"
+        subtitle={`שיעור גיוס, שירות קרבי וקצונה לכל מגזר ולכל מגדר · ${SLATEST} · צבע כהה יותר = ערך גבוה יותר`}
       />
       <div className="grid gap-3 md:hidden">
         {rows.map((r) => (
@@ -107,7 +107,7 @@ export function SectorHeatmap() {
         </table>
       </div>
       <p className="pt-3 text-xs text-muted-foreground">
-        הצבע מחושב בנפרד לכל עמודה.
+        הצבע מחושב בנפרד לכל מדד, כדי להבליט מי גבוה או נמוך בתוך אותה עמודה.
       </p>
     </Panel>
   );
