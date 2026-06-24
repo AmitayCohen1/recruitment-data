@@ -1,7 +1,7 @@
 "use client";
 
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { matrix, SECTOR_COLOR, SLATEST } from "@/lib/sectors";
+import { matrix, SECTOR_COLOR } from "@/lib/sectors";
 
 const COLS: { key: "enlist" | "combat" | "officer"; label: string }[] = [
   { key: "enlist", label: "🪖 שיעור גיוס" },
@@ -28,7 +28,7 @@ export function SectorHeatmap() {
     <Panel>
       <PanelHeader
         title="מפת מדדים לפי מגזר ומגדר"
-        subtitle={`שיעור גיוס, שירות קרבי וקצונה לכל מגזר ולכל מגדר · ${SLATEST} · צבע כהה יותר = ערך גבוה יותר`}
+        subtitle="שיעור גיוס, שירות קרבי וקצונה לכל מגזר ולכל מגדר. צבע כהה יותר מציין ערך גבוה יותר."
       />
       <div className="grid gap-3 md:hidden">
         {rows.map((r) => (

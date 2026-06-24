@@ -7,7 +7,6 @@ import {
   R_METRICS,
   R_SECTORS,
   REGION_COLOR,
-  RLATEST,
   regionView,
   type RGender,
   type RMetric,
@@ -35,7 +34,7 @@ export function RegionView() {
     <Panel>
       <PanelHeader
         title="דירוג אזורים לפי מדד"
-        subtitle={`השוואה בין אזורים גאוגרפיים לפי ${def.label} · ${sector === "הכל" ? "כל המגזרים" : sector} · ${gender} · ${RLATEST}`}
+        subtitle="השוואה בין אזורים גאוגרפיים לפי מדדי גיוס, שירות קרבי וקצונה."
       >
         <div className="flex flex-wrap gap-2">
           {/* gender */}

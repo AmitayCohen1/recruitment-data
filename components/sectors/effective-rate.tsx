@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
-import { effective, SECTOR_COLOR, SLATEST, type SGender } from "@/lib/sectors";
+import { effective, SECTOR_COLOR, type SGender } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 
 type EffMetric = "combat" | "officer";
@@ -12,13 +12,12 @@ export function EffectiveRate() {
   const [gender, setGender] = React.useState<SGender>("בנים");
   const rows = effective(metric, gender);
   const max = Math.max(...rows.map((r) => r.value), 1);
-  const destination = metric === "combat" ? "לשירות קרבי" : "לקצונה";
 
   return (
     <Panel>
       <PanelHeader
         title="לוחמים וקצינים מתוך 100 בני נוער"
-        subtitle={`כמה מכל 100 בני נוער מגיעים בפועל ${destination} בכל מגזר · ${gender} · ${SLATEST}`}
+        subtitle="כמה מכל 100 בני נוער מגיעים בפועל לשירות קרבי או לקצונה בכל מגזר."
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

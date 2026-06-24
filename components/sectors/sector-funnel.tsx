@@ -6,7 +6,6 @@ import {
   funnel,
   SECTORS,
   SECTOR_COLOR,
-  SLATEST,
   type SGender,
 } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
@@ -18,7 +17,7 @@ export function SectorFunnel() {
     <Panel>
       <PanelHeader
         title="מסלול הגיוס בכל מגזר"
-        subtitle={`כמה מתוך 100 בני נוער עוברים מגיוס ללחימה ולקצונה · ${gender} · ${SLATEST}`}
+        subtitle="כמה מתוך 100 בני נוער עוברים מגיוס ללחימה ולקצונה בכל מגזר."
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>

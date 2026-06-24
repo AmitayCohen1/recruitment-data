@@ -88,7 +88,7 @@ export function Explorer({
     <Panel>
       <PanelHeader
         title="טבלת השוואה לפי בית ספר"
-        subtitle={`${filtered.length.toLocaleString("he")} תוצאות אחרי סינון · ${year}`}
+        subtitle="חיפוש וסינון בתי ספר לפי שנה, מגדר, רשות ומדדי הגיוס המרכזיים."
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">

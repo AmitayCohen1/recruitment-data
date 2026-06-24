@@ -5,8 +5,6 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import {
   genderGap,
   SECTOR_COLOR,
-  SLATEST,
-  S_METRICS,
   type SMetric,
 } from "@/lib/sectors";
 import { MetricTabsS } from "./controls";
@@ -15,13 +13,12 @@ export function GenderGap() {
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const rows = genderGap(metric);
   const max = Math.max(...rows.map((r) => Math.abs(r.gap)), 1);
-  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
         title="פערי מגדר לפי מגזר"
-        subtitle={`הפרש נקודות האחוז בין בנים לבנות בכל מגזר · ${label} · ${SLATEST}`}
+        subtitle="הפרש נקודות האחוז בין בנים לבנות בכל מגזר."
       >
         <MetricTabsS value={metric} onChange={setMetric} />
       </PanelHeader>

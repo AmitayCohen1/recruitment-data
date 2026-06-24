@@ -5,7 +5,6 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import {
   profile,
   SECTOR_COLOR,
-  SLATEST,
   type SGender,
 } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
@@ -40,7 +39,7 @@ export function CombatParadox() {
     <Panel>
       <PanelHeader
         title="גיוס דומה, שירות שונה"
-        subtitle={`השוואה בין דתי לאומי לחילוני: שיעור גיוס דומה, אך פערים בלחימה ובקצונה · ${gender} · ${SLATEST}`}
+        subtitle="השוואה בין דתי לאומי לחילוני: שיעור גיוס דומה, אך פערים בלחימה ובקצונה."
       >
         <GenderToggle value={gender} onChange={setGender} />
       </PanelHeader>

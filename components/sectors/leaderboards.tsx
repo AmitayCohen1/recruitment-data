@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { topSchools, LATEST, type Gender, type MetricKey } from "@/lib/data";
-import { SCHOOL_SECTOR, SECTOR_COLOR, S_METRICS, type SGender, type SMetric } from "@/lib/sectors";
+import { topSchools, type Gender, type MetricKey } from "@/lib/data";
+import { SCHOOL_SECTOR, SECTOR_COLOR, type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 
 const toG = (g: SGender): Gender => (g === "בנים" ? "m" : "f");
@@ -58,13 +58,12 @@ export function Leaderboards() {
   const [metric, setMetric] = React.useState<SMetric>("combat");
   const [gender, setGender] = React.useState<SGender>("בנים");
   const g = toG(gender);
-  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
         title="בתי ספר בקצוות המדד"
-        subtitle={`עשרת בתי הספר עם הערכים הגבוהים והנמוכים ביותר · ${label} · ${gender} · ${LATEST}`}
+        subtitle="עשרת בתי הספר עם הערכים הגבוהים והנמוכים ביותר במדד שנבחר."
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

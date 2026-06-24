@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 import {
   SECTORS,
   SECTOR_COLOR,
-  SLATEST,
-  S_METRICS,
   subgroups,
   type SGender,
   type SMetric,
@@ -19,7 +17,6 @@ export function Subgroups() {
   const [gender, setGender] = React.useState<SGender>("בנים");
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const color = SECTOR_COLOR[sector];
-  const label = S_METRICS.find((m) => m.key === metric)!.label;
   const rows = subgroups(sector, gender, metric);
   const max = Math.max(...rows.map((r) => (r[metric] as number) ?? 0), 1);
 
@@ -27,7 +24,7 @@ export function Subgroups() {
     <Panel>
       <PanelHeader
         title="תת-קבוצות בתוך כל מגזר"
-        subtitle={`השוואה בין תתי-הקבוצות של ${sector} לפי ${label} · ${gender} · ${SLATEST}`}
+        subtitle="השוואה בין תתי-הקבוצות בתוך כל מגזר לפי מדדי הגיוס המרכזיים."
       >
         <div className="flex flex-wrap gap-2">
           <GenderToggle value={gender} onChange={setGender} />

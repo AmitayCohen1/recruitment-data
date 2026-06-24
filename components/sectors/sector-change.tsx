@@ -8,28 +8,35 @@ import {
   SECTOR_COLOR,
   SFIRST,
   SLATEST,
-  S_METRICS,
   type SGender,
   type SMetric,
 } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 
-export function SectorChange() {
-  const [metric, setMetric] = React.useState<SMetric>("enlist");
-  const [gender, setGender] = React.useState<SGender>("בנות");
+export function SectorChange({
+  metric: metricProp,
+  gender: genderProp,
+}: { metric?: SMetric; gender?: SGender } = {}) {
+  // controlled when both props are supplied (shared section filter); else standalone
+  const controlled = metricProp !== undefined && genderProp !== undefined;
+  const [metricState, setMetric] = React.useState<SMetric>("enlist");
+  const [genderState, setGender] = React.useState<SGender>("בנות");
+  const metric = metricProp ?? metricState;
+  const gender = genderProp ?? genderState;
   const rows = change(metric, gender).sort((a, b) => b.to - a.to);
-  const label = S_METRICS.find((m) => m.key === metric)!.label;
 
   return (
     <Panel>
       <PanelHeader
         title="מה השתנה מאז 2018"
-        subtitle={`השינוי בכל מגזר בין ${SFIRST} ל־${SLATEST} · ${label} · ${gender}`}
+        subtitle="השינוי בכל מגזר בין תחילת תקופת המדידה לשנה האחרונה."
       >
-        <div className="flex flex-wrap gap-2">
-          <GenderToggle value={gender} onChange={setGender} />
-          <MetricTabsS value={metric} onChange={setMetric} />
-        </div>
+        {!controlled && (
+          <div className="flex flex-wrap gap-2">
+            <GenderToggle value={gender} onChange={setGender} />
+            <MetricTabsS value={metric} onChange={setMetric} />
+          </div>
+        )}
       </PanelHeader>
 
       <div className="space-y-4 pt-1">

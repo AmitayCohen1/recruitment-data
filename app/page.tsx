@@ -1,8 +1,7 @@
 import Image from "next/image";
 import cover from "@/public/cover.png";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
-import { SectorDonuts } from "@/components/sectors/sector-donuts";
-import { SectorChange } from "@/components/sectors/sector-change";
+import { SectorOverview } from "@/components/sectors/sector-overview";
 import { Subgroups } from "@/components/sectors/subgroups";
 import { CombatParadox } from "@/components/sectors/combat-paradox";
 import { GenderGap } from "@/components/sectors/gender-gap";
@@ -55,9 +54,8 @@ export default function Home() {
             label: "מפת מגזרים",
             content: (
               <>
+                <SectorOverview />
                 <SectorHeatmap />
-                <SectorDonuts />
-                <SectorChange />
               </>
             ),
           },
