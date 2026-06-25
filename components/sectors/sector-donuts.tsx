@@ -29,8 +29,8 @@ function Donut({
   ];
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="relative h-28 w-28">
-        <ChartContainer config={{}} className="aspect-square h-28 w-28">
+      <div className="relative h-32 w-32">
+        <ChartContainer config={{}} className="aspect-square h-32 w-32">
           <PieChart>
             <Pie
               data={data}
@@ -50,7 +50,7 @@ function Donut({
           </PieChart>
         </ChartContainer>
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="text-xl font-bold tabular-nums">
+          <span className="text-2xl font-bold tabular-nums">
             {value === null ? "—" : `${v}%`}
           </span>
         </div>
@@ -86,7 +86,7 @@ export function SectorDonuts({
           </div>
         )}
       </PanelHeader>
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+      <div className="mx-auto grid max-w-3xl grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
         {SECTORS.map((s) => (
           <Donut
             key={s}

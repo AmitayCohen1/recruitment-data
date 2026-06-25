@@ -1,11 +1,12 @@
 import * as React from "react";
 
-/** A classic anchored filter toolbar — a card-matching surface holding labeled
- *  control fields, so shared controls read as "filters for this view" instead
- *  of floating pills. */
+/** A light filter toolbar — controls sit directly on the page rather than in
+ *  their own card, so they read as "filters for this view" without adding
+ *  another competing surface. Padding matches the panels' so the labels line
+ *  up with the panel titles below. */
 export function FilterBar({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-white/10 bg-white/[0.025] px-4 py-3">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5">
       {children}
     </div>
   );

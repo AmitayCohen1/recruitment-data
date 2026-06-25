@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { ArrowDown, ArrowUp, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, MoreHorizontal, Search } from "lucide-react";
 import { track } from "@vercel/analytics";
 import { Panel, PanelHeader } from "@/components/ui/panel";
+import { Popover } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import {
   GENDER_LABEL,
@@ -101,8 +102,9 @@ export function Explorer({
         subtitle="חיפוש וסינון בתי ספר לפי שנה, מגדר, רשות ומדדי הגיוס המרכזיים."
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[200px] flex-1">
+      <div className="mb-4 space-y-2">
+        {/* search — its own full-width row */}
+        <div className="relative">
           <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={q}
@@ -112,58 +114,75 @@ export function Explorer({
           />
         </div>
 
-        <select
-          value={year}
-          onChange={(e) => {
-            const y = Number(e.target.value);
-            setYear(y);
-            track("explorer_year", { year: y });
-          }}
-          className={inputCls}
-        >
-          {[...YEARS].reverse().map((y) => (
-            <option key={y} value={y} className="bg-popover">
-              {y}
-            </option>
-          ))}
-        </select>
-
-        <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/3 p-1">
-          {(["all", "m", "f"] as const).map((g) => (
-            <button
-              key={g}
-              type="button"
-              onClick={() => {
-                setGender(g);
-                track("explorer_gender", { gender: g });
-              }}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                gender === g
-                  ? "bg-white/10 text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {g === "all" ? "הכל" : g === "m" ? "👨 בנים" : "👩 בנות"}
-            </button>
-          ))}
-        </div>
-
-        {zeroRows.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowZero((v) => !v)}
-            aria-pressed={showZero}
-            className={cn(
-              "h-9 rounded-lg border px-3 text-sm font-medium transition-colors",
-              showZero
-                ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
-                : "border-white/10 bg-white/3 text-muted-foreground hover:text-foreground",
-            )}
+        {/* controls row — primary filters inline, secondary tucked into a popover */}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={year}
+            onChange={(e) => {
+              const y = Number(e.target.value);
+              setYear(y);
+              track("explorer_year", { year: y });
+            }}
+            className={inputCls}
           >
-            {showZero ? "☑" : "☐"} הצגת בתי ספר ללא מתגייסים
-          </button>
-        )}
+            {[...YEARS].reverse().map((y) => (
+              <option key={y} value={y} className="bg-popover">
+                {y}
+              </option>
+            ))}
+          </select>
+
+          <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/3 p-1">
+            {(["all", "m", "f"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => {
+                  setGender(g);
+                  track("explorer_gender", { gender: g });
+                }}
+                className={cn(
+                  "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3",
+                  gender === g
+                    ? "bg-white/10 text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {g === "all" ? "הכל" : g === "m" ? "👨 בנים" : "👩 בנות"}
+              </button>
+            ))}
+          </div>
+
+          {zeroRows.length > 0 && (
+            <Popover
+              ariaLabel="עוד מסננים"
+              triggerClassName={cn(
+                "relative inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:text-foreground",
+                showZero
+                  ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
+                  : "border-white/10 bg-white/3",
+              )}
+              trigger={
+                <>
+                  <MoreHorizontal className="size-4" />
+                  {showZero && (
+                    <span className="absolute -left-0.5 -top-0.5 size-2 rounded-full bg-emerald-400 ring-2 ring-background" />
+                  )}
+                </>
+              }
+            >
+              <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={showZero}
+                  onChange={(e) => setShowZero(e.target.checked)}
+                  className="size-4 accent-emerald-400"
+                />
+                הצגת בתי ספר ללא מתגייסים
+              </label>
+            </Popover>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-white/10">
