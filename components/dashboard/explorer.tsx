@@ -15,12 +15,12 @@ import {
 
 type SortKey = "e" | "cb" | "o" | "m" | "s";
 
-const COLUMNS: { key: SortKey; label: string; metric: boolean }[] = [
-  { key: "s", label: "בית ספר", metric: false },
-  { key: "e", label: "🪖 שיעור גיוס", metric: true },
-  { key: "cb", label: "⚔️ שירות קרבי מתוך מתגייסים", metric: true },
-  { key: "o", label: "🎖️ קצונה מתוך מתגייסים", metric: true },
-  { key: "m", label: "שירות משמעותי", metric: true },
+const COLUMNS: { key: SortKey; label: string; short: string; metric: boolean }[] = [
+  { key: "s", label: "בית ספר", short: "בית ספר", metric: false },
+  { key: "e", label: "🪖 שיעור גיוס", short: "🪖 גיוס", metric: true },
+  { key: "cb", label: "⚔️ שירות קרבי מתוך מתגייסים", short: "⚔️ קרבי", metric: true },
+  { key: "o", label: "🎖️ קצונה מתוך מתגייסים", short: "🎖️ קצונה", metric: true },
+  { key: "m", label: "שירות משמעותי", short: "משמעותי", metric: true },
 ];
 
 function pct(v: number | null) {
@@ -174,7 +174,7 @@ export function Explorer({
                 <th
                   key={c.key}
                   className={cn(
-                    "cursor-pointer select-none whitespace-nowrap px-3 py-2.5 font-medium",
+                    "cursor-pointer select-none whitespace-nowrap px-2.5 py-2.5 sm:px-3 font-medium",
                     c.metric ? "text-center" : "text-right",
                   )}
                   onClick={() => setSortKey(c.key)}
@@ -185,7 +185,8 @@ export function Explorer({
                       c.metric && "justify-center",
                     )}
                   >
-                    {c.label}
+                    <span className="sm:hidden">{c.short}</span>
+                    <span className="hidden sm:inline">{c.label}</span>
                     {sort === c.key &&
                       (dir === "asc" ? (
                         <ArrowUp className="size-3" />
@@ -196,7 +197,7 @@ export function Explorer({
                 </th>
               ))}
               {gender === "all" && (
-                <th className="px-3 py-2.5 text-center font-medium">מגדר</th>
+                <th className="px-2.5 py-2.5 sm:px-3 text-center font-medium">מגדר</th>
               )}
             </tr>
           </thead>
@@ -206,26 +207,26 @@ export function Explorer({
                 key={`${r.k}-${r.g}`}
                 className="border-b border-white/5 last:border-0 hover:bg-white/3"
               >
-                <td className="px-3 py-2.5 text-right">
+                <td className="px-2.5 py-2.5 sm:px-3 text-right">
                   <div className="font-medium text-foreground">{r.s}</div>
                   {r.c && (
                     <div className="text-xs text-muted-foreground">{r.c}</div>
                   )}
                 </td>
-                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.e))}>
+                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.e))}>
                   {pct(r.e)}
                 </td>
-                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.cb))}>
+                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.cb))}>
                   {pct(r.cb)}
                 </td>
-                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.o))}>
+                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.o))}>
                   {pct(r.o)}
                 </td>
-                <td className={cn("px-3 py-2.5 text-center tabular-nums", pctColor(r.m))}>
+                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.m))}>
                   {pct(r.m)}
                 </td>
                 {gender === "all" && (
-                  <td className="px-3 py-2.5 text-center text-muted-foreground">
+                  <td className="px-2.5 py-2.5 sm:px-3 text-center text-muted-foreground">
                     {GENDER_LABEL[r.g]}
                   </td>
                 )}

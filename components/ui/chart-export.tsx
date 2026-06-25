@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Download, Share2, Loader2 } from "lucide-react";
+import { track } from "@vercel/analytics";
 
 const SHARE_TEXT = "נתוני גיוס לפי בתי ספר ומגזרים";
 
@@ -44,6 +45,7 @@ export function ChartExport({
   async function download() {
     const node = getNode();
     if (!node) return;
+    track("chart_share", { method: "download", chart: name });
     setBusy(true);
     try {
       const blob = await nodeToBlob(node);
@@ -70,9 +72,11 @@ export function ChartExport({
       if (!blob) return;
       const file = new File([blob], filename, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
+        track("chart_share", { method: "native", chart: name });
         await navigator.share({ files: [file], title: SHARE_TEXT });
       } else {
         // browser can't share files — fall back to a PNG download
+        track("chart_share", { method: "share_fallback", chart: name });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -89,6 +93,7 @@ export function ChartExport({
   }
 
   function tweet() {
+    track("chart_share", { method: "x", chart: name });
     const url = encodeURIComponent(window.location.href);
     const text = encodeURIComponent(`${SHARE_TEXT} — ${name}`);
     window.open(

@@ -80,19 +80,19 @@ export function Contribution({
             key={r.sector}
             className="flex items-baseline justify-between gap-3 text-sm"
           >
-            <span className="flex items-baseline gap-2 truncate font-medium">
+            <span className="flex min-w-0 flex-1 items-baseline gap-2 font-medium">
               <span
                 className="size-2.5 shrink-0 translate-y-0.5 rounded-full"
                 style={{ background: SECTOR_COLOR[r.sector] }}
               />
               <span
-                className="truncate"
+                className="shrink-0"
                 style={{ color: SECTOR_COLOR[r.sector] }}
               >
                 {r.sector}
               </span>
               {r.rate != null && (
-                <span className="text-xs tabular-nums text-muted-foreground">
+                <span className="min-w-0 truncate text-xs tabular-nums text-muted-foreground">
                   ({r.rate}% מהמתגייסים)
                 </span>
               )}

@@ -29,7 +29,7 @@ export default function Home() {
           sizes="(max-width: 1024px) 100vw, 1024px"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-black/10" />
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/65 to-black/10" />
         <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
           <h1 className="max-w-3xl text-2xl font-bold leading-[1.1] tracking-tight text-white drop-shadow-lg sm:text-4xl lg:text-5xl">
             מפת גיוס לפי בתי ספר, מגזרים ואזורים
