@@ -43,12 +43,12 @@ function SectorCard({
       />
       {/* content */}
       <div className="absolute inset-x-0 bottom-0 p-3">
-        <div className="flex items-end justify-between gap-2">
-          <span className="text-sm font-medium text-white/90">{sector}</span>
-          <span className="text-2xl font-bold tabular-nums text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)] sm:text-3xl">
-            {value === null ? "—" : `${v}%`}
-          </span>
-        </div>
+        <span className="block truncate text-xs font-medium text-white/80 sm:text-sm">
+          {sector}
+        </span>
+        <span className="block text-xl font-bold leading-tight tabular-nums text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)] sm:text-3xl">
+          {value === null ? "—" : `${v}%`}
+        </span>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
           <div
             className="h-full rounded-full transition-[width] duration-500"
