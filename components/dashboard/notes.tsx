@@ -32,6 +32,7 @@ export function Notes() {
     <Panel className="mt-8">
       <PanelHeader
         title="הערות, מקורות והבהרות"
+        noExport
         subtitle="הגדרות המדדים, מקור הנתונים וההסתייגויות שחשוב להכיר לפני השוואה."
       />
       <dl className="divide-y divide-white/5">

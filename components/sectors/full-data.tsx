@@ -25,6 +25,7 @@ export function FullData() {
     <Panel>
       <PanelHeader
         title="הורדת קובצי הנתונים"
+        noExport
         subtitle="קובצי Excel להמשך בדיקה, הצלבה או ניתוח עצמאי של הנתונים."
       />
 
