@@ -100,7 +100,7 @@ export default function Home() {
           <p>
             built by{" "}
             <a
-              href="https://www.linkedin.com/in/amitay-cohen-461481168/"
+              href="https://x.com/amitay1599"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sky-400 underline-offset-2 hover:underline"
