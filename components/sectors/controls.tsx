@@ -11,7 +11,7 @@ const pill =
   "flex w-full items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 sm:inline-flex sm:w-auto";
 const btn = (active: boolean) =>
   cn(
-    "flex-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-center text-sm font-medium transition-colors sm:flex-none",
+    "min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-center text-sm font-medium transition-colors sm:flex-none sm:px-3",
     active
       ? "bg-white/10 text-foreground shadow-sm"
       : "text-muted-foreground hover:text-foreground",
