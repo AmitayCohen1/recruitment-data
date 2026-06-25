@@ -1,13 +1,15 @@
 import * as React from "react";
 
-/** A light filter toolbar — controls sit directly on the page rather than in
- *  their own card, so they read as "filters for this view" without adding
- *  another competing surface. Padding matches the panels' so the labels line
- *  up with the panel titles below. */
+/** A light filter toolbar that spans the full content column (so it lines up
+ *  with the hero and the cards instead of floating), anchored by a hairline
+ *  rule rather than its own card. Controls are inset to match the panel titles
+ *  below. */
 export function FilterBar({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5">
-      {children}
+    <div className="border-b border-white/10 pb-5">
+      <div className="flex flex-col gap-4 px-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-3 sm:px-5">
+        {children}
+      </div>
     </div>
   );
 }
@@ -20,7 +22,7 @@ export function FilterField({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2.5">
+    <div className="flex flex-col items-stretch gap-1.5 sm:flex-row sm:items-center sm:gap-2.5">
       <span className="shrink-0 text-xs font-medium text-muted-foreground">
         {label}
       </span>

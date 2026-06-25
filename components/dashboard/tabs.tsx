@@ -87,11 +87,12 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
           )}
         </div>
 
-        {/* desktop: pills */}
-        <div className="hidden justify-center sm:flex">
+        {/* desktop: underline tabs — SaaS style. The baseline rule spans the
+            full content column so it lines up with the cards below. */}
+        <div className="hidden sm:block">
           <div
             role="tablist"
-            className="flex gap-1.5 rounded-full border border-white/10 bg-white/[0.04] p-1.5"
+            className="flex items-center gap-7 border-b border-white/10"
           >
             {tabs.map((t) => (
               <button
@@ -102,10 +103,10 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
                 aria-controls={`panel-${t.id}`}
                 onClick={() => selectTab(t.id)}
                 className={cn(
-                  "flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 text-base font-semibold transition-colors",
+                  "-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-1 text-base font-semibold transition-colors",
                   active === t.id
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
                 {t.icon && (

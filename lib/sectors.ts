@@ -51,6 +51,20 @@ export const SECTOR_COLOR: Record<string, string> = {
   דרוזי: "#c084fc", // purple
 };
 
+const SECTOR_SLUG: Record<string, string> = {
+  חילוני: "secular",
+  "דתי לאומי": "religious-zionist",
+  חרדי: "haredi",
+  דרוזי: "druze",
+};
+
+/** Portrait for a sector + gender, served from /public/sectors. */
+export function sectorImg(sector: string, gender: SGender): string {
+  const slug = SECTOR_SLUG[sector];
+  const g = gender === "בנות" ? "girls" : "boys";
+  return `/sectors/${slug}-${g}.jpg`;
+}
+
 export const SECTOR_EN: Record<string, string> = {
   חילוני: "Secular",
   "דתי לאומי": "Religious-Zionist",

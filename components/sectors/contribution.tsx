@@ -35,7 +35,7 @@ export function Contribution({
           {!controlled && (
             <GenderToggle value={gender} onChange={setGender} />
           )}
-          <div className="inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
             {ABS_METRICS.map((m) => (
               <button
                 key={m.key}

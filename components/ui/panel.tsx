@@ -20,7 +20,7 @@ export function Panel({
       <section
         ref={ref}
         className={cn(
-          "rounded-2xl border border-white/10 bg-white/[0.025] p-5 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset] backdrop-blur-sm",
+          "rounded-2xl border border-white/10 bg-white/[0.025] p-4 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset] backdrop-blur-sm sm:p-5",
           className,
         )}
         {...props}
@@ -50,11 +50,11 @@ export function PanelHeader({
   return (
     <div
       className={cn(
-        "mb-5 flex flex-wrap items-start justify-between gap-3",
+        "mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between",
         className,
       )}
     >
-      <div className="space-y-1">
+      <div className="min-w-0 space-y-1">
         <h3 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
           {title}
         </h3>
@@ -62,7 +62,7 @@ export function PanelHeader({
           <p className="text-sm leading-6 text-muted-foreground">{subtitle}</p>
         )}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {children}
         {!noExport && getNode && (
           <ChartExport getNode={getNode} name={exportName} />

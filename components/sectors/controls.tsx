@@ -8,10 +8,10 @@ import {
 } from "@/lib/sectors";
 
 const pill =
-  "inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1";
+  "flex w-full items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1 sm:inline-flex sm:w-auto";
 const btn = (active: boolean) =>
   cn(
-    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+    "flex-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-center text-sm font-medium transition-colors sm:flex-none",
     active
       ? "bg-white/10 text-foreground shadow-sm"
       : "text-muted-foreground hover:text-foreground",

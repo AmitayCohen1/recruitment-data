@@ -35,18 +35,18 @@ export function FullData() {
             <a
               href={f.href}
               download
-              className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-emerald-400/30 hover:bg-emerald-400/[0.06] sm:items-center sm:gap-4"
+              className="block rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-emerald-400/30 hover:bg-emerald-400/[0.06]"
             >
-              <FileSpreadsheet className="size-7 shrink-0 text-emerald-300" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-foreground">{f.title}</p>
-                  <Download className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
-                </div>
-                <p className="mt-0.5 text-sm leading-5 text-muted-foreground">
-                  {f.desc}
+              <div className="flex items-center gap-3">
+                <FileSpreadsheet className="size-6 shrink-0 text-emerald-300" />
+                <p className="min-w-0 flex-1 font-semibold text-foreground">
+                  {f.title}
                 </p>
+                <Download className="size-5 shrink-0 text-muted-foreground" />
               </div>
+              <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                {f.desc}
+              </p>
             </a>
           </li>
         ))}

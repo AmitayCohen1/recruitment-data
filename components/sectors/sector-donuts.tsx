@@ -1,63 +1,61 @@
 "use client";
 
 import * as React from "react";
-import { Cell, Pie, PieChart } from "recharts";
+import Image from "next/image";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { ChartContainer } from "@/components/ui/chart";
 import {
   profile,
   SECTORS,
   SECTOR_COLOR,
+  sectorImg,
   type SGender,
   type SMetric,
 } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 
-function Donut({
+function SectorCard({
   value,
   color,
   sector,
+  img,
 }: {
   value: number | null;
   color: string;
   sector: string;
+  img: string;
 }) {
   const v = value ?? 0;
-  const data = [
-    { name: "v", value: v },
-    { name: "rest", value: Math.max(0, 100 - v) },
-  ];
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative h-32 w-32">
-        <ChartContainer config={{}} className="aspect-square h-32 w-32">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="value"
-              cx="50%"
-              cy="50%"
-              innerRadius="72%"
-              outerRadius="100%"
-              startAngle={90}
-              endAngle={-270}
-              stroke="none"
-              isAnimationActive={false}
-            >
-              <Cell fill={color} />
-              <Cell fill="rgba(255,255,255,0.06)" />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold tabular-nums">
+    <div className="group relative aspect-[4/5] overflow-hidden rounded-xl">
+      <Image
+        src={img}
+        alt={sector}
+        fill
+        sizes="(min-width: 640px) 25vw, 50vw"
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
+      />
+      {/* readability scrim */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+      {/* sector accent on top edge */}
+      <div
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ backgroundColor: color }}
+      />
+      {/* content */}
+      <div className="absolute inset-x-0 bottom-0 p-3">
+        <div className="flex items-end justify-between gap-2">
+          <span className="text-sm font-medium text-white/90">{sector}</span>
+          <span className="text-2xl font-bold tabular-nums text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)] sm:text-3xl">
             {value === null ? "—" : `${v}%`}
           </span>
         </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+          <div
+            className="h-full rounded-full transition-[width] duration-500"
+            style={{ width: `${v}%`, backgroundColor: color }}
+          />
+        </div>
       </div>
-      <span className="text-sm font-medium" style={{ color }}>
-        {sector}
-      </span>
     </div>
   );
 }
@@ -86,12 +84,13 @@ export function SectorDonuts({
           </div>
         )}
       </PanelHeader>
-      <div className="mx-auto grid max-w-3xl grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {SECTORS.map((s) => (
-          <Donut
+          <SectorCard
             key={s}
             sector={s}
             color={SECTOR_COLOR[s]}
+            img={sectorImg(s, gender)}
             value={profile(s, gender)[metric]}
           />
         ))}
