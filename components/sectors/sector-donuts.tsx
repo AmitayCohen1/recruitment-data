@@ -60,6 +60,47 @@ function SectorCard({
   );
 }
 
+function SectorRow({
+  value,
+  color,
+  sector,
+  img,
+}: {
+  value: number | null;
+  color: string;
+  sector: string;
+  img: string;
+}) {
+  const v = value ?? 0;
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+        <Image src={img} alt={sector} fill sizes="56px" className="object-cover" />
+        <div
+          className="absolute inset-x-0 bottom-0 h-1"
+          style={{ backgroundColor: color }}
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-medium text-white/90">
+            {sector}
+          </span>
+          <span className="shrink-0 text-xl font-bold tabular-nums text-white">
+            {value === null ? "—" : `${v}%`}
+          </span>
+        </div>
+        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full transition-[width] duration-500"
+            style={{ width: `${v}%`, backgroundColor: color }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SectorDonuts({
   metric: metricProp,
   gender: genderProp,
@@ -84,7 +125,20 @@ export function SectorDonuts({
           </div>
         )}
       </PanelHeader>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* mobile: scannable list rows */}
+      <div className="flex flex-col gap-4 sm:hidden">
+        {SECTORS.map((s) => (
+          <SectorRow
+            key={s}
+            sector={s}
+            color={SECTOR_COLOR[s]}
+            img={sectorImg(s, gender)}
+            value={profile(s, gender)[metric]}
+          />
+        ))}
+      </div>
+      {/* sm+: portrait cards */}
+      <div className="hidden gap-3 sm:grid sm:grid-cols-4">
         {SECTORS.map((s) => (
           <SectorCard
             key={s}
