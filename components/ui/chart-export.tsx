@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Check, Download, Share2, Loader2 } from "lucide-react";
-import { track } from "@vercel/analytics";
+import { track } from "@/lib/analytics";
 
 const SHARE_TEXT = "נתוני גיוס לפי בתי ספר ומגזרים";
 

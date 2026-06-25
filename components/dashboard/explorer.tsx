@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { ArrowDown, ArrowUp, MoreHorizontal, Search } from "lucide-react";
-import { track } from "@vercel/analytics";
+import { track } from "@/lib/analytics";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Popover } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
