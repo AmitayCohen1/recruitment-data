@@ -31,7 +31,12 @@ CLASS_CSV = os.path.join(HERE, "full_data_with_classification.csv")
 
 RAW_YEARS = list(range(2018, 2025))   # raw per-school data spans all years
 FILE_YEARS = [2018, 2024]             # the only years the published file covers
-SECTORS = ["חילוני", "דתי לאומי", "חרדי", "דרוזי וערבי"]
+SECTORS = ["חילוני", "דתי לאומי", "חרדי", "דרוזי"]  # display names
+# the published file labels the Druze group "דרוזי וערבי" (it also covers Arab /
+# mixed schools); we match that row but display it as "דרוזי" (see the note in
+# the dashboard's disclaimers).
+FILE_SECTORS = {"חילוני", "דתי לאומי", "חרדי", "דרוזי וערבי"}
+RENAME = {"דרוזי וערבי": "דרוזי"}
 REGIONS = ["מרכז", "פריפריה", "כפרי/קיבוצים", "התנחלויות", "ירושלים"]
 R_SECTORS = ["הכל", "חילוני", "דתי לאומי", "חרדי"]
 GENDERS = [("ז", "בנים", "m"), ("נ", "בנות", "f")]
@@ -57,10 +62,10 @@ def read_published():
             continue
         rows = []
         for r in wb[sheet].iter_rows(values_only=True):
-            if r[0] not in SECTORS or r[2] not in ("בנים", "בנות"):
+            if r[0] not in FILE_SECTORS or r[2] not in ("בנים", "בנות"):
                 continue
             rows.append({
-                "sector": r[0], "azor": r[1], "gender": r[2],
+                "sector": RENAME.get(r[0], r[0]), "azor": r[1], "gender": r[2],
                 "enlist": r[3], "combat": r[4], "officer": r[5],
                 "schools": int(r[6]) if r[6] is not None else 0,
                 "cohort": float(r[7] or 0), "enlistees": float(r[8] or 0),
@@ -85,8 +90,8 @@ def canonical_region(azor):
 
 
 def group_label(sector, azor):
-    if sector == "דרוזי וערבי":
-        return "דרוזי וערבי"
+    if sector == "דרוזי":
+        return "דרוזי"
     return f"{sector} - {azor}"
 
 
@@ -99,7 +104,7 @@ def sector_of(group):
     if g.startswith("חילוני"):
         return "חילוני"
     if g in ("דרוזי", "ערבי", "בדואי"):
-        return "דרוזי וערבי"   # the published file merges Druze + Arab
+        return "דרוזי"   # displayed as "דרוזי"; also covers Arab / mixed schools
     return None
 
 

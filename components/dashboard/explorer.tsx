@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ArrowDown, ArrowUp, Search } from "lucide-react";
+import { track } from "@vercel/analytics";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
 import {
@@ -79,7 +80,16 @@ export function Explorer({
       setSort(k);
       setDir(k === "s" ? "asc" : "desc");
     }
+    track("explorer_sort", { column: k });
   };
+
+  // Debounced search tracking — fires once the user pauses typing.
+  React.useEffect(() => {
+    const term = q.trim();
+    if (term === "") return;
+    const id = setTimeout(() => track("explorer_search", { length: term.length }), 800);
+    return () => clearTimeout(id);
+  }, [q]);
 
   const inputCls =
     "h-9 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
@@ -104,7 +114,11 @@ export function Explorer({
 
         <select
           value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
+          onChange={(e) => {
+            const y = Number(e.target.value);
+            setYear(y);
+            track("explorer_year", { year: y });
+          }}
           className={inputCls}
         >
           {[...YEARS].reverse().map((y) => (
@@ -119,7 +133,10 @@ export function Explorer({
             <button
               key={g}
               type="button"
-              onClick={() => setGender(g)}
+              onClick={() => {
+                setGender(g);
+                track("explorer_gender", { gender: g });
+              }}
               className={cn(
                 "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 gender === g

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
+import { track } from "@vercel/analytics";
 import { cn } from "@/lib/utils";
 
 export type Tab = {
@@ -16,6 +17,12 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
   const [open, setOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const activeTab = tabs.find((t) => t.id === active);
+
+  const selectTab = (id: string) => {
+    setActive(id);
+    const tab = tabs.find((t) => t.id === id);
+    track("tab_view", { tab: tab?.label ?? id });
+  };
 
   React.useEffect(() => {
     if (!open) return;
@@ -62,7 +69,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
                   role="option"
                   aria-selected={active === t.id}
                   onClick={() => {
-                    setActive(t.id);
+                    selectTab(t.id);
                     setOpen(false);
                   }}
                   className={cn(
@@ -93,7 +100,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
                 id={`tab-${t.id}`}
                 aria-selected={active === t.id}
                 aria-controls={`panel-${t.id}`}
-                onClick={() => setActive(t.id)}
+                onClick={() => selectTab(t.id)}
                 className={cn(
                   "flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 text-base font-semibold transition-colors",
                   active === t.id
