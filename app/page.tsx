@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PieChart, Scale, Layers, Search, Download } from "lucide-react";
 import cover from "@/public/cover.png";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorOverview } from "@/components/sectors/sector-overview";
@@ -18,7 +19,7 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-6 sm:pb-10">
       {/* hero — contained width, touching the top, rounded only at bottom */}
-      <header className="relative mb-8 h-[32vh] min-h-[240px] w-full overflow-hidden rounded-b-2xl border-x border-b border-white/10 sm:h-[36vh]">
+      <header className="relative -mx-4 mb-8 h-[32vh] min-h-[240px] overflow-hidden border-b border-white/10 sm:mx-0 sm:h-[36vh] sm:rounded-b-2xl sm:border-x">
         <Image
           src={cover}
           alt="נתוני גיוס לפי בתי ספר ומגזרים"
@@ -47,6 +48,7 @@ export default function Home() {
           {
             id: "sectors",
             label: "מפת מגזרים",
+            icon: <PieChart className="size-4" />,
             content: (
               <>
                 <SectorOverview />
@@ -57,6 +59,7 @@ export default function Home() {
           {
             id: "gaps",
             label: "פערים והשוואות",
+            icon: <Scale className="size-4" />,
             content: (
               <>
                 <GapsOverview />
@@ -67,11 +70,13 @@ export default function Home() {
           {
             id: "breakdown",
             label: "פילוחים ואזורים",
+            icon: <Layers className="size-4" />,
             content: <BreakdownOverview />,
           },
           {
             id: "schools",
             label: "חיפוש בתי ספר",
+            icon: <Search className="size-4" />,
             content: (
               <div>
                 <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
@@ -88,6 +93,7 @@ export default function Home() {
           {
             id: "downloads",
             label: "מקורות נתונים",
+            icon: <Download className="size-4" />,
             content: <FullData />,
           },
         ]}

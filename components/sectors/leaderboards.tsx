@@ -28,7 +28,7 @@ function List({
           const sec = SCHOOL_SECTOR[String(r.key)];
           const color = sec ? SECTOR_COLOR[sec] : "#64748b";
           return (
-            <li key={`${r.key}-${r.school}`} className="flex items-center gap-3 py-2">
+            <li key={`${r.key}-${r.school}`} className="flex items-center gap-2.5 py-2 sm:gap-3">
               <span className="w-4 shrink-0 text-center text-xs tabular-nums text-muted-foreground">
                 {i + 1}
               </span>
@@ -78,7 +78,7 @@ export function Leaderboards({
           </div>
         )}
       </PanelHeader>
-      <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
+      <div className="grid gap-x-8 gap-y-6 divide-y divide-white/10 md:grid-cols-2 md:divide-y-0 [&>*+*]:pt-6 md:[&>*+*]:pt-0">
         <List metric={metric} gender={g} dir="top" title="עשרת הערכים הגבוהים ביותר" />
         <List metric={metric} gender={g} dir="bottom" title="עשרת הערכים הנמוכים ביותר" />
       </div>

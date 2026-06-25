@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export type Tab = {
   id: string;
   label: string;
-  icon?: string;
+  icon?: React.ReactNode;
   content: React.ReactNode;
 };
 
@@ -109,7 +109,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
                 )}
               >
                 {t.icon && (
-                  <span aria-hidden className="text-lg">
+                  <span aria-hidden className="flex">
                     {t.icon}
                   </span>
                 )}
