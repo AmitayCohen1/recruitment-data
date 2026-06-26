@@ -27,6 +27,7 @@ const he = {
     cities: "אזורים וערים",
     search: "חיפוש בתי ספר",
     sources: "מקורות נתונים",
+    lab: "ניסויים",
   },
   citiesTab: {
     title: "גיוס לפי אזור ועיר",
@@ -37,6 +38,11 @@ const he = {
     title: "חיפוש והשוואת בתי ספר",
     subtitle:
       "מצאו בית ספר או רשות והשוו שיעורי גיוס, קרבי, קצונה ושירות משמעותי לפי שנה ומגדר.",
+  },
+  labTab: {
+    title: "זירת ניסויים",
+    subtitle:
+      "דרכים לא שגרתיות להסתכל על אותם נתונים. ניסיוני — דברים נשברים פה לפעמים.",
   },
   common: {
     noData: "אין נתונים מספיקים עבור צירוף זה.",
@@ -279,6 +285,7 @@ const en: Dictionary = {
     cities: "Regions & Cities",
     search: "School Search",
     sources: "Data Sources",
+    lab: "Lab",
   },
   citiesTab: {
     title: "Enlistment by Region & City",
@@ -289,6 +296,11 @@ const en: Dictionary = {
     title: "Search & Compare Schools",
     subtitle:
       "Find a school or municipality and compare enlistment, combat, officer and meaningful-service rates by year and gender.",
+  },
+  labTab: {
+    title: "The Lab",
+    subtitle:
+      "Unconventional ways to look at the same data. Experimental — things break here sometimes.",
   },
   common: {
     noData: "Not enough data for this combination.",

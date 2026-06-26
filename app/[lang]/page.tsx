@@ -1,5 +1,12 @@
 import Image from "next/image";
-import { PieChart, Scale, Search, Download, Building2 } from "lucide-react";
+import {
+  PieChart,
+  Scale,
+  Search,
+  Download,
+  Building2,
+  FlaskConical,
+} from "lucide-react";
 import cover from "@/public/cover.png";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorOverview } from "@/components/sectors/sector-overview";
@@ -10,6 +17,7 @@ import { RegionView } from "@/components/sectors/region-view";
 import { FullData } from "@/components/sectors/full-data";
 import { Explorer } from "@/components/dashboard/explorer";
 import { Cities } from "@/components/dashboard/cities";
+import { Lab } from "@/components/lab/lab";
 import { Notes } from "@/components/dashboard/notes";
 import { DashboardTabs } from "@/components/dashboard/tabs";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
@@ -126,6 +134,22 @@ export default async function Home({
                   <Explorer rows={rows} zeroRows={zeros} />
                   <Leaderboards />
                 </div>
+              </div>
+            ),
+          },
+          {
+            id: "lab",
+            label: t.tabs.lab,
+            icon: <FlaskConical className="size-4" />,
+            content: (
+              <div>
+                <h2 className="mb-1 text-xl font-bold tracking-tight sm:text-2xl">
+                  {t.labTab.title}
+                </h2>
+                <p className="mb-5 text-sm text-muted-foreground">
+                  {t.labTab.subtitle}
+                </p>
+                <Lab />
               </div>
             ),
           },
