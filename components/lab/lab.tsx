@@ -173,7 +173,7 @@ function Movers({
   t: Dictionary;
 }) {
   const Row = ({ m, up }: { m: (typeof risers)[number]; up: boolean }) => (
-    <div className="flex items-center gap-3 py-2">
+    <div className="flex items-center gap-2 py-2 sm:gap-3">
       <span
         className={cn(
           "inline-flex size-7 shrink-0 items-center justify-center rounded-full",
@@ -182,15 +182,15 @@ function Movers({
       >
         {up ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
       </span>
-      <span className="w-28 shrink-0 truncate text-sm text-foreground sm:w-40">
+      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
         {m.council}
       </span>
-      <span className="flex-1 text-sm text-muted-foreground tabular-nums">
+      <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground tabular-nums sm:text-sm">
         {m.from}% <span className="opacity-50">→</span> {m.to}%
       </span>
       <span
         className={cn(
-          "shrink-0 text-sm font-bold tabular-nums",
+          "shrink-0 whitespace-nowrap text-sm font-bold tabular-nums",
           up ? "text-emerald-400" : "text-rose-400",
         )}
       >
