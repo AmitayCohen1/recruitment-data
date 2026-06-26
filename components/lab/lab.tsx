@@ -34,15 +34,19 @@ const CITY_COLORS = [
 const cityColor = (name: string) =>
   CITY_COLORS[Math.max(0, BIG.indexOf(name)) % CITY_COLORS.length];
 
+const WAFFLE_STAGE = {
+  enlisted: "#38bdf888",
+  combat: "#38bdf8",
+  officer: "#a78bfa",
+} as const;
 const EMPTY = "rgba(255,255,255,0.06)";
 
 /* ---------- 1) Waffle: out of 100 youth ---------- */
 function WaffleCard({ d }: { d: Waffle }) {
-  const color = SECTOR_COLOR[d.sector] ?? "#38bdf8";
   const cells = Array.from({ length: 100 }, (_, i) => {
-    if (i < d.officer) return color;
-    if (i < d.combat) return `${color}88`;
-    if (i < d.enlisted) return `${color}33`;
+    if (i < d.officer) return WAFFLE_STAGE.officer;
+    if (i < d.combat) return WAFFLE_STAGE.combat;
+    if (i < d.enlisted) return WAFFLE_STAGE.enlisted;
     return EMPTY;
   });
   return (
@@ -61,25 +65,13 @@ function WaffleCard({ d }: { d: Waffle }) {
         ))}
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground sm:text-xs">
-        <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
-          <span
-            className="size-2.5 rounded-[2px]"
-            style={{ background: `${color}33` }}
-          />
+        <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.enlisted }}>
           <span className="font-bold text-foreground">{d.enlisted}</span> גויסו
         </span>
-        <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
-          <span
-            className="size-2.5 rounded-[2px]"
-            style={{ background: `${color}88` }}
-          />
+        <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.combat }}>
           <span className="font-bold text-foreground">{d.combat}</span> קרביים
         </span>
-        <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
-          <span
-            className="size-2.5 rounded-[2px]"
-            style={{ background: color }}
-          />
+        <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.officer }}>
           <span className="font-bold text-foreground">{d.officer}</span> קצינים
         </span>
       </div>
@@ -417,7 +409,7 @@ export function Lab() {
       <Panel>
         <PanelHeader
           title="מתוך 100 בני נוער"
-          subtitle="לכל מגזר: מתוך 100 בני נוער — צבע חלש לגיוס, צבע בינוני לקרבי, וצבע מלא לקצונה. כל ריבוע = בן אדם אחד."
+          subtitle="לכל מגזר: מתוך 100 בני נוער — כחול חלש לגיוס, כחול מלא לקרבי, וסגול לקצונה. כל ריבוע = בן אדם אחד."
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {w.map((d) => (
