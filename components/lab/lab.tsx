@@ -34,7 +34,7 @@ const CITY_COLORS = [
 const cityColor = (name: string) =>
   CITY_COLORS[Math.max(0, BIG.indexOf(name)) % CITY_COLORS.length];
 
-const OFFICER = "#fbbf24"; // gold
+const OFFICER = "#f8fafc"; // bright near-white — the top tier, distinct from every sector hue (incl. Haredi amber)
 const EMPTY = "rgba(255,255,255,0.06)";
 
 /* ---------- 1) Waffle: out of 100 youth ---------- */
@@ -215,64 +215,61 @@ function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
   const rad = (n: number) => 3 + Math.min(8, Math.sqrt(n) * 1.4);
   const mx = px(medEnlist);
   const my = py(medCombat);
-  const corner = (
-    x: number,
-    y: number,
-    anchor: "start" | "end",
-    text: string,
-  ) => (
-    <text x={x} y={y} fill="rgba(255,255,255,0.4)" fontSize="12" textAnchor={anchor}>
-      {text}
-    </text>
-  );
   const sorted = [...points].sort((a, b) => Number(a.big) - Number(b.big));
 
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${SC_W} ${SC_H}`} className="h-auto w-full min-w-[640px]">
-        {/* median split */}
-        <line x1={mx} x2={mx} y1={SC_PAD - 8} y2={SC_H - SC_PAD} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-        <line x1={SC_PAD} x2={SC_W - SC_PAD} y1={my} y2={my} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-        {/* quadrant captions */}
-        {corner(SC_W - SC_PAD, SC_PAD, "end", "מגייסת וגם לוחמת")}
-        {corner(SC_PAD, SC_PAD, "start", "מעטים מתגייסים — אך לוחמים")}
-        {corner(SC_W - SC_PAD, SC_H - SC_PAD + 4, "end", "מתגייסים, פחות קרבי")}
-        {/* axis labels */}
-        <text x={SC_W / 2} y={SC_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
-          שיעור גיוס →
-        </text>
-        <text x={14} y={SC_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${SC_H / 2})`}>
-          שיעור קרבי ↑
-        </text>
-        {sorted.map((p) => (
-          <g key={p.council}>
-            <circle
-              cx={px(p.enlist)}
-              cy={py(p.combat)}
-              r={rad(p.n)}
-              fill={p.big ? "#38bdf8" : "#475569"}
-              fillOpacity={p.big ? 0.95 : 0.55}
-              stroke={p.big ? "#bae6fd" : "none"}
-              strokeWidth={p.big ? 1 : 0}
-            >
-              <title>
-                {p.council} — גיוס {p.enlist}% · קרבי {p.combat}%
-              </title>
-            </circle>
-            {p.big && (
-              <text
-                x={px(p.enlist)}
-                y={py(p.combat) - rad(p.n) - 4}
-                fill="rgba(255,255,255,0.85)"
-                fontSize="11"
-                textAnchor="middle"
+      <div className="relative min-w-[640px] pb-6 pl-6">
+        <svg viewBox={`0 0 ${SC_W} ${SC_H}`} className="h-auto w-full">
+          {/* median split */}
+          <line x1={mx} x2={mx} y1={SC_PAD - 8} y2={SC_H - SC_PAD} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
+          <line x1={SC_PAD} x2={SC_W - SC_PAD} y1={my} y2={my} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
+          {sorted.map((p) => (
+            <g key={p.council}>
+              <circle
+                cx={px(p.enlist)}
+                cy={py(p.combat)}
+                r={rad(p.n)}
+                fill={p.big ? "#38bdf8" : "#475569"}
+                fillOpacity={p.big ? 0.95 : 0.55}
+                stroke={p.big ? "#bae6fd" : "none"}
+                strokeWidth={p.big ? 1 : 0}
               >
-                {p.council}
-              </text>
-            )}
-          </g>
-        ))}
-      </svg>
+                <title>
+                  {p.council} — גיוס {p.enlist}% · קרבי {p.combat}%
+                </title>
+              </circle>
+              {p.big && (
+                <text
+                  x={px(p.enlist)}
+                  y={py(p.combat) - rad(p.n) - 4}
+                  fill="rgba(255,255,255,0.85)"
+                  fontSize="11"
+                  textAnchor="middle"
+                >
+                  {p.council}
+                </text>
+              )}
+            </g>
+          ))}
+        </svg>
+
+        {/* quadrant captions — HTML overlay (RTL-safe, never clipped) */}
+        <div className="pointer-events-none absolute inset-0 text-[11px] leading-tight text-muted-foreground/55">
+          <span className="absolute right-2 top-1 text-right">מגייסת וגם לוחמת</span>
+          <span className="absolute left-2 top-1 text-left">מעטים מתגייסים — אך לוחמים</span>
+          <span className="absolute bottom-8 right-2 text-right">מתגייסים, פחות קרבי</span>
+          <span className="absolute bottom-8 left-2 text-left">נמוך בשניהם</span>
+        </div>
+
+        {/* axis labels */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-xs text-muted-foreground">
+          שיעור גיוס
+        </div>
+        <div className="pointer-events-none absolute bottom-1/2 left-0 -rotate-90 text-xs text-muted-foreground">
+          שיעור קרבי
+        </div>
+      </div>
     </div>
   );
 }
