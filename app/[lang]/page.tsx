@@ -52,13 +52,13 @@ export default async function Home({
           <p className="mt-2.5 max-w-2xl text-sm leading-6 text-white/80 drop-shadow-md sm:text-base sm:leading-7">
             {t.hero.subtitle(TOTAL_SCHOOLS.toLocaleString(htmlLang(locale)))}
           </p>
-          <p className="mt-2 text-xs text-white/70 drop-shadow-md sm:text-sm">
+          <p className="mt-3.5 text-sm font-medium text-white drop-shadow-md sm:text-base">
             הערות? כתבו לי{" "}
             <a
-              href="https://x.com/amitay1599"
+              href="https://x.com/messages/compose?recipient_id=1926622482"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition-colors hover:decoration-white"
+              className="rounded-md bg-white/15 px-2 py-0.5 font-semibold text-white underline decoration-white/60 underline-offset-2 ring-1 ring-white/20 transition-colors hover:bg-white/25 hover:decoration-white"
             >
               amitay1599@
             </a>

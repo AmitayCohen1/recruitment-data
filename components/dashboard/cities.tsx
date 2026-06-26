@@ -12,15 +12,10 @@ import {
   type Gender,
   type MetricKey,
 } from "@/lib/data";
-import {
-  cityRows,
-  citySectorBreakdown,
-  splitFeatured,
-  BIG_CITIES,
-} from "@/lib/cities";
-import { SECTORS, SECTOR_COLOR, type SGender } from "@/lib/sectors";
+import { cityRows, splitFeatured, BIG_CITIES } from "@/lib/cities";
+import { SECTORS, type SGender } from "@/lib/sectors";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
-import { sectorLabel, sectorFilterLabel } from "@/lib/i18n/labels";
+import { sectorFilterLabel } from "@/lib/i18n/labels";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 const ACCENT = "#38bdf8"; // sky
@@ -121,53 +116,6 @@ function Bar({
   );
 }
 
-/** The selected city's by-sector split (horizontal bars), shown under the chart. */
-function SectorBreakdown({
-  council,
-  metric,
-  max,
-  rows,
-  gender,
-  locale,
-  t,
-}: {
-  council: string;
-  metric: MetricKey;
-  max: number;
-  rows: CompactRow[];
-  gender: Gender;
-  locale: "he" | "en";
-  t: Dictionary;
-}) {
-  const breakdown = React.useMemo(
-    () => citySectorBreakdown(rows, council, gender, LATEST),
-    [rows, council, gender],
-  );
-  if (breakdown.length <= 1) return null;
-  return (
-    <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
-      <div className="mb-2.5 text-sm font-medium text-foreground">
-        {t.cities.breakdownToggle} · {council}
-      </div>
-      <div className="space-y-2">
-        {breakdown.map((b) => (
-          <Bar
-            key={b.sector}
-            label={
-              b.sector === "אחר"
-                ? t.cities.sectorOther
-                : sectorLabel(b.sector, locale)
-            }
-            value={b[metric]}
-            max={max}
-            accent={SECTOR_COLOR[b.sector] ?? "#94a3b8"}
-            note={t.cities.schoolsCount(b.n)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function Cities({ rows }: { rows: CompactRow[] }) {
   const t = useT();
@@ -178,7 +126,6 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
   const [q, setQ] = React.useState("");
   const [sort, setSort] = React.useState<SortKey>("enlist");
   const [dir, setDir] = React.useState<"asc" | "desc">("desc");
-  const [selectedCity, setSelectedCity] = React.useState<string | null>(null);
 
   const g: Gender = gender === "בנים" ? "m" : "f";
   const sectorFilter = sector === ALL ? undefined : sector;
@@ -290,10 +237,6 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
     const id = setTimeout(() => track("cities_search", { length: term.length }), 800);
     return () => clearTimeout(id);
   }, [q]);
-
-  const trendConfig = Object.fromEntries(
-    featuredNames.map((c) => [c, { label: c, color: colorFor(c) }]),
-  ) satisfies ChartConfig;
 
   const inputCls =
     "h-9 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
@@ -408,50 +351,17 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
         {t.cities.featuredHeading}
       </div>
       <div className="mb-7 space-y-1">
-        {featuredSorted.map((c) => {
-          const selected = selectedCity === c.council;
-          const canExpand = !sectorFilter && featuredNames.includes(c.council);
-          return (
-            <div key={c.council}>
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedCity((cur) =>
-                    cur === c.council ? null : c.council,
-                  )
-                }
-                className={cn(
-                  "w-full rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-white/[0.03]",
-                  selected && "bg-white/[0.04]",
-                )}
-              >
-                <Bar
-                  label={c.council}
-                  value={c[metric]}
-                  max={max}
-                  accent={colorFor(c.council)}
-                  note={c.n > 0 ? t.cities.schoolsCount(c.n) : t.cities.noData}
-                />
-              </button>
-              {selected && canExpand && (
-                <SectorBreakdown
-                  council={c.council}
-                  metric={metric}
-                  max={max}
-                  rows={rows}
-                  gender={g}
-                  locale={locale}
-                  t={t}
-                />
-              )}
-            </div>
-          );
-        })}
-        {!sectorFilter && (
-          <p className="pt-1 text-center text-xs text-muted-foreground">
-            {t.cities.clickHint}
-          </p>
-        )}
+        {featuredSorted.map((c) => (
+          <div key={c.council} className="px-2 py-1.5">
+            <Bar
+              label={c.council}
+              value={c[metric]}
+              max={max}
+              accent={colorFor(c.council)}
+              note={c.n > 0 ? t.cities.schoolsCount(c.n) : t.cities.noData}
+            />
+          </div>
+        ))}
       </div>
 
       {/* section 2: all municipalities, ranked */}
