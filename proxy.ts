@@ -1,21 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { locales, defaultLocale, type Locale } from "@/lib/i18n/config";
-
-/** Pick the best supported locale from the Accept-Language header,
- *  falling back to the default. */
-function preferredLocale(request: NextRequest): Locale {
-  const header = request.headers.get("accept-language") ?? "";
-  const wanted = header
-    .split(",")
-    .map((part) => part.split(";")[0].trim().toLowerCase());
-  for (const tag of wanted) {
-    const base = tag.split("-")[0];
-    const hit = locales.find((l) => l === base);
-    if (hit) return hit;
-  }
-  return defaultLocale;
-}
+import { locales, defaultLocale } from "@/lib/i18n/config";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -25,9 +10,10 @@ export function proxy(request: NextRequest) {
   );
   if (hasLocale) return;
 
-  const locale = preferredLocale(request);
+  // Hebrew is the default for everyone; English is opt-in via the toggle (/en).
+  // We intentionally do NOT auto-detect Accept-Language.
   const url = request.nextUrl.clone();
-  url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
+  url.pathname = `/${defaultLocale}${pathname === "/" ? "" : pathname}`;
   return NextResponse.redirect(url);
 }
 

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Subgroups } from "./subgroups";
-import { RegionView } from "./region-view";
 import { Leaderboards } from "./leaderboards";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { FilterBar, FilterField } from "./filter-bar";
@@ -28,7 +27,6 @@ export function BreakdownOverview() {
         </FilterField>
       </FilterBar>
       <Subgroups metric={metric} gender={gender} />
-      <RegionView metric={metric} gender={gender} />
       <Leaderboards metric={metric} gender={gender} />
     </>
   );

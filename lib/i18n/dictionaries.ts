@@ -23,15 +23,15 @@ const he = {
   tabs: {
     sectors: "מפת מגזרים",
     gaps: "פערים והשוואות",
-    breakdowns: "פילוחים ואזורים",
-    cities: "לפי ערים",
+    breakdowns: "פילוחים",
+    cities: "אזורים וערים",
     search: "חיפוש בתי ספר",
     sources: "מקורות נתונים",
   },
   citiesTab: {
-    title: "גיוס לפי רשות מקומית",
+    title: "גיוס לפי אזור ועיר",
     subtitle:
-      "השוואת רשויות מקומיות לפי הממוצע של בתי הספר שבהן. הערים הגדולות מוצגות למעלה, ושאר הרשויות בטבלה.",
+      "מהאזור הגאוגרפי ועד הרשות המקומית — דירוג אזורים למעלה, ואחריו השוואת הערים והרשויות.",
   },
   searchTab: {
     title: "חיפוש והשוואת בתי ספר",
@@ -230,6 +230,7 @@ const he = {
     noData: "אין נתונים",
     trendCaption: "מגמת גיוס לאורך השנים",
     trendHeading: "מגמת הערים הגדולות לאורך השנים",
+    clickHint: "לחצו על עיר בתרשים לפילוח לפי מגזר",
     addCity: "הוסף עיר…",
     removeCity: "הסר מהמועדפות",
     reset: "איפוס",
@@ -274,15 +275,15 @@ const en: Dictionary = {
   tabs: {
     sectors: "Sector Map",
     gaps: "Gaps & Comparisons",
-    breakdowns: "Breakdowns & Regions",
-    cities: "By City",
+    breakdowns: "Breakdowns",
+    cities: "Regions & Cities",
     search: "School Search",
     sources: "Data Sources",
   },
   citiesTab: {
-    title: "Enlistment by Municipality",
+    title: "Enlistment by Region & City",
     subtitle:
-      "Comparing municipalities by the average of their schools. Israel's largest cities are shown on top, the rest in the table below.",
+      "From the geographic region down to the local municipality — regions ranked first, then a comparison of cities and municipalities.",
   },
   searchTab: {
     title: "Search & Compare Schools",
@@ -492,6 +493,7 @@ const en: Dictionary = {
     noData: "No data",
     trendCaption: "Enlistment trend over the years",
     trendHeading: "Biggest cities over time",
+    clickHint: "Click a city in the chart to break it down by sector",
     addCity: "Add city…",
     removeCity: "Remove from featured",
     reset: "Reset",

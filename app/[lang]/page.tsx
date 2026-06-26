@@ -6,6 +6,7 @@ import { SectorOverview } from "@/components/sectors/sector-overview";
 import { GenderGap } from "@/components/sectors/gender-gap";
 import { GapsOverview } from "@/components/sectors/gaps-overview";
 import { BreakdownOverview } from "@/components/sectors/breakdown-overview";
+import { RegionView } from "@/components/sectors/region-view";
 import { FullData } from "@/components/sectors/full-data";
 import { Explorer } from "@/components/dashboard/explorer";
 import { Cities } from "@/components/dashboard/cities";
@@ -97,7 +98,10 @@ export default async function Home({
                 <p className="mb-5 text-sm text-muted-foreground">
                   {t.citiesTab.subtitle}
                 </p>
-                <Cities rows={rows} />
+                <div className="space-y-6">
+                  <RegionView />
+                  <Cities rows={rows} />
+                </div>
               </div>
             ),
           },

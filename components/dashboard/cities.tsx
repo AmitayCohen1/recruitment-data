@@ -1,10 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-import { ArrowDown, ArrowUp, ChevronDown, Search, X } from "lucide-react";
+import {
+  Bar as RBar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { ArrowDown, ArrowUp, Plus, Search, X } from "lucide-react";
 import { track } from "@/lib/analytics";
-import { Panel, PanelHeader, ChipLegend } from "@/components/ui/panel";
+import { Panel, PanelHeader } from "@/components/ui/panel";
 import {
   ChartContainer,
   ChartTooltip,
@@ -25,7 +35,6 @@ import {
   citySectorBreakdown,
   splitFeatured,
   BIG_CITIES,
-  type CityRow,
 } from "@/lib/cities";
 import { SECTORS, SECTOR_COLOR, type SGender } from "@/lib/sectors";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
@@ -130,92 +139,50 @@ function Bar({
   );
 }
 
-/** A featured big city: a ranked bar that expands to its by-sector split
- *  (only when no single sector is already selected). */
-function FeaturedCity({
-  c,
+/** The selected city's by-sector split (horizontal bars), shown under the chart. */
+function SectorBreakdown({
+  council,
   metric,
   max,
   rows,
   gender,
-  sectorFilter,
-  onRemove,
   locale,
   t,
 }: {
-  c: CityRow;
+  council: string;
   metric: MetricKey;
   max: number;
   rows: CompactRow[];
   gender: Gender;
-  sectorFilter: string | undefined;
-  onRemove: () => void;
   locale: "he" | "en";
   t: Dictionary;
 }) {
-  const [open, setOpen] = React.useState(false);
   const breakdown = React.useMemo(
-    () => citySectorBreakdown(rows, c.council, gender, LATEST),
-    [rows, c.council, gender],
+    () => citySectorBreakdown(rows, council, gender, LATEST),
+    [rows, council, gender],
   );
-  const canExpand = !sectorFilter && breakdown.length > 1;
-  const value = c[metric];
-  const note = c.n > 0 ? t.cities.schoolsCount(c.n) : t.cities.noData;
-
+  if (breakdown.length <= 1) return null;
   return (
-    <div className="group rounded-lg px-2 py-1.5 transition-colors hover:bg-white/[0.02]">
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          disabled={!canExpand}
-          onClick={() => {
-            setOpen((v) => !v);
-            if (!open) track("cities_expand", { city: c.council });
-          }}
-          aria-expanded={open}
-          className="flex flex-1 items-center gap-2 disabled:cursor-default"
-        >
-          <ChevronDown
-            className={cn(
-              "size-4 shrink-0 text-muted-foreground transition-transform",
-              open && "rotate-180",
-              !canExpand && "opacity-0",
-            )}
-          />
-          <div className="flex-1">
-            <Bar label={c.council} value={value} max={max} note={note} />
-          </div>
-        </button>
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label={t.cities.removeCity}
-          title={t.cities.removeCity}
-          className="shrink-0 rounded-md p-1 text-muted-foreground opacity-0 transition hover:bg-white/10 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100"
-        >
-          <X className="size-3.5" />
-        </button>
+    <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.02] p-3.5">
+      <div className="mb-2.5 text-sm font-medium text-foreground">
+        {t.cities.breakdownToggle} · {council}
       </div>
-      {open && canExpand && (
-        <div className="mb-1 mt-2 space-y-1.5 ps-6">
-          {breakdown.map((b) => {
-            const label =
+      <div className="space-y-2">
+        {breakdown.map((b) => (
+          <Bar
+            key={b.sector}
+            label={
               b.sector === "אחר"
                 ? t.cities.sectorOther
-                : sectorLabel(b.sector, locale);
-            return (
-              <Bar
-                key={b.sector}
-                label={label}
-                value={b[metric]}
-                max={max}
-                accent={SECTOR_COLOR[b.sector] ?? "#94a3b8"}
-                note={t.cities.schoolsCount(b.n)}
-              />
-            );
-          })}
-        </div>
-      )}
+                : sectorLabel(b.sector, locale)
+            }
+            value={b[metric]}
+            max={max}
+            accent={SECTOR_COLOR[b.sector] ?? "#94a3b8"}
+            note={t.cities.schoolsCount(b.n)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -229,6 +196,7 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
   const [q, setQ] = React.useState("");
   const [sort, setSort] = React.useState<SortKey>("enlist");
   const [dir, setDir] = React.useState<"asc" | "desc">("desc");
+  const [selectedCity, setSelectedCity] = React.useState<string | null>(null);
 
   const g: Gender = gender === "בנים" ? "m" : "f";
   const sectorFilter = sector === ALL ? undefined : sector;
@@ -310,6 +278,15 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
   const featuredSorted = React.useMemo(
     () => [...featured].sort((a, b) => (b[metric] ?? -1) - (a[metric] ?? -1)),
     [featured, metric],
+  );
+
+  const barData = featuredSorted.map((c) => ({
+    city: c.council,
+    value: c[metric],
+  }));
+  const featuredMax = Math.max(
+    ...featuredSorted.map((c) => c[metric] ?? 0),
+    1,
   );
 
   const ranked = React.useMemo(() => {
@@ -440,33 +417,40 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
           ))}
         </LineChart>
       </ChartContainer>
-      <ChipLegend
-        className="mb-7"
-        items={featuredNames.map((c) => ({ label: c, color: colorFor(c) }))}
-      />
 
-      {/* section 1: featured cities (editable) — expandable to sector split */}
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-sm font-medium text-muted-foreground">
-          {t.cities.featuredHeading}
-        </span>
-        <div className="flex items-center gap-2">
-          {!isDefault && (
+      {/* shared city manager — removable chips (also the legend) + add picker.
+          Controls which cities appear in both the trend chart and the bar chart. */}
+      <div className="mb-6 flex flex-wrap items-center gap-1.5">
+        {featuredNames.map((c) => (
+          <span
+            key={c}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] py-1 pe-1 ps-2.5 text-xs text-foreground"
+          >
+            <span
+              className="size-2 rounded-full"
+              style={{ background: colorFor(c) }}
+            />
+            {c}
             <button
               type="button"
-              onClick={() => setFeaturedNames([...BIG_CITIES])}
-              className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              onClick={() => removeCity(c)}
+              aria-label={t.cities.removeCity}
+              title={t.cities.removeCity}
+              className="rounded-full p-0.5 text-muted-foreground transition hover:bg-white/10 hover:text-foreground"
             >
-              {t.cities.reset}
+              <X className="size-3" />
             </button>
-          )}
+          </span>
+        ))}
+        <div className="relative">
+          <Plus className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <select
             value=""
             onChange={(e) => {
               addCity(e.target.value);
               e.currentTarget.value = "";
             }}
-            className={cn(inputCls, "max-w-[12rem]")}
+            className="h-7 rounded-full border border-dashed border-white/15 bg-transparent ps-7 pe-2 text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
           >
             <option value="" className="bg-popover">
               {t.cities.addCity}
@@ -478,23 +462,75 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
             ))}
           </select>
         </div>
+        {!isDefault && (
+          <button
+            type="button"
+            onClick={() => setFeaturedNames([...BIG_CITIES])}
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {t.cities.reset}
+          </button>
+        )}
       </div>
-      <div className="mb-7 space-y-0.5">
-        {featuredSorted.map((c) => (
-          <FeaturedCity
-            key={c.council}
-            c={c}
-            metric={metric}
-            max={max}
-            rows={rows}
-            gender={g}
-            sectorFilter={sectorFilter}
-            onRemove={() => removeCity(c.council)}
-            locale={locale}
-            t={t}
-          />
-        ))}
+
+      {/* section 1: featured cities snapshot (latest year) as a bar chart;
+          click a bar to drill into that city's sector split. */}
+      <div className="mb-2 text-sm font-medium text-muted-foreground">
+        {t.cities.featuredHeading}
       </div>
+      <ChartContainer config={trendConfig} className="aspect-auto h-[240px] w-full">
+        <BarChart
+          data={barData}
+          margin={{ top: 24, right: 8, left: 8, bottom: 0 }}
+          onClick={(s) => {
+            const city =
+              typeof s?.activeLabel === "string" ? s.activeLabel : null;
+            setSelectedCity((cur) => (cur === city ? null : city));
+          }}
+          className="cursor-pointer"
+        >
+          <CartesianGrid vertical={false} strokeOpacity={0.25} />
+          <XAxis dataKey="city" tickLine={false} axisLine={false} tick={false} height={0} />
+          <YAxis hide domain={[0, featuredMax * 1.2]} />
+          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+          <RBar dataKey="value" radius={[6, 6, 0, 0]}>
+            {barData.map((d) => (
+              <Cell
+                key={d.city}
+                fill={colorFor(d.city)}
+                fillOpacity={selectedCity && selectedCity !== d.city ? 0.4 : 1}
+              />
+            ))}
+            <LabelList
+              dataKey="value"
+              position="top"
+              offset={8}
+              className="fill-foreground"
+              fontSize={12}
+              formatter={(v: unknown) => (v == null ? "" : `${v}%`)}
+            />
+          </RBar>
+        </BarChart>
+      </ChartContainer>
+
+      {selectedCity && !sectorFilter && featuredNames.includes(selectedCity) ? (
+        <SectorBreakdown
+          council={selectedCity}
+          metric={metric}
+          max={max}
+          rows={rows}
+          gender={g}
+          locale={locale}
+          t={t}
+        />
+      ) : (
+        !sectorFilter && (
+          <p className="text-center text-xs text-muted-foreground">
+            {t.cities.clickHint}
+          </p>
+        )
+      )}
+      <div className="mb-7" />
 
       {/* section 2: all municipalities, ranked */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -511,17 +547,68 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
           />
         </div>
       </div>
-      <div className="space-y-1.5">
-        {ranked.slice(0, LIMIT).map((c, i) => (
-          <Bar
-            key={c.council}
-            rank={i + 1}
-            label={c.council}
-            value={c[metric]}
-            max={max}
-            note={t.cities.schoolsCount(c.n)}
-          />
-        ))}
+      <div className="overflow-x-auto rounded-xl border border-white/10">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-white/10 bg-white/3 text-muted-foreground">
+              {TABLE_COLS.map((col) => {
+                const [long, short] = colLabels(col.key, t);
+                return (
+                  <th
+                    key={col.key}
+                    onClick={() => setSortKey(col.key)}
+                    className={cn(
+                      "cursor-pointer select-none whitespace-nowrap px-2.5 py-2.5 font-medium sm:px-3",
+                      col.metric || col.key === "n" ? "text-center" : "text-start",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1",
+                        (col.metric || col.key === "n") && "justify-center",
+                      )}
+                    >
+                      <span className="sm:hidden">{short}</span>
+                      <span className="hidden sm:inline">{long}</span>
+                      {sort === col.key &&
+                        (dir === "asc" ? (
+                          <ArrowUp className="size-3" />
+                        ) : (
+                          <ArrowDown className="size-3" />
+                        ))}
+                    </span>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {ranked.slice(0, LIMIT).map((c) => (
+              <tr
+                key={c.council}
+                className="border-b border-white/5 last:border-0 hover:bg-white/3"
+              >
+                <td className="px-2.5 py-2.5 text-start font-medium text-foreground sm:px-3">
+                  {c.council}
+                </td>
+                <td className="px-2.5 py-2.5 text-center tabular-nums text-muted-foreground sm:px-3">
+                  {c.n}
+                </td>
+                {(["enlist", "combat", "officer", "meaning"] as const).map((m) => (
+                  <td
+                    key={m}
+                    className={cn(
+                      "px-2.5 py-2.5 text-center tabular-nums sm:px-3",
+                      cellColor(c[m]),
+                    )}
+                  >
+                    {pct(c[m])}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
       <p className="pt-3 text-center text-xs text-muted-foreground">
         {ranked.length > LIMIT
