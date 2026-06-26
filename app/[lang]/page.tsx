@@ -1,11 +1,11 @@
 import Image from "next/image";
-import { PieChart, Scale, Layers, Search, Download, Building2 } from "lucide-react";
+import { PieChart, Scale, Search, Download, Building2 } from "lucide-react";
 import cover from "@/public/cover.png";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { SectorOverview } from "@/components/sectors/sector-overview";
 import { GenderGap } from "@/components/sectors/gender-gap";
 import { GapsOverview } from "@/components/sectors/gaps-overview";
-import { BreakdownOverview } from "@/components/sectors/breakdown-overview";
+import { Leaderboards } from "@/components/sectors/leaderboards";
 import { RegionView } from "@/components/sectors/region-view";
 import { FullData } from "@/components/sectors/full-data";
 import { Explorer } from "@/components/dashboard/explorer";
@@ -81,12 +81,6 @@ export default async function Home({
             ),
           },
           {
-            id: "breakdown",
-            label: t.tabs.breakdowns,
-            icon: <Layers className="size-4" />,
-            content: <BreakdownOverview />,
-          },
-          {
             id: "cities",
             label: t.tabs.cities,
             icon: <Building2 className="size-4" />,
@@ -117,7 +111,10 @@ export default async function Home({
                 <p className="mb-5 text-sm text-muted-foreground">
                   {t.searchTab.subtitle}
                 </p>
-                <Explorer rows={rows} zeroRows={zeros} />
+                <div className="space-y-6">
+                  <Explorer rows={rows} zeroRows={zeros} />
+                  <Leaderboards />
+                </div>
               </div>
             ),
           },

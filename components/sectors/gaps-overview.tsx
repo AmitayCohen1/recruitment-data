@@ -2,17 +2,16 @@
 
 import * as React from "react";
 import { Contribution } from "./contribution";
-import { EffectiveRate } from "./effective-rate";
-import { SectorFunnel } from "./sector-funnel";
 import { CombatParadox } from "./combat-paradox";
 import { GenderToggle } from "./controls";
 import { FilterBar, FilterField } from "./filter-bar";
 import type { SGender } from "@/lib/sectors";
 import { useT } from "@/components/i18n/locale-provider";
 
-/** Comparisons section: one shared gender filter drives all four charts; each
- *  keeps its own metric control where relevant. (Gender-gap shows both genders
- *  by definition, so it lives outside this group.) */
+/** "Why it differs": one shared gender filter drives the two complementary
+ *  views — absolute contribution (volume) and rate-vs-volume. The per-100
+ *  effective-rate and the funnel were folded away; they re-argued the same
+ *  point. (Gender-gap shows both genders by definition, so it lives outside.) */
 export function GapsOverview() {
   const t = useT();
   const [gender, setGender] = React.useState<SGender>("בנים");
@@ -25,8 +24,6 @@ export function GapsOverview() {
         </FilterField>
       </FilterBar>
       <Contribution gender={gender} />
-      <EffectiveRate gender={gender} />
-      <SectorFunnel gender={gender} />
       <CombatParadox gender={gender} />
     </>
   );

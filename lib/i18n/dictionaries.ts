@@ -21,8 +21,8 @@ const he = {
       `השוואה אינטראקטיבית של ${total} בתי ספר: שיעורי גיוס, שירות קרבי, קצונה ושירות משמעותי לפי מגזר, מגדר ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.`,
   },
   tabs: {
-    sectors: "מפת מגזרים",
-    gaps: "פערים והשוואות",
+    sectors: "מבט-על",
+    gaps: "פערים",
     breakdowns: "פילוחים",
     cities: "אזורים וערים",
     search: "חיפוש בתי ספר",
@@ -273,8 +273,8 @@ const en: Dictionary = {
       `An interactive comparison of ${total} schools: enlistment, combat, officer and meaningful-service rates by sector, gender and year. Averages are weighted by the number of 12th-grade students.`,
   },
   tabs: {
-    sectors: "Sector Map",
-    gaps: "Gaps & Comparisons",
+    sectors: "Overview",
+    gaps: "Gaps",
     breakdowns: "Breakdowns",
     cities: "Regions & Cities",
     search: "School Search",
