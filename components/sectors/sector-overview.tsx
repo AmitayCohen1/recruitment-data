@@ -26,7 +26,7 @@ export function SectorOverview() {
         </FilterField>
       </FilterBar>
       <SectorDonuts metric={metric} gender={gender} />
-      <SectorTrend metric={metric} gender={gender} />
+      {/* <SectorTrend metric={metric} gender={gender} /> */}
     </>
   );
 }

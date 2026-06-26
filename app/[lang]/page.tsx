@@ -75,8 +75,8 @@ export default async function Home({
             icon: <PieChart className="size-4" />,
             content: (
               <>
-                <SectorHeatmap />
                 <SectorOverview />
+                <SectorHeatmap />
               </>
             ),
           },
