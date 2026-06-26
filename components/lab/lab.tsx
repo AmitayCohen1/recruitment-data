@@ -17,6 +17,7 @@ import {
   LAB_LAST,
   type Waffle,
   type SchoolDot,
+  type CityPoint,
 } from "@/lib/lab";
 import { BIG_CITIES } from "@/lib/cities";
 
@@ -174,14 +175,16 @@ function Movers({
         )}
       >
         {m.delta > 0 ? "+" : ""}
-        {m.delta}
+        {m.delta} נק׳
       </span>
     </div>
   );
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <div className="mb-1 text-sm font-medium text-emerald-400">העולות ביותר ⤴</div>
+        <div className="mb-1 text-sm font-medium text-emerald-400">
+          העלייה הגדולה ביותר
+        </div>
         <div className="divide-y divide-white/5">
           {risers.map((m) => (
             <Row key={m.council} m={m} up />
@@ -189,7 +192,9 @@ function Movers({
         </div>
       </div>
       <div>
-        <div className="mb-1 text-sm font-medium text-rose-400">היורדות ביותר ⤵</div>
+        <div className="mb-1 text-sm font-medium text-rose-400">
+          הירידה הגדולה ביותר
+        </div>
         <div className="divide-y divide-white/5">
           {fallers.map((m) => (
             <Row key={m.council} m={m} up={false} />
@@ -206,7 +211,21 @@ const SC_H = 440;
 const SC_PAD = 44;
 function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
   const { points, medEnlist, medCombat } = data;
+  // Which cities are featured (blue + labeled). Seeded with the big cities, but
+  // the user can click any dot to add or remove it.
+  const [featured, setFeatured] = React.useState<Set<string>>(() => new Set(BIG));
+  const [hover, setHover] = React.useState<string | null>(null);
   if (!points.length) return null;
+
+  const isF = (c: string) => featured.has(c);
+  const toggle = (c: string) =>
+    setFeatured((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+
   const xs = points.map((p) => p.enlist);
   const ys = points.map((p) => p.combat);
   const xMin = Math.max(0, Math.floor((Math.min(...xs) - 3) / 5) * 5);
@@ -220,11 +239,14 @@ function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
   const rad = (n: number) => 3 + Math.min(8, Math.sqrt(n) * 1.4);
   const mx = px(medEnlist);
   const my = py(medCombat);
-  const sorted = [...points].sort((a, b) => Number(a.big) - Number(b.big));
+  // Draw order: rest, then featured, then the hovered dot on top.
+  const depth = (p: CityPoint) =>
+    hover === p.council ? 2 : isF(p.council) ? 1 : 0;
+  const sorted = [...points].sort((a, b) => depth(a) - depth(b));
 
-  // De-collide the big-city labels: stack clustered ones upward, above the dots.
+  // De-collide the featured labels: stack clustered ones upward, above the dots.
   const bigLabels = points
-    .filter((p) => p.big)
+    .filter((p) => isF(p.council))
     .map((p) => ({
       council: p.council,
       x: px(p.enlist),
@@ -246,55 +268,94 @@ function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
     }
   }
 
+  const hp = hover ? points.find((p) => p.council === hover) ?? null : null;
+  // Flip the tooltip below the dot when it's too close to the top edge.
+  const tipBelow = hp ? py(hp.combat) < 70 : false;
+
   return (
     <div className="overflow-x-auto">
       <div className="relative min-w-[640px] pb-6 pl-6">
-        <svg viewBox={`0 0 ${SC_W} ${SC_H}`} className="h-auto w-full">
-          {/* median split */}
-          <line x1={mx} x2={mx} y1={SC_PAD - 8} y2={SC_H - SC_PAD} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-          <line x1={SC_PAD} x2={SC_W - SC_PAD} y1={my} y2={my} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-          {sorted.map((p) => (
-            <circle
-              key={p.council}
-              cx={px(p.enlist)}
-              cy={py(p.combat)}
-              r={rad(p.n)}
-              fill={p.big ? "#38bdf8" : "#475569"}
-              fillOpacity={p.big ? 0.95 : 0.55}
-              stroke={p.big ? "#bae6fd" : "none"}
-              strokeWidth={p.big ? 1 : 0}
+        <div className="relative">
+          <svg viewBox={`0 0 ${SC_W} ${SC_H}`} className="h-auto w-full">
+            {/* median split */}
+            <line x1={mx} x2={mx} y1={SC_PAD - 8} y2={SC_H - SC_PAD} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
+            <line x1={SC_PAD} x2={SC_W - SC_PAD} y1={my} y2={my} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
+            {sorted.map((p) => {
+              const f = isF(p.council);
+              const h = hover === p.council;
+              const r = rad(p.n);
+              return (
+                <circle
+                  key={p.council}
+                  cx={px(p.enlist)}
+                  cy={py(p.combat)}
+                  r={h ? r + 2 : r}
+                  fill={f ? "#38bdf8" : "#475569"}
+                  fillOpacity={f ? 0.95 : h ? 0.85 : 0.55}
+                  stroke={f ? "#bae6fd" : h ? "#94a3b8" : "none"}
+                  strokeWidth={f || h ? 1 : 0}
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHover(p.council)}
+                  onMouseLeave={() =>
+                    setHover((cur) => (cur === p.council ? null : cur))
+                  }
+                  onClick={() => toggle(p.council)}
+                />
+              );
+            })}
+            {bigLabels.map((l) => (
+              <g
+                key={l.council}
+                className="cursor-pointer"
+                onClick={() => toggle(l.council)}
+              >
+                {l.y < l.dotY - l.r - 9 && (
+                  <line x1={l.x} y1={l.dotY - l.r} x2={l.x} y2={l.y + 3} stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
+                )}
+                <text x={l.x} y={l.y} fill="rgba(255,255,255,0.88)" fontSize="11" textAnchor="middle">
+                  {l.council}
+                </text>
+              </g>
+            ))}
+          </svg>
+
+          {/* hover tooltip — positioned over the dot in viewBox-percent space */}
+          {hp && (
+            <div
+              className="pointer-events-none absolute z-20 w-max rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl"
+              style={{
+                left: `${(px(hp.enlist) / SC_W) * 100}%`,
+                top: `${(py(hp.combat) / SC_H) * 100}%`,
+                transform: `translate(-50%, ${
+                  tipBelow
+                    ? `${rad(hp.n) + 8}px`
+                    : `calc(-100% - ${rad(hp.n) + 8}px)`
+                })`,
+              }}
             >
-              <title>
-                {p.council} — גיוס {p.enlist}% · קרבי {p.combat}%
-              </title>
-            </circle>
-          ))}
-          {bigLabels.map((l) => (
-            <g key={l.council}>
-              {l.y < l.dotY - l.r - 9 && (
-                <line x1={l.x} y1={l.dotY - l.r} x2={l.x} y2={l.y + 3} stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
-              )}
-              <text x={l.x} y={l.y} fill="rgba(255,255,255,0.88)" fontSize="11" textAnchor="middle">
-                {l.council}
-              </text>
-            </g>
-          ))}
-        </svg>
+              <div className="font-bold text-foreground">{hp.council}</div>
+              <div className="text-muted-foreground">
+                גיוס {hp.enlist}% · קרבי {hp.combat}%
+              </div>
+              <div className="text-muted-foreground/70">{hp.n} בתי ספר</div>
+            </div>
+          )}
+        </div>
 
         {/* quadrant captions — HTML overlay (RTL-safe, never clipped) */}
         <div className="pointer-events-none absolute inset-0 text-[11px] leading-tight text-muted-foreground/55">
-          <span className="absolute right-2 top-1 text-right">מגייסת וגם לוחמת</span>
-          <span className="absolute left-2 top-1 text-left">מעטים מתגייסים — אך לוחמים</span>
-          <span className="absolute bottom-8 right-2 text-right">מתגייסים, פחות קרבי</span>
-          <span className="absolute bottom-8 left-2 text-left">נמוך בשניהם</span>
+          <span className="absolute right-2 top-1 text-right">גיוס גבוה · קרבי גבוה</span>
+          <span className="absolute left-2 top-1 text-left">גיוס נמוך · קרבי גבוה</span>
+          <span className="absolute bottom-8 right-2 text-right">גיוס גבוה · קרבי נמוך</span>
+          <span className="absolute bottom-8 left-2 text-left">גיוס נמוך · קרבי נמוך</span>
         </div>
 
         {/* axis labels */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-xs text-muted-foreground">
-          שיעור גיוס
+          שיעור גיוס מתוך המחזור
         </div>
         <div className="pointer-events-none absolute bottom-1/2 left-0 -rotate-90 text-xs text-muted-foreground">
-          שיעור קרבי
+          שיעור קרבי מתוך המתגייסים
         </div>
       </div>
     </div>
@@ -426,8 +487,7 @@ export function Lab() {
           title="אין ׳ישראל אחת׳ — כל בית ספר כנקודה"
           subtitle="כל נקודה = בית ספר אחד, צבועה לפי מגזר. ככל שימינה — שיעור השירות הקרבי גבוה יותר. הגובה הוא מספר בתי הספר באותו שיעור (טור גבוה = הרבה בתי ספר שם)."
         />
-        <Beeswarm dots={dots} />
-        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-4 text-sm text-muted-foreground">
+        <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
           {Object.entries(SECTOR_COLOR).map(([s, c]) => (
             <span key={s} className="flex items-center gap-2">
               <span className="size-3 rounded-full" style={{ background: c }} />
@@ -435,13 +495,14 @@ export function Lab() {
             </span>
           ))}
         </div>
+        <Beeswarm dots={dots} />
       </Panel>
 
       {/* 3 — two-armies scatter */}
       <Panel>
         <PanelHeader
           title="שתי צבאות באותה מדינה"
-          subtitle="כל עיר ממוקמת לפי שיעור הגיוס (אופקי) מול השירות הקרבי (אנכי). הקווים המקווקווים הם החציון — הם מחלקים את המפה לארבעה רבעים. הערים הגדולות מסומנות."
+          subtitle="כל עיר ממוקמת לפי שיעור הגיוס (אופקי) מול השירות הקרבי (אנכי). הקווים המקווקווים הם החציון — הם מחלקים את המפה לארבעה רבעים. רחפו לפרטים, ולחצו על כל עיר כדי לסמן או להסיר."
         />
         <QuadrantScatter data={scatter} />
       </Panel>
