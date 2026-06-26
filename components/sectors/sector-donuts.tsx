@@ -12,6 +12,8 @@ import {
   type SMetric,
 } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
+import { sectorLabel } from "@/lib/i18n/labels";
 
 function Donut({
   value,
@@ -67,6 +69,8 @@ export function SectorDonuts({
   gender: genderProp,
 }: { metric?: SMetric; gender?: SGender } = {}) {
   // controlled when both props are supplied (shared section filter); else standalone
+  const t = useT();
+  const locale = useLocale();
   const controlled = metricProp !== undefined && genderProp !== undefined;
   const [metricState, setMetric] = React.useState<SMetric>("enlist");
   const [genderState, setGender] = React.useState<SGender>("בנים");
@@ -76,13 +80,13 @@ export function SectorDonuts({
   return (
     <Panel>
       <PanelHeader
-        title="מדד נבחר לפי מגזר"
-        subtitle="השוואה מהירה של כל מגזר במדד שנבחר."
+        title={t.sectorDonuts.title}
+        subtitle={t.sectorDonuts.subtitle}
       >
         {!controlled && (
           <div className="flex flex-wrap gap-2">
-            <GenderToggle value={gender} onChange={setGender} />
-            <MetricTabsS value={metric} onChange={setMetric} />
+            <GenderToggle value={gender} onChange={setGender} surface="donuts" />
+            <MetricTabsS value={metric} onChange={setMetric} surface="donuts" />
           </div>
         )}
       </PanelHeader>
@@ -90,7 +94,7 @@ export function SectorDonuts({
         {SECTORS.map((s) => (
           <Donut
             key={s}
-            sector={s}
+            sector={sectorLabel(s, locale)}
             color={SECTOR_COLOR[s]}
             value={profile(s, gender)[metric]}
           />

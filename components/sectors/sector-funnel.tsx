@@ -8,11 +8,15 @@ import {
   SECTOR_COLOR,
   type SGender,
 } from "@/lib/sectors";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { sectorLabel } from "@/lib/i18n/labels";
 import { GenderToggle } from "./controls";
 
 export function SectorFunnel({
   gender: genderProp,
 }: { gender?: SGender } = {}) {
+  const t = useT();
+  const locale = useLocale();
   const controlled = genderProp !== undefined;
   const [genderState, setGender] = React.useState<SGender>("בנים");
   const gender = genderProp ?? genderState;
@@ -20,10 +24,10 @@ export function SectorFunnel({
   return (
     <Panel>
       <PanelHeader
-        title="מסלול הגיוס בכל מגזר"
-        subtitle="כמה מתוך 100 בני נוער עוברים מגיוס ללחימה ולקצונה בכל מגזר."
+        title={t.sectorFunnel.title}
+        subtitle={t.sectorFunnel.subtitle}
       >
-        {!controlled && <GenderToggle value={gender} onChange={setGender} />}
+        {!controlled && <GenderToggle value={gender} onChange={setGender} surface="funnel" />}
       </PanelHeader>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -36,14 +40,14 @@ export function SectorFunnel({
               className="rounded-xl border border-white/10 bg-white/[0.02] p-4"
             >
               <p className="mb-3 text-center text-sm font-semibold" style={{ color }}>
-                {s}
+                {sectorLabel(s, locale)}
               </p>
               <div className="space-y-2.5">
                 {stages.map((st, idx) => (
                   <div key={st.stage}>
                     <div className="mb-1 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">
-                        {st.stage}
+                        {t.funnel[st.stage]}
                       </span>
                       <span className="font-bold tabular-nums">{st.per100}</span>
                     </div>
@@ -65,7 +69,7 @@ export function SectorFunnel({
         })}
       </div>
       <p className="pt-4 text-xs text-muted-foreground">
-        כל שלב מוצג ביחס ל־100 בני נוער במחזור, לא רק ביחס למתגייסים.
+        {t.sectorFunnel.footnote}
       </p>
     </Panel>
   );

@@ -5,6 +5,8 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { topSchools, type Gender, type MetricKey } from "@/lib/data";
 import { SCHOOL_SECTOR, SECTOR_COLOR, type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { sectorLabel } from "@/lib/i18n/labels";
 
 const toG = (g: SGender): Gender => (g === "בנים" ? "m" : "f");
 
@@ -20,6 +22,8 @@ function List({
   title: string;
 }) {
   const rows = topSchools(metric, gender, dir, 10);
+  const t = useT();
+  const locale = useLocale();
   return (
     <div>
       <p className="mb-2 text-sm font-semibold text-muted-foreground">{title}</p>
@@ -35,7 +39,7 @@ function List({
               <span
                 className="size-2 shrink-0 rounded-full"
                 style={{ background: color }}
-                title={sec || "לא מסווג"}
+                title={sec ? sectorLabel(sec, locale) : t.leaderboards.unclassified}
               />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm text-foreground">{r.school}</div>
@@ -64,30 +68,32 @@ export function Leaderboards({
   const metric = metricProp ?? metricState;
   const gender = genderProp ?? genderState;
   const g = toG(gender);
+  const t = useT();
+  const locale = useLocale();
 
   return (
     <Panel>
       <PanelHeader
-        title="בתי ספר בקצוות המדד"
-        subtitle="עשרת בתי הספר עם הערכים הגבוהים והנמוכים ביותר במדד שנבחר."
+        title={t.leaderboards.title}
+        subtitle={t.leaderboards.subtitle}
       >
         {!controlled && (
           <div className="flex flex-wrap gap-2">
-            <GenderToggle value={gender} onChange={setGender} />
-            <MetricTabsS value={metric} onChange={setMetric} />
+            <GenderToggle value={gender} onChange={setGender} surface="leaderboards" />
+            <MetricTabsS value={metric} onChange={setMetric} surface="leaderboards" />
           </div>
         )}
       </PanelHeader>
       <div className="grid gap-x-8 gap-y-6 divide-y divide-white/10 md:grid-cols-2 md:divide-y-0 [&>*+*]:pt-6 md:[&>*+*]:pt-0">
-        <List metric={metric} gender={g} dir="top" title="עשרת הערכים הגבוהים ביותר" />
-        <List metric={metric} gender={g} dir="bottom" title="עשרת הערכים הנמוכים ביותר" />
+        <List metric={metric} gender={g} dir="top" title={t.leaderboards.topTitle} />
+        <List metric={metric} gender={g} dir="bottom" title={t.leaderboards.bottomTitle} />
       </div>
       <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-        <span>הנקודה הצבעונית מציינת את המגזר:</span>
+        <span>{t.leaderboards.legend}</span>
         {Object.entries(SECTOR_COLOR).map(([s, c]) => (
           <span key={s} className="flex items-center gap-1">
             <span className="size-2 rounded-full" style={{ background: c }} />
-            {s}
+            {sectorLabel(s, locale)}
           </span>
         ))}
       </div>

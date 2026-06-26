@@ -30,18 +30,12 @@ export const SFIRST = SYEARS[0];
 export const ROWS_S = data.byYearSector as SectorRow[];
 export const SUBGROUPS = data.subgroups as SubgroupRow[];
 
-export const S_METRICS: { key: SMetric; label: string; short: string }[] = [
-  { key: "enlist", label: "שיעור גיוס", short: "🪖 גיוס" },
-  {
-    key: "combat",
-    label: "שירות קרבי מתוך מתגייסים",
-    short: "⚔️ קרבי",
-  },
-  {
-    key: "officer",
-    label: "קצונה מתוך מתגייסים",
-    short: "🎖️ קצונה",
-  },
+/** Metric keys shown in the sector controls, in display order. Labels come
+ *  from the active locale's dictionary (see lib/i18n/dictionaries.ts). */
+export const S_METRICS: { key: SMetric }[] = [
+  { key: "enlist" },
+  { key: "combat" },
+  { key: "officer" },
 ];
 
 export const SECTOR_COLOR: Record<string, string> = {
@@ -76,10 +70,12 @@ export function trend(metric: SMetric, gender: SGender) {
   });
 }
 
-export const ABS_METRICS: { key: AbsMetric; label: string; rate: SMetric }[] = [
-  { key: "nFighters", label: "⚔️ לוחמים", rate: "combat" },
-  { key: "nOfficers", label: "🎖️ קצינים", rate: "officer" },
-  { key: "nEnlistees", label: "🪖 מתגייסים", rate: "enlist" },
+/** Absolute-count metrics and the rate each one pairs with. Labels come from
+ *  the active locale's dictionary (absMetrics / absNoun). */
+export const ABS_METRICS: { key: AbsMetric; rate: SMetric }[] = [
+  { key: "nFighters", rate: "combat" },
+  { key: "nOfficers", rate: "officer" },
+  { key: "nEnlistees", rate: "enlist" },
 ];
 
 /** Absolute contribution per sector for one gender + metric (default latest year):
@@ -148,9 +144,9 @@ export function funnel(sector: string, gender: SGender, year = SLATEST) {
   const per = (rate: number | null) =>
     Math.round(((e * (rate ?? 0)) / 100) * 10) / 10;
   return [
-    { stage: "מתגייסים", per100: Math.round(e * 10) / 10 },
-    { stage: "קרביים", per100: per(p.combat) },
-    { stage: "קצינים", per100: per(p.officer) },
+    { stage: "enlist" as const, per100: Math.round(e * 10) / 10 },
+    { stage: "combat" as const, per100: per(p.combat) },
+    { stage: "officer" as const, per100: per(p.officer) },
   ];
 }
 

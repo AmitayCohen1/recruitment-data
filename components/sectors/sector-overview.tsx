@@ -6,21 +6,23 @@ import { SectorTrend } from "./sector-trend";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { FilterBar, FilterField } from "./filter-bar";
 import type { SGender, SMetric } from "@/lib/sectors";
+import { useT } from "@/components/i18n/locale-provider";
 
 /** Sector overview: a top toolbar of controls drives both the per-sector
  *  snapshot (donuts) and the 2018→2024 trend line — filter once. */
 export function SectorOverview() {
+  const t = useT();
   const [metric, setMetric] = React.useState<SMetric>("enlist");
   const [gender, setGender] = React.useState<SGender>("בנים");
 
   return (
     <>
       <FilterBar>
-        <FilterField label="מגדר">
-          <GenderToggle value={gender} onChange={setGender} />
+        <FilterField label={t.common.fieldGender}>
+          <GenderToggle value={gender} onChange={setGender} surface="overview" />
         </FilterField>
-        <FilterField label="מדד">
-          <MetricTabsS value={metric} onChange={setMetric} />
+        <FilterField label={t.common.fieldMetric}>
+          <MetricTabsS value={metric} onChange={setMetric} surface="overview" />
         </FilterField>
       </FilterBar>
       <SectorDonuts metric={metric} gender={gender} />

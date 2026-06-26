@@ -11,29 +11,30 @@ import {
   type SGender,
 } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { sectorLabel } from "@/lib/i18n/labels";
 
 export function Contribution({
   gender: genderProp,
 }: { gender?: SGender } = {}) {
+  const t = useT();
+  const locale = useLocale();
   const controlled = genderProp !== undefined;
   const [metric, setMetric] = React.useState<AbsMetric>("nFighters");
   const [genderState, setGender] = React.useState<SGender>("בנים");
   const gender = genderProp ?? genderState;
   const rows = contribution(metric, gender);
-  const noun = ABS_METRICS.find((m) => m.key === metric)!.label.replace(
-    /^\S+\s/,
-    "",
-  );
+  const noun = t.absNoun[metric];
 
   return (
     <Panel>
       <PanelHeader
-        title="תרומה בפועל במספרים מוחלטים"
-        subtitle={`חלקו של כל מגזר מכלל ה${noun} בארץ — שיעור גבוה אינו בהכרח תרומה גדולה.`}
+        title={t.contribution.title}
+        subtitle={t.contribution.subtitle(noun)}
       >
         <div className="flex flex-wrap gap-2">
           {!controlled && (
-            <GenderToggle value={gender} onChange={setGender} />
+            <GenderToggle value={gender} onChange={setGender} surface="contribution" />
           )}
           <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
             {ABS_METRICS.map((m) => (
@@ -48,7 +49,7 @@ export function Contribution({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {m.label}
+                {t.absMetrics[m.key]}
               </button>
             ))}
           </div>
@@ -62,7 +63,7 @@ export function Contribution({
             key={r.sector}
             className="flex items-center justify-center"
             style={{ width: `${r.share}%`, background: SECTOR_COLOR[r.sector] }}
-            title={`${r.sector}: ${r.value.toLocaleString("he")} (${r.share}%)`}
+            title={`${sectorLabel(r.sector, locale)}: ${r.value.toLocaleString("he")} (${r.share}%)`}
           >
             {r.share >= 8 && (
               <span className="text-xs font-bold tabular-nums text-black/75">
@@ -89,11 +90,11 @@ export function Contribution({
                 className="shrink-0"
                 style={{ color: SECTOR_COLOR[r.sector] }}
               >
-                {r.sector}
+                {sectorLabel(r.sector, locale)}
               </span>
               {r.rate != null && (
                 <span className="min-w-0 truncate text-xs tabular-nums text-muted-foreground">
-                  ({r.rate}% מהמתגייסים)
+                  {t.contribution.ofEnlistees(r.rate)}
                 </span>
               )}
             </span>
@@ -108,8 +109,7 @@ export function Contribution({
       </ul>
 
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        מגזר גדול עם שיעור בינוני עשוי לספק יותר לוחמים ממגזר קטן עם שיעור גבוה.
-        המספרים המוחלטים מוערכים לפי גודל המחזור ושיעור המדד.
+        {t.contribution.footnote}
       </p>
     </Panel>
   );

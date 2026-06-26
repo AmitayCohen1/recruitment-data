@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ChartExport } from "./chart-export";
+import { useT } from "@/components/i18n/locale-provider";
 
 /** Lets a PanelHeader grab its enclosing Panel's DOM node (for image export). */
 const PanelNodeCtx = React.createContext<(() => HTMLElement | null) | null>(
@@ -46,7 +47,8 @@ export function PanelHeader({
   noExport?: boolean;
 }) {
   const getNode = React.useContext(PanelNodeCtx);
-  const exportName = typeof title === "string" ? title : "תרשים";
+  const t = useT();
+  const exportName = typeof title === "string" ? title : t.panel.exportFallback;
   return (
     <div
       className={cn(

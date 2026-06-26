@@ -7,22 +7,41 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Popover } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import {
-  GENDER_LABEL,
   YEARS,
   LATEST,
   type CompactRow,
   type Gender,
 } from "@/lib/data";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
+import { genderLabelFromCode } from "@/lib/i18n/labels";
+import { htmlLang } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type SortKey = "e" | "cb" | "o" | "m" | "s";
 
-const COLUMNS: { key: SortKey; label: string; short: string; metric: boolean }[] = [
-  { key: "s", label: "בית ספר", short: "בית ספר", metric: false },
-  { key: "e", label: "🪖 שיעור גיוס", short: "🪖 גיוס", metric: true },
-  { key: "cb", label: "⚔️ שירות קרבי מתוך מתגייסים", short: "⚔️ קרבי", metric: true },
-  { key: "o", label: "🎖️ קצונה מתוך מתגייסים", short: "🎖️ קצונה", metric: true },
-  { key: "m", label: "שירות משמעותי", short: "משמעותי", metric: true },
+const COLUMNS: { key: SortKey; metric: boolean }[] = [
+  { key: "s", metric: false },
+  { key: "e", metric: true },
+  { key: "cb", metric: true },
+  { key: "o", metric: true },
+  { key: "m", metric: true },
 ];
+
+/** Localized [long, short] header labels per column. */
+function colLabels(key: SortKey, t: Dictionary): [string, string] {
+  switch (key) {
+    case "s":
+      return [t.explorer.colSchool, t.explorer.colSchool];
+    case "e":
+      return [t.metrics.enlist.long, t.metrics.enlist.short];
+    case "cb":
+      return [t.metrics.combat.long, t.metrics.combat.short];
+    case "o":
+      return [t.metrics.officer.long, t.metrics.officer.short];
+    case "m":
+      return [t.explorer.colMeaning, t.explorer.colMeaningShort];
+  }
+}
 
 function pct(v: number | null) {
   return v === null ? "—" : `${v.toFixed(1)}%`;
@@ -44,6 +63,8 @@ export function Explorer({
   rows: CompactRow[];
   zeroRows?: CompactRow[];
 }) {
+  const t = useT();
+  const locale = useLocale();
   const [year, setYear] = React.useState<number>(LATEST);
   const [gender, setGender] = React.useState<Gender | "all">("all");
   const [q, setQ] = React.useState("");
@@ -98,19 +119,19 @@ export function Explorer({
   return (
     <Panel>
       <PanelHeader
-        title="טבלת השוואה לפי בית ספר"
-        subtitle="חיפוש וסינון בתי ספר לפי שנה, מגדר, רשות ומדדי הגיוס המרכזיים."
+        title={t.explorer.title}
+        subtitle={t.explorer.subtitle}
       />
 
       <div className="mb-4 space-y-2">
         {/* search — its own full-width row */}
         <div className="relative">
-          <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="חיפוש לפי שם בית ספר או רשות…"
-            className={cn(inputCls, "w-full pr-9")}
+            placeholder={t.explorer.searchPlaceholder}
+            className={cn(inputCls, "w-full ps-9")}
           />
         </div>
 
@@ -148,14 +169,18 @@ export function Explorer({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {g === "all" ? "הכל" : g === "m" ? "👨 בנים" : "👩 בנות"}
+                {g === "all"
+                  ? t.explorer.genderAll
+                  : g === "m"
+                    ? t.explorer.genderBoys
+                    : t.explorer.genderGirls}
               </button>
             ))}
           </div>
 
           {zeroRows.length > 0 && (
             <Popover
-              ariaLabel="עוד מסננים"
+              ariaLabel={t.explorer.moreFilters}
               triggerClassName={cn(
                 "relative inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:text-foreground",
                 showZero
@@ -178,7 +203,7 @@ export function Explorer({
                   onChange={(e) => setShowZero(e.target.checked)}
                   className="size-4 accent-emerald-400"
                 />
-                הצגת בתי ספר ללא מתגייסים
+                {t.explorer.showZero}
               </label>
             </Popover>
           )}
@@ -189,12 +214,14 @@ export function Explorer({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 bg-white/3 text-muted-foreground">
-              {COLUMNS.map((c) => (
+              {COLUMNS.map((c) => {
+                const [long, short] = colLabels(c.key, t);
+                return (
                 <th
                   key={c.key}
                   className={cn(
                     "cursor-pointer select-none whitespace-nowrap px-2.5 py-2.5 sm:px-3 font-medium",
-                    c.metric ? "text-center" : "text-right",
+                    c.metric ? "text-center" : "text-start",
                   )}
                   onClick={() => setSortKey(c.key)}
                 >
@@ -204,8 +231,8 @@ export function Explorer({
                       c.metric && "justify-center",
                     )}
                   >
-                    <span className="sm:hidden">{c.short}</span>
-                    <span className="hidden sm:inline">{c.label}</span>
+                    <span className="sm:hidden">{short}</span>
+                    <span className="hidden sm:inline">{long}</span>
                     {sort === c.key &&
                       (dir === "asc" ? (
                         <ArrowUp className="size-3" />
@@ -214,9 +241,12 @@ export function Explorer({
                       ))}
                   </span>
                 </th>
-              ))}
+                );
+              })}
               {gender === "all" && (
-                <th className="px-2.5 py-2.5 sm:px-3 text-center font-medium">מגדר</th>
+                <th className="px-2.5 py-2.5 sm:px-3 text-center font-medium">
+                  {t.explorer.genderHeader}
+                </th>
               )}
             </tr>
           </thead>
@@ -226,7 +256,7 @@ export function Explorer({
                 key={`${r.k}-${r.g}`}
                 className="border-b border-white/5 last:border-0 hover:bg-white/3"
               >
-                <td className="px-2.5 py-2.5 sm:px-3 text-right">
+                <td className="px-2.5 py-2.5 sm:px-3 text-start">
                   <div className="font-medium text-foreground">{r.s}</div>
                   {r.c && (
                     <div className="text-xs text-muted-foreground">{r.c}</div>
@@ -246,7 +276,7 @@ export function Explorer({
                 </td>
                 {gender === "all" && (
                   <td className="px-2.5 py-2.5 sm:px-3 text-center text-muted-foreground">
-                    {GENDER_LABEL[r.g]}
+                    {genderLabelFromCode(r.g, locale)}
                   </td>
                 )}
               </tr>
@@ -256,8 +286,10 @@ export function Explorer({
       </div>
       {filtered.length > LIMIT && (
         <p className="pt-3 text-center text-xs text-muted-foreground">
-          מוצגים {LIMIT} מתוך {filtered.length.toLocaleString("he")} תוצאות.
-          צמצמו באמצעות חיפוש, שנה או מגדר.
+          {t.explorer.resultsNote(
+            LIMIT,
+            filtered.length.toLocaleString(htmlLang(locale)),
+          )}
         </p>
       )}
     </Panel>

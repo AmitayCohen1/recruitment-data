@@ -1,36 +1,28 @@
+"use client";
+
 import { Download, FileSpreadsheet } from "lucide-react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
+import { useT } from "@/components/i18n/locale-provider";
 
-type FileItem = {
-  href: string;
-  title: string;
-  desc: string;
-};
-
-const FILES: FileItem[] = [
-  {
-    href: "/full-recruitment-data.xlsx",
-    title: "קובץ נתונים מצרפי מלא",
-    desc: "פילוח לפי מגזר, תת-קבוצה, אזור ומגדר — כולל שיעורי גיוס, קרבי, קצונה ומספרים מוחלטים לשנים 2018 ו־2024.",
-  },
-  {
-    href: "/Recruitment-data-by-school.xlsx",
-    title: "קובץ נתונים ברמת בית ספר",
-    desc: "נתוני המקור לכל בית ספר בנפרד, כולל רשות, שנה, מגדר ומדדי הגיוס הזמינים.",
-  },
+/** Download hrefs, paired by index with the localized titles/descriptions. */
+const HREFS = [
+  "/full-recruitment-data.xlsx",
+  "/Recruitment-data-by-school.xlsx",
 ];
 
 export function FullData() {
+  const t = useT();
+  const files = t.fullData.items.map((item, i) => ({ ...item, href: HREFS[i] }));
   return (
     <Panel>
       <PanelHeader
-        title="הורדת קובצי הנתונים"
+        title={t.fullData.title}
         noExport
-        subtitle="קובצי Excel להמשך בדיקה, הצלבה או ניתוח עצמאי של הנתונים."
+        subtitle={t.fullData.subtitle}
       />
 
       <ul className="space-y-3">
-        {FILES.map((f) => (
+        {files.map((f) => (
           <li key={f.href}>
             <a
               href={f.href}
@@ -53,7 +45,7 @@ export function FullData() {
       </ul>
 
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        הנתונים התקבלו מצה״ל במסגרת חוק חופש המידע, באדיבות התנועה לחופש המידע.
+        {t.fullData.footnote}
       </p>
     </Panel>
   );

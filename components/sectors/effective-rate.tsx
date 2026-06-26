@@ -4,12 +4,16 @@ import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
 import { effective, SECTOR_COLOR, type SGender } from "@/lib/sectors";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { sectorLabel } from "@/lib/i18n/labels";
 import { GenderToggle } from "./controls";
 
 type EffMetric = "combat" | "officer";
 export function EffectiveRate({
   gender: genderProp,
 }: { gender?: SGender } = {}) {
+  const t = useT();
+  const locale = useLocale();
   const controlled = genderProp !== undefined;
   const [metric, setMetric] = React.useState<EffMetric>("combat");
   const [genderState, setGender] = React.useState<SGender>("בנים");
@@ -20,12 +24,12 @@ export function EffectiveRate({
   return (
     <Panel>
       <PanelHeader
-        title="לוחמים וקצינים מתוך 100 בני נוער"
-        subtitle="כמה מכל 100 בני נוער מגיעים בפועל לשירות קרבי או לקצונה בכל מגזר."
+        title={t.effectiveRate.title}
+        subtitle={t.effectiveRate.subtitle}
       >
         <div className="flex flex-wrap gap-2">
           {!controlled && (
-            <GenderToggle value={gender} onChange={setGender} />
+            <GenderToggle value={gender} onChange={setGender} surface="effective-rate" />
           )}
           <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
             {(["combat", "officer"] as EffMetric[]).map((k) => (
@@ -40,7 +44,7 @@ export function EffectiveRate({
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                {k === "combat" ? "⚔️ קרבי" : "🎖️ קצונה"}
+                {k === "combat" ? t.metrics.combat.short : t.metrics.officer.short}
               </button>
             ))}
           </div>
@@ -61,7 +65,7 @@ export function EffectiveRate({
                     {i + 1}
                   </span>
                   <span className="truncate" style={{ color }}>
-                    {r.sector}
+                    {sectorLabel(r.sector, locale)}
                   </span>
                 </span>
                 <span className="flex shrink-0 items-baseline gap-2">
@@ -84,7 +88,7 @@ export function EffectiveRate({
         })}
       </ul>
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        חישוב המדד: שיעור גיוס מתוך המחזור × שיעור התפקיד מתוך המתגייסים.
+        {t.effectiveRate.footnote}
       </p>
     </Panel>
   );

@@ -11,15 +11,12 @@ import {
 import {
   SECTORS,
   SECTOR_COLOR,
-  S_METRICS,
   trend,
   type SGender,
   type SMetric,
 } from "@/lib/sectors";
-
-const config = Object.fromEntries(
-  SECTORS.map((s) => [s, { label: s, color: SECTOR_COLOR[s] }]),
-) satisfies ChartConfig;
+import { useLocale, useT } from "@/components/i18n/locale-provider";
+import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 
 export function SectorTrend({
   metric,
@@ -28,14 +25,19 @@ export function SectorTrend({
   metric: SMetric;
   gender: SGender;
 }) {
+  const t = useT();
+  const locale = useLocale();
   const data = trend(metric, gender);
-  const label = S_METRICS.find((m) => m.key === metric)!.label;
+  const label = t.metrics[metric].label;
+  const config = Object.fromEntries(
+    SECTORS.map((s) => [s, { label: sectorLabel(s, locale), color: SECTOR_COLOR[s] }]),
+  ) satisfies ChartConfig;
 
   return (
     <Panel>
       <PanelHeader
-        title="מ‑2018 ל‑2024"
-        subtitle={`המגמה בכל מגזר לאורך התקופה · ${label} · ${gender}`}
+        title={t.trend.title}
+        subtitle={t.trend.subtitle(label, genderLabel(gender, locale))}
       />
       <ChartContainer config={config} className="h-[300px] w-full">
         <LineChart data={data} margin={{ left: 4, right: 16, top: 12, bottom: 4 }}>
@@ -72,7 +74,7 @@ export function SectorTrend({
         </LineChart>
       </ChartContainer>
       <ChipLegend
-        items={SECTORS.map((s) => ({ label: s, color: SECTOR_COLOR[s] }))}
+        items={SECTORS.map((s) => ({ label: sectorLabel(s, locale), color: SECTOR_COLOR[s] }))}
       />
     </Panel>
   );

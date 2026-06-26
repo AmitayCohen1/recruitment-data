@@ -3,9 +3,12 @@
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/analytics";
 import { R_SECTORS, REGION_COLOR, regionView } from "@/lib/regions";
-import { S_METRICS, type SGender, type SMetric } from "@/lib/sectors";
+import { type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { regionLabel, sectorFilterLabel } from "@/lib/i18n/labels";
 
 export function RegionView({
   metric: metricProp,
@@ -17,21 +20,23 @@ export function RegionView({
   const metric = metricProp ?? metricState;
   const gender = genderProp ?? genderState;
   const [sector, setSector] = React.useState<string>("הכל");
+  const t = useT();
+  const locale = useLocale();
 
   const rows = regionView(sector, gender, metric);
   const max = Math.max(...rows.map((r) => r.value), 1);
-  const label = S_METRICS.find((m) => m.key === metric)?.label ?? "";
+  const label = t.metrics[metric].label;
 
   return (
     <Panel>
       <PanelHeader
-        title="דירוג אזורים לפי מדד"
-        subtitle={`השוואה בין אזורים גאוגרפיים · ${label}`}
+        title={t.regionView.title}
+        subtitle={t.regionView.subtitle(label)}
       >
         {!controlled && (
           <div className="flex flex-wrap gap-2">
-            <GenderToggle value={gender} onChange={setGender} />
-            <MetricTabsS value={metric} onChange={setMetric} />
+            <GenderToggle value={gender} onChange={setGender} surface="region" />
+            <MetricTabsS value={metric} onChange={setMetric} surface="region" />
           </div>
         )}
       </PanelHeader>
@@ -42,7 +47,10 @@ export function RegionView({
           <button
             key={s}
             type="button"
-            onClick={() => setSector(s)}
+            onClick={() => {
+              if (sector !== s) track("sector_filter", { surface: "region", sector: s });
+              setSector(s);
+            }}
             className={cn(
               "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
               sector === s
@@ -50,14 +58,14 @@ export function RegionView({
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {s}
+            {sectorFilterLabel(s, locale)}
           </button>
         ))}
       </div>
 
       {rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          אין נתונים מספיקים עבור צירוף זה.
+          {t.common.noData}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -72,7 +80,7 @@ export function RegionView({
                   className="w-24 shrink-0 truncate text-sm sm:w-32"
                   style={{ color }}
                 >
-                  {r.region}
+                  {regionLabel(r.region, locale)}
                 </span>
                 <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
                   <div
@@ -92,7 +100,7 @@ export function RegionView({
         </ul>
       )}
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        רוחב העמודה יחסי לערך הגבוה ביותר בתצוגה הנוכחית.
+        {t.regionView.footnote}
       </p>
     </Panel>
   );

@@ -18,11 +18,6 @@ export type Row = {
 
 const ROWS = raw as Row[];
 
-export const GENDER_LABEL: Record<Gender, string> = {
-  m: "בנים",
-  f: "בנות",
-};
-
 export const YEARS = Array.from(new Set(ROWS.map((r) => r.year))).sort(
   (a, b) => a - b,
 );

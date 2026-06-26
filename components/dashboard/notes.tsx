@@ -1,42 +1,19 @@
-import { Panel, PanelHeader } from "@/components/ui/panel";
+"use client";
 
-const NOTES: { label: string; text: string }[] = [
-  {
-    label: "שנתון",
-    text: "נתוני 2024 מתייחסים לבוגרי כיתה י״ב משנתון 2002–2003, כלומר כשלוש שנים לאחר סיום הלימודים.",
-  },
-  {
-    label: "מקור הנתונים",
-    text: "נתוני הגיוס התקבלו מצה״ל (מערכת מוסדות וערים, לשכת רחט) במסגרת חוק חופש המידע, באדיבות התנועה לחופש המידע.",
-  },
-  {
-    label: "שיטת חישוב",
-    text: "שיעור הגיוס מחושב מתוך מחזור תלמידי י״ב. שיעורי קרבי וקצונה מחושבים מתוך המתגייסים בלבד: סך הלוחמים או הקצינים חלקי סך המתגייסים. הנתונים המצרפיים תואמים לקובץ ״נתוני גיוס מלאים״ שבלשונית ״מקורות נתונים״.",
-  },
-  {
-    label: "בתי ספר ללא גיוס",
-    text: "בתי ספר שמהם לא התגייס איש (142 ב־2024) אינם נכללים בממוצעים המרכזיים; הכללתם הייתה מורידה את שיעור הגיוס, בעיקר במגזר החרדי. אפשר להציג אותם בטבלת בתי הספר והם מופיעים גם בקובץ המלא להורדה.",
-  },
-  {
-    label: "מגזר חרדי",
-    text: "שיעור הגיוס במגזר החרדי מוערך ביתר, בשל בתי ספר רבים שצה״ל אינו מכיר. בהנחה שמהם לא מתגייסים כלל, שיעור הגיוס לגברים עומד על כ־8.5% (2024).",
-  },
-  {
-    label: "דרוזי",
-    text: "קבוצת ׳דרוזי׳ כוללת גם בתי ספר ערביים ומעורבים (נוצרים ומוסלמים), ולא רק דרוזים.",
-  },
-];
+import { Panel, PanelHeader } from "@/components/ui/panel";
+import { useT } from "@/components/i18n/locale-provider";
 
 export function Notes() {
+  const t = useT();
   return (
     <Panel className="mt-8">
       <PanelHeader
-        title="הערות, מקורות והבהרות"
+        title={t.notes.title}
         noExport
-        subtitle="הגדרות המדדים, מקור הנתונים וההסתייגויות שחשוב להכיר לפני השוואה."
+        subtitle={t.notes.subtitle}
       />
       <dl className="divide-y divide-white/5">
-        {NOTES.map((n) => (
+        {t.notes.items.map((n) => (
           <div
             key={n.label}
             className="flex flex-col gap-0.5 py-3 first:pt-0 last:pb-0 sm:flex-row sm:gap-4"

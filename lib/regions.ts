@@ -27,6 +27,15 @@ export const REGION_COLOR: Record<string, string> = {
   ירושלים: "#f472b6", // pink
 };
 
+/** English labels for the Hebrew region keys (keys stay Hebrew — they index data). */
+export const REGION_EN: Record<string, string> = {
+  מרכז: "Center",
+  פריפריה: "Periphery",
+  "כפרי/קיבוצים": "Rural / Kibbutzim",
+  התנחלויות: "Settlements",
+  ירושלים: "Jerusalem",
+};
+
 /** Region ranking for a sector + gender by the chosen rate metric (raw %),
  *  using the same metric vocabulary as the rest of the dashboard. */
 export function regionView(

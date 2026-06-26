@@ -28,6 +28,7 @@ OUT = os.path.join(HERE, "app", "data")
 PUBLISHED = os.path.join(HERE, "public", "full-recruitment-data.xlsx")  # "נתוני גיוס מלאים"
 RECRUIT = os.path.join(HERE, "Recruitment-data-by-school.xlsx")
 CLASS_CSV = os.path.join(HERE, "full_data_with_classification.csv")
+MOSDOT = os.path.join(HERE, "mosdot.xlsx")
 
 RAW_YEARS = list(range(2018, 2025))   # raw per-school data spans all years
 FILE_YEARS = [2018, 2024]             # the only years the published file covers
@@ -45,6 +46,23 @@ ALL = "— הכל —"
 
 def r1(x):
     return None if x is None else round(x, 1)
+
+
+# Same municipality, inconsistent spelling across the yearly sheets (spacing /
+# hyphen / quote variants). Collapse each to one canonical name so a city isn't
+# split into two rows in the by-city view (and so search + downloads agree).
+COUNCIL_CANON = {
+    "תלאביב יפו": "תל אביב - יפו",
+    "ראשוןלציון": "ראשון לציון",
+    "כפר חבד": 'כפר חב"ד',
+}
+
+
+def canon_council(c):
+    if c is None or (isinstance(c, float) and pd.isna(c)):
+        return None
+    c = str(c).strip()
+    return COUNCIL_CANON.get(c, c)
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +137,45 @@ def load_classification():
     return cls
 
 
+def supervision_sector(pik, mig):
+    """Map a school's Education-Ministry supervision (פיקוח) / sector (מגזר) to one
+    of our display sectors — used to FILL GAPS where the קבוצה classification is
+    missing. Non-Jewish streams collapse to 'דרוזי' (as elsewhere); state→חילוני,
+    state-religious (חמ״ד)→דתי לאומי, Haredi→חרדי. Returns None if unknown."""
+    if mig in ("ערבי", "בדואי", "דרוזי", "צרקסי"):
+        return "דרוזי"
+    p = (pik or "").replace('"', "")
+    if p == "חמד":
+        return "דתי לאומי"
+    if p == "ממ":
+        return "חילוני"
+    if "חרדי" in p:
+        return "חרדי"
+    return None
+
+
+def load_supervision():
+    """{school_key: sector} from mosdot.xlsx, for filling classification gaps."""
+    wb = openpyxl.load_workbook(MOSDOT, read_only=True, data_only=True)
+    ws = wb["mosdot"]
+    rows = ws.iter_rows(values_only=True)
+    hdr = list(next(rows))
+    ik, ip, im = (hdr.index("סמל מוסד"), hdr.index("פיקוח"), hdr.index("מגזר"))
+    out = {}
+    for r in rows:
+        k = r[ik]
+        if k is None:
+            continue
+        try:
+            k = int(k)
+        except (TypeError, ValueError):
+            continue
+        s = supervision_sector(r[ip], r[im])
+        if s:
+            out[k] = s
+    return out
+
+
 def load_recruitment():
     frames = []
     for yr in RAW_YEARS:
@@ -146,7 +203,7 @@ def main():
     # ---- recruitment.json / zero-schools.json (raw, disjoint) ---------------
     recruitment = [
         {"year": int(r.year), "gender": r.gender, "key": int(r.school_key),
-         "school": r.school, "council": r.council,
+         "school": r.school, "council": canon_council(r.council),
          "enlist": round(float(r.enlist), 2),
          "combat": None if pd.isna(r.combat) else round(float(r.combat), 2),
          "officer": None if pd.isna(r.officer) else round(float(r.officer), 2),
@@ -156,7 +213,7 @@ def main():
     ]
     zero = [
         {"y": int(r.year), "g": r.gender, "k": int(r.school_key),
-         "s": r.school, "c": r.council}
+         "s": r.school, "c": canon_council(r.council)}
         for r in rec.itertuples(index=False)
         if not pd.isna(r.enlist) and float(r.enlist) == 0
     ]
@@ -195,6 +252,19 @@ def main():
         for r in cls.itertuples(index=False)
         if r.sector in SECTORS
     }
+    # fill gaps from the Education-Ministry supervision for schools that have
+    # recruitment data but no קבוצה classification (so the by-city sector
+    # breakdown covers them instead of dropping them into "אחר").
+    supervision = load_supervision()
+    rec_keys = {int(r.school_key) for r in rec.itertuples(index=False)}
+    filled = 0
+    for k in rec_keys:
+        sk = str(k)
+        if sk not in school_sector and supervision.get(k) in SECTORS:
+            school_sector[sk] = supervision[k]
+            filled += 1
+    print(f"  schoolSector: {len(school_sector)} schools "
+          f"(+{filled} filled from supervision)")
 
     sectors_json = {
         "sectors": SECTORS, "years": FILE_YEARS,

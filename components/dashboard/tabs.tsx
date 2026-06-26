@@ -75,7 +75,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
                   className={cn(
                     "flex w-full items-center gap-2 px-4 py-3.5 text-right text-base font-medium transition-colors",
                     active === t.id
-                      ? "bg-white/10 text-foreground"
+                      ? "bg-white/15 text-white"
                       : "text-muted-foreground hover:bg-white/5",
                   )}
                 >
@@ -105,7 +105,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
                 className={cn(
                   "-mb-px flex items-center gap-2 whitespace-nowrap border-b-2 pb-3 pt-1 text-base font-semibold transition-colors",
                   active === t.id
-                    ? "border-foreground text-foreground"
+                    ? "border-white text-white"
                     : "border-transparent text-muted-foreground hover:text-foreground",
                 )}
               >
