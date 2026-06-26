@@ -168,22 +168,31 @@ export function ChartExport({
     }
   }
 
-  const item =
+  // Desktop dropdown items use classic shadcn DropdownMenu sizing (compact,
+  // rounded-sm, text-sm, focus:bg-accent). The mobile sheet keeps larger,
+  // touch-friendly targets.
+  const itemDesktop =
+    "relative flex w-full cursor-pointer select-none items-center gap-2 whitespace-nowrap rounded-sm px-2 py-1.5 text-sm text-popover-foreground outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground disabled:pointer-events-none disabled:opacity-50";
+  const itemSheet =
     "flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-start text-base font-medium text-foreground transition-colors hover:bg-white/10 disabled:opacity-50";
 
   // shared action items — rendered into the desktop dropdown and the mobile sheet
-  const actions = (
+  const renderActions = (
+    itemClass: string,
+    iconClass: string,
+    xClass: string,
+  ) => (
     <>
-      <button type="button" className={item} onClick={download} disabled={busy}>
-        <Download className="size-5 text-muted-foreground" />
+      <button type="button" className={itemClass} onClick={download} disabled={busy}>
+        <Download className={iconClass} />
         {t.chartExport.downloadPng}
       </button>
-      <button type="button" className={item} onClick={share} disabled={busy}>
-        <Share2 className="size-5 text-muted-foreground" />
+      <button type="button" className={itemClass} onClick={share} disabled={busy}>
+        <Share2 className={iconClass} />
         {t.chartExport.share}
       </button>
-      <button type="button" className={item} onClick={tweet} disabled={busy}>
-        <span className="w-5 text-center text-lg text-muted-foreground">𝕏</span>
+      <button type="button" className={itemClass} onClick={tweet} disabled={busy}>
+        <span className={xClass}>𝕏</span>
         {t.chartExport.shareX} {busy && "…"}
       </button>
       {xIntent && (
@@ -224,8 +233,12 @@ export function ChartExport({
 
       {/* Desktop: anchored dropdown */}
       {open && (
-        <div className="absolute end-0 top-full z-30 mt-1.5 hidden min-w-60 rounded-2xl border border-white/10 bg-background p-2 shadow-xl shadow-black/40 sm:block">
-          {actions}
+        <div className="absolute end-0 top-full z-30 mt-1.5 hidden min-w-[12rem] overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md sm:block">
+          {renderActions(
+            itemDesktop,
+            "size-4 shrink-0 text-muted-foreground",
+            "w-4 shrink-0 text-center text-sm text-muted-foreground",
+          )}
         </div>
       )}
 
@@ -252,7 +265,11 @@ export function ChartExport({
               }`}
             >
               <div className="mx-auto mb-3 mt-1.5 h-1.5 w-12 rounded-full bg-white/25" />
-              {actions}
+              {renderActions(
+                itemSheet,
+                "size-5 shrink-0 text-muted-foreground",
+                "w-5 shrink-0 text-center text-lg text-muted-foreground",
+              )}
             </div>
           </div>,
           document.body,

@@ -44,6 +44,41 @@ const he = {
     subtitle:
       "דרכים לא שגרתיות להסתכל על אותם נתונים. ניסיוני — דברים נשברים פה לפעמים.",
   },
+  lab: {
+    waffleTitle: "מה קורה מתוך 100 בני נוער?",
+    waffleSubtitle:
+      "בכל מגזר, כל ריבוע מייצג בן או בת נוער מתוך 100. כחול חלש = התגייסו, כחול מלא = שירתו בקרבי, סגול = הגיעו לקצונה.",
+    per100: "מתוך 100 בני נוער",
+    enlisted: "גויסו",
+    combat: "קרביים",
+    officer: "קצינים",
+    histTitle: "כל בית ספר כנקודה",
+    histSubtitle:
+      "כל נקודה היא בית ספר אחד בשנה האחרונה, צבועה לפי מגזר. ימינה = שיעור קרבי גבוה יותר; טור גבוה = הרבה בתי ספר סביב אותו שיעור.",
+    scatterTitle: "גיוס מול שירות קרבי ברשויות",
+    scatterSubtitle:
+      "כל נקודה היא רשות עם 3+ בתי ספר. ימינה = יותר מתגייסים מתוך המחזור; למעלה = יותר קרביים מתוך המתגייסים. הקווים המקווקווים מסמנים את החציון, ולחיצה על נקודה מציגה או מסתירה את שם הרשות.",
+    qTopRight: "גיוס גבוה · קרבי גבוה",
+    qTopLeft: "גיוס נמוך · קרבי גבוה",
+    qBottomRight: "גיוס גבוה · קרבי נמוך",
+    qBottomLeft: "גיוס נמוך · קרבי נמוך",
+    axisEnlist: "שיעור גיוס מתוך המחזור",
+    axisCombat: "שיעור קרבי מתוך המתגייסים",
+    rank: "מקום",
+    scatterTip: (e: number | string, c: number | string) =>
+      `גיוס ${e}% · קרבי ${c}%`,
+    schools: (n: number | string) => `${n} בתי ספר`,
+    bumpTitle: (a: number | string, b: number | string) =>
+      `דירוג הערים הגדולות לאורך זמן: ${a}–${b}`,
+    bumpSubtitle:
+      "בכל שנה הערים הגדולות מדורגות לפי שיעור השירות הקרבי שלהן מול כל הרשויות עם מספיק נתונים. קו גבוה יותר = דירוג טוב יותר.",
+    moversTitle: (a: number | string, b: number | string) =>
+      `איפה שיעור הקרבי השתנה הכי הרבה? ${a}–${b}`,
+    moversSubtitle:
+      "הרשויות עם העלייה או הירידה הגדולה ביותר בשיעור השירות הקרבי בין השנה הראשונה לאחרונה. מוצגות רק רשויות עם 4+ בתי ספר.",
+    risers: "העלייה הגדולה ביותר",
+    fallers: "הירידה הגדולה ביותר",
+  },
   common: {
     noData: "אין נתונים מספיקים עבור צירוף זה.",
     fieldGender: "מגדר",
@@ -301,6 +336,41 @@ const en: Dictionary = {
     title: "The Lab",
     subtitle:
       "Unconventional ways to look at the same data. Experimental — things break here sometimes.",
+  },
+  lab: {
+    waffleTitle: "What happens out of 100 young people?",
+    waffleSubtitle:
+      "In each sector, every square is one young person out of 100. Faint blue = enlisted, solid blue = served in combat, purple = became officers.",
+    per100: "of 100 youth",
+    enlisted: "enlisted",
+    combat: "combat",
+    officer: "officers",
+    histTitle: "Every school as a dot",
+    histSubtitle:
+      "Each dot is one school in the latest year, colored by sector. Right = higher combat rate; a tall column = many schools around that rate.",
+    scatterTitle: "Enlistment vs. combat service, by municipality",
+    scatterSubtitle:
+      "Each dot is a municipality with 3+ schools. Right = more enlist out of the cohort; up = more combat out of enlistees. Dashed lines mark the medians; click a dot to show or hide its name.",
+    qTopRight: "High enlist · high combat",
+    qTopLeft: "Low enlist · high combat",
+    qBottomRight: "High enlist · low combat",
+    qBottomLeft: "Low enlist · low combat",
+    axisEnlist: "Enlistment rate (of cohort)",
+    axisCombat: "Combat rate (of enlistees)",
+    rank: "rank",
+    scatterTip: (e: number | string, c: number | string) =>
+      `Enlist ${e}% · combat ${c}%`,
+    schools: (n: number | string) => `${n} schools`,
+    bumpTitle: (a: number | string, b: number | string) =>
+      `Ranking of the largest cities over time: ${a}–${b}`,
+    bumpSubtitle:
+      "Each year the largest cities are ranked by their combat-service rate against all municipalities with enough data. A higher line = a better rank.",
+    moversTitle: (a: number | string, b: number | string) =>
+      `Where did the combat rate change most? ${a}–${b}`,
+    moversSubtitle:
+      "The municipalities with the biggest rise or fall in combat-service rate between the first and last year. Only municipalities with 4+ schools are shown.",
+    risers: "Biggest rise",
+    fallers: "Biggest drop",
   },
   common: {
     noData: "Not enough data for this combination.",

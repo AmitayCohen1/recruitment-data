@@ -7,6 +7,10 @@ import { GenderToggle } from "@/components/sectors/controls";
 import { cn } from "@/lib/utils";
 import type { Gender } from "@/lib/data";
 import { SECTOR_COLOR, type SGender } from "@/lib/sectors";
+import { useT, useLocale } from "@/components/i18n/locale-provider";
+import { sectorLabel } from "@/lib/i18n/labels";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/config";
 import {
   waffles,
   schoolDots,
@@ -43,7 +47,15 @@ const WAFFLE_STAGE = {
 const EMPTY = "rgba(255,255,255,0.06)";
 
 /* ---------- 1) Waffle: out of 100 youth ---------- */
-function WaffleCard({ d }: { d: Waffle }) {
+function WaffleCard({
+  d,
+  t,
+  locale,
+}: {
+  d: Waffle;
+  t: Dictionary;
+  locale: Locale;
+}) {
   const cells = Array.from({ length: 100 }, (_, i) => {
     if (i < d.officer) return WAFFLE_STAGE.officer;
     if (i < d.combat) return WAFFLE_STAGE.combat;
@@ -53,8 +65,10 @@ function WaffleCard({ d }: { d: Waffle }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/3 p-4">
       <div className="mb-3 flex items-baseline justify-between">
-        <span className="font-bold text-foreground">{d.sector}</span>
-        <span className="text-xs text-muted-foreground">מתוך 100 בני נוער</span>
+        <span className="font-bold text-foreground">
+          {sectorLabel(d.sector, locale)}
+        </span>
+        <span className="text-xs text-muted-foreground">{t.lab.per100}</span>
       </div>
       <div className="grid grid-cols-10 gap-1">
         {cells.map((c, i) => (
@@ -67,13 +81,13 @@ function WaffleCard({ d }: { d: Waffle }) {
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground sm:text-xs">
         <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.enlisted }}>
-          <span className="font-bold text-foreground">{d.enlisted}</span> גויסו
+          <span className="font-bold text-foreground">{d.enlisted}</span> {t.lab.enlisted}
         </span>
         <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.combat }}>
-          <span className="font-bold text-foreground">{d.combat}</span> קרביים
+          <span className="font-bold text-foreground">{d.combat}</span> {t.lab.combat}
         </span>
         <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.officer }}>
-          <span className="font-bold text-foreground">{d.officer}</span> קצינים
+          <span className="font-bold text-foreground">{d.officer}</span> {t.lab.officer}
         </span>
       </div>
     </div>
@@ -148,9 +162,11 @@ function Beeswarm({ dots }: { dots: SchoolDot[] }) {
 function Movers({
   risers,
   fallers,
+  t,
 }: {
   risers: ReturnType<typeof movers>;
   fallers: ReturnType<typeof movers>;
+  t: Dictionary;
 }) {
   const Row = ({ m, up }: { m: (typeof risers)[number]; up: boolean }) => (
     <div className="flex items-center gap-3 py-2">
@@ -183,7 +199,7 @@ function Movers({
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
         <div className="mb-1 text-sm font-medium text-emerald-400">
-          העלייה הגדולה ביותר
+          {t.lab.risers}
         </div>
         <div className="divide-y divide-white/5">
           {risers.map((m) => (
@@ -193,7 +209,7 @@ function Movers({
       </div>
       <div>
         <div className="mb-1 text-sm font-medium text-rose-400">
-          הירידה הגדולה ביותר
+          {t.lab.fallers}
         </div>
         <div className="divide-y divide-white/5">
           {fallers.map((m) => (
@@ -209,7 +225,13 @@ function Movers({
 const SC_W = 880;
 const SC_H = 440;
 const SC_PAD = 44;
-function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
+function QuadrantScatter({
+  data,
+  t,
+}: {
+  data: ReturnType<typeof cityScatter>;
+  t: Dictionary;
+}) {
   const { points, medEnlist, medCombat } = data;
   // Which cities are featured (blue + labeled). Seeded with the big cities, but
   // the user can click any dot to add or remove it.
@@ -335,27 +357,27 @@ function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
             >
               <div className="font-bold text-foreground">{hp.council}</div>
               <div className="text-muted-foreground">
-                גיוס {hp.enlist}% · קרבי {hp.combat}%
+                {t.lab.scatterTip(hp.enlist, hp.combat)}
               </div>
-              <div className="text-muted-foreground/70">{hp.n} בתי ספר</div>
+              <div className="text-muted-foreground/70">{t.lab.schools(hp.n)}</div>
             </div>
           )}
         </div>
 
         {/* quadrant captions — HTML overlay (RTL-safe, never clipped) */}
         <div className="pointer-events-none absolute inset-0 text-[11px] leading-tight text-muted-foreground/55">
-          <span className="absolute right-2 top-1 text-right">גיוס גבוה · קרבי גבוה</span>
-          <span className="absolute left-2 top-1 text-left">גיוס נמוך · קרבי גבוה</span>
-          <span className="absolute bottom-8 right-2 text-right">גיוס גבוה · קרבי נמוך</span>
-          <span className="absolute bottom-8 left-2 text-left">גיוס נמוך · קרבי נמוך</span>
+          <span className="absolute right-2 top-1 text-right">{t.lab.qTopRight}</span>
+          <span className="absolute left-2 top-1 text-left">{t.lab.qTopLeft}</span>
+          <span className="absolute bottom-8 right-2 text-right">{t.lab.qBottomRight}</span>
+          <span className="absolute bottom-8 left-2 text-left">{t.lab.qBottomLeft}</span>
         </div>
 
         {/* axis labels */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-xs text-muted-foreground">
-          שיעור גיוס מתוך המחזור
+          {t.lab.axisEnlist}
         </div>
         <div className="pointer-events-none absolute bottom-1/2 left-0 -rotate-90 text-xs text-muted-foreground">
-          שיעור קרבי מתוך המתגייסים
+          {t.lab.axisCombat}
         </div>
       </div>
     </div>
@@ -368,7 +390,13 @@ const BP_H = 360;
 const BP_PADX = 64;
 const BP_TOP = 22;
 const BP_BOT = 34;
-function BumpChart({ data }: { data: ReturnType<typeof bump> }) {
+function BumpChart({
+  data,
+  t,
+}: {
+  data: ReturnType<typeof bump>;
+  t: Dictionary;
+}) {
   const { years, maxRank, series } = data;
   const x = (year: number) =>
     BP_PADX + (years.indexOf(year) / (years.length - 1)) * (BP_W - 2 * BP_PADX);
@@ -420,7 +448,7 @@ function BumpChart({ data }: { data: ReturnType<typeof bump> }) {
               {pts.map((p) => (
                 <circle key={p.year} cx={x(p.year)} cy={y(p.rank as number)} r={3.5} fill={color}>
                   <title>
-                    {s.council} · {p.year} — מקום {p.rank} ({p.value}%)
+                    {s.council} · {p.year} — {t.lab.rank} {p.rank} ({p.value}%)
                   </title>
                 </circle>
               ))}
@@ -443,6 +471,8 @@ function BumpChart({ data }: { data: ReturnType<typeof bump> }) {
 }
 
 export function Lab() {
+  const t = useT();
+  const locale = useLocale();
   const [gender, setGender] = React.useState<SGender>("בנים");
   const g: Gender = gender === "בנים" ? "m" : "f";
 
@@ -470,28 +500,22 @@ export function Lab() {
 
       {/* 1 — waffle */}
       <Panel>
-        <PanelHeader
-          title="מתוך 100 בני נוער"
-          subtitle="לכל מגזר: מתוך 100 בני נוער — כחול חלש לגיוס, כחול מלא לקרבי, וסגול לקצונה. כל ריבוע = בן אדם אחד."
-        />
+        <PanelHeader title={t.lab.waffleTitle} subtitle={t.lab.waffleSubtitle} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {w.map((d) => (
-            <WaffleCard key={d.sector} d={d} />
+            <WaffleCard key={d.sector} d={d} t={t} locale={locale} />
           ))}
         </div>
       </Panel>
 
       {/* 2 — beeswarm */}
       <Panel>
-        <PanelHeader
-          title="אין ׳ישראל אחת׳ — כל בית ספר כנקודה"
-          subtitle="כל נקודה = בית ספר אחד, צבועה לפי מגזר. ככל שימינה — שיעור השירות הקרבי גבוה יותר. הגובה הוא מספר בתי הספר באותו שיעור (טור גבוה = הרבה בתי ספר שם)."
-        />
+        <PanelHeader title={t.lab.histTitle} subtitle={t.lab.histSubtitle} />
         <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
           {Object.entries(SECTOR_COLOR).map(([s, c]) => (
             <span key={s} className="flex items-center gap-2">
               <span className="size-3 rounded-full" style={{ background: c }} />
-              {s}
+              {sectorLabel(s, locale)}
             </span>
           ))}
         </div>
@@ -501,28 +525,28 @@ export function Lab() {
       {/* 3 — two-armies scatter */}
       <Panel>
         <PanelHeader
-          title="שתי צבאות באותה מדינה"
-          subtitle="כל עיר ממוקמת לפי שיעור הגיוס (אופקי) מול השירות הקרבי (אנכי). הקווים המקווקווים הם החציון — הם מחלקים את המפה לארבעה רבעים. רחפו לפרטים, ולחצו על כל עיר כדי לסמן או להסיר."
+          title={t.lab.scatterTitle}
+          subtitle={t.lab.scatterSubtitle}
         />
-        <QuadrantScatter data={scatter} />
+        <QuadrantScatter data={scatter} t={t} />
       </Panel>
 
       {/* 4 — bump chart */}
       <Panel>
         <PanelHeader
-          title={`מי טיפס ומי צנח בדירוג? ${LAB_FIRST}–${LAB_LAST}`}
-          subtitle="הדירוג של הערים הגדולות בשיעור השירות הקרבי, מתוך כלל הרשויות, בכל שנה. ככל שגבוה יותר — מקום טוב יותר."
+          title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)}
+          subtitle={t.lab.bumpSubtitle}
         />
-        <BumpChart data={bumpData} />
+        <BumpChart data={bumpData} t={t} />
       </Panel>
 
       {/* 5 — movers */}
       <Panel>
         <PanelHeader
-          title={`מי זזה הכי הרבה? ${LAB_FIRST}–${LAB_LAST}`}
-          subtitle="הרשויות עם השינוי הגדול ביותר בשיעור השירות הקרבי, מהשנה הראשונה ועד האחרונה (4+ בתי ספר)."
+          title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)}
+          subtitle={t.lab.moversSubtitle}
         />
-        <Movers risers={risers} fallers={fallers} />
+        <Movers risers={risers} fallers={fallers} t={t} />
       </Panel>
     </div>
   );
