@@ -337,6 +337,12 @@ export function Lab() {
   const [gender, setGender] = React.useState<SGender>("בנים");
   const g: Gender = gender === "בנים" ? "m" : "f";
 
+  // These views are pure client-side SVG (no chart lib); render after mount so
+  // the SSR HTML and first client paint can't disagree (same gate as ChartContainer).
+  const [mounted, setMounted] = React.useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => setMounted(true), []);
+
   const w = React.useMemo(() => waffles(g), [g]);
   const dots = React.useMemo(() => schoolDots(g, "combat"), [g]);
   const scatter = React.useMemo(() => cityScatter(g), [g]);
@@ -344,6 +350,8 @@ export function Lab() {
   const allMovers = React.useMemo(() => movers(g, "combat"), [g]);
   const risers = allMovers.slice(0, 6);
   const fallers = allMovers.slice(-6).reverse();
+
+  if (!mounted) return <div className="min-h-[480px]" />;
 
   return (
     <div className="space-y-8">
