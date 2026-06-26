@@ -64,11 +64,15 @@ function WaffleCard({
   });
   return (
     <div className="rounded-xl border border-white/10 bg-white/3 p-4">
-      <div className="mb-3 flex items-baseline justify-between">
-        <span className="font-bold text-foreground">
+      {/* fixed-height header so a 2-line label (e.g. "Religious-Zionist") doesn't
+          push this card's grid down and break alignment with the others */}
+      <div className="mb-3 flex min-h-10 items-start justify-between gap-2">
+        <span className="font-bold leading-tight text-foreground">
           {sectorLabel(d.sector, locale)}
         </span>
-        <span className="text-xs text-muted-foreground">{t.lab.per100}</span>
+        <span className="shrink-0 whitespace-nowrap pt-0.5 text-xs text-muted-foreground">
+          {t.lab.per100}
+        </span>
       </div>
       <div className="grid grid-cols-10 gap-1">
         {cells.map((c, i) => (
@@ -191,7 +195,7 @@ function Movers({
         )}
       >
         {m.delta > 0 ? "+" : ""}
-        {m.delta} נק׳
+        {m.delta} {t.lab.points}
       </span>
     </div>
   );

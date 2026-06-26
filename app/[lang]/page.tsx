@@ -61,7 +61,7 @@ export default async function Home({
             {t.hero.subtitle(TOTAL_SCHOOLS.toLocaleString(htmlLang(locale)))}
           </p>
           <p className="mt-3.5 text-sm font-medium text-white drop-shadow-md sm:text-base">
-            הערות? כתבו לי{" "}
+            {t.hero.feedback}{" "}
             <a
               href="https://x.com/messages/compose?recipient_id=1926622482"
               target="_blank"

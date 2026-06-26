@@ -19,6 +19,7 @@ const he = {
     title: "מפת גיוס לפי בתי ספר, מגזרים ואזורים",
     subtitle: (total: string) =>
       `השוואה אינטראקטיבית של ${total} בתי ספר: שיעורי גיוס, שירות קרבי, קצונה ושירות משמעותי לפי מגזר, מגדר ושנה. הממוצעים משוקללים לפי מספר תלמידי י״ב.`,
+    feedback: "הערות? כתבו לי",
   },
   tabs: {
     sectors: "מבט-על",
@@ -78,6 +79,7 @@ const he = {
       "הרשויות עם העלייה או הירידה הגדולה ביותר בשיעור השירות הקרבי בין השנה הראשונה לאחרונה. מוצגות רק רשויות עם 4+ בתי ספר.",
     risers: "העלייה הגדולה ביותר",
     fallers: "הירידה הגדולה ביותר",
+    points: "נק׳",
   },
   common: {
     noData: "אין נתונים מספיקים עבור צירוף זה.",
@@ -312,6 +314,7 @@ const en: Dictionary = {
     title: "Enlistment Map by School, Sector and Region",
     subtitle: (total: string) =>
       `An interactive comparison of ${total} schools: enlistment, combat, officer and meaningful-service rates by sector, gender and year. Averages are weighted by the number of 12th-grade students.`,
+    feedback: "Feedback? Message me",
   },
   tabs: {
     sectors: "Overview",
@@ -371,6 +374,7 @@ const en: Dictionary = {
       "The municipalities with the biggest rise or fall in combat-service rate between the first and last year. Only municipalities with 4+ schools are shown.",
     risers: "Biggest rise",
     fallers: "Biggest drop",
+    points: "pts",
   },
   common: {
     noData: "Not enough data for this combination.",

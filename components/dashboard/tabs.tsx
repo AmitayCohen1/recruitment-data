@@ -92,7 +92,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
         <div className="hidden sm:block">
           <div
             role="tablist"
-            className="flex items-stretch border-b border-white/10"
+            className="flex items-stretch justify-between border-b border-white/10"
           >
             {tabs.map((t) => (
               <button
@@ -103,7 +103,7 @@ export function DashboardTabs({ tabs }: { tabs: Tab[] }) {
                 aria-controls={`panel-${t.id}`}
                 onClick={() => selectTab(t.id)}
                 className={cn(
-                  "relative flex flex-1 items-center justify-center gap-2 whitespace-nowrap pb-3 pt-1 text-base font-semibold transition-colors",
+                  "relative flex items-center gap-2 whitespace-nowrap pb-3 pt-1 text-base font-semibold transition-colors",
                   // centered white underline indicator — grows from the middle on select
                   "after:absolute after:-bottom-px after:left-1/2 after:h-0.5 after:-translate-x-1/2 after:rounded-full after:bg-white after:transition-all after:duration-200 after:content-['']",
                   active === t.id
