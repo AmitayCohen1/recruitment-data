@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Check, Download, Share2, Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { useT } from "@/components/i18n/locale-provider";
@@ -35,11 +36,17 @@ export function ChartExport({
   // when set, the X screenshot is on the clipboard and this is the composer URL
   const [xIntent, setXIntent] = React.useState<string | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
+  // the mobile sheet is portaled to <body>, outside `ref`, so track it
+  // separately to keep its taps from counting as an outside-click dismiss
+  const sheetRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current?.contains(target) || sheetRef.current?.contains(target))
+        return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -162,21 +169,21 @@ export function ChartExport({
   }
 
   const item =
-    "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-start text-sm text-foreground transition-colors hover:bg-white/10 disabled:opacity-50";
+    "flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-start text-base font-medium text-foreground transition-colors hover:bg-white/10 disabled:opacity-50";
 
   // shared action items — rendered into the desktop dropdown and the mobile sheet
   const actions = (
     <>
       <button type="button" className={item} onClick={download} disabled={busy}>
-        <Download className="size-4 text-muted-foreground" />
+        <Download className="size-5 text-muted-foreground" />
         {t.chartExport.downloadPng}
       </button>
       <button type="button" className={item} onClick={share} disabled={busy}>
-        <Share2 className="size-4 text-muted-foreground" />
+        <Share2 className="size-5 text-muted-foreground" />
         {t.chartExport.share}
       </button>
       <button type="button" className={item} onClick={tweet} disabled={busy}>
-        <span className="w-4 text-center text-muted-foreground">𝕏</span>
+        <span className="w-5 text-center text-lg text-muted-foreground">𝕏</span>
         {t.chartExport.shareX} {busy && "…"}
       </button>
       {xIntent && (
@@ -217,32 +224,39 @@ export function ChartExport({
 
       {/* Desktop: anchored dropdown */}
       {open && (
-        <div className="absolute end-0 top-full z-30 mt-1.5 hidden min-w-44 rounded-xl border border-white/10 bg-background p-1 shadow-xl shadow-black/40 sm:block">
+        <div className="absolute end-0 top-full z-30 mt-1.5 hidden min-w-60 rounded-2xl border border-white/10 bg-background p-2 shadow-xl shadow-black/40 sm:block">
           {actions}
         </div>
       )}
 
-      {/* Mobile: bottom sheet that always stays within the viewport */}
-      {open && (
-        <div className="sm:hidden">
-          <div
-            onClick={() => setOpen(false)}
-            className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-200 ${
-              sheetIn ? "opacity-100" : "opacity-0"
-            }`}
-          />
-          <div
-            role="dialog"
-            aria-label={t.chartExport.ariaLabel}
-            className={`fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t border-white/10 bg-background p-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl shadow-black/50 transition-transform duration-200 ease-out ${
-              sheetIn ? "translate-y-0" : "translate-y-full"
-            }`}
-          >
-            <div className="mx-auto mb-2 mt-1 h-1 w-9 rounded-full bg-white/20" />
-            {actions}
-          </div>
-        </div>
-      )}
+      {/* Mobile: bottom sheet portaled to <body> so a `fixed` position resolves
+          against the viewport, not an ancestor's backdrop-filter/transform
+          containing block (the panel's backdrop-blur would otherwise anchor it
+          to the bottom of the component instead of the screen). */}
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="sm:hidden" data-export-ignore>
+            <div
+              onClick={() => setOpen(false)}
+              className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-200 ${
+                sheetIn ? "opacity-100" : "opacity-0"
+              }`}
+            />
+            <div
+              ref={sheetRef}
+              role="dialog"
+              aria-label={t.chartExport.ariaLabel}
+              className={`fixed inset-x-0 bottom-0 z-50 rounded-t-3xl border-t border-white/10 bg-background p-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-lg shadow-2xl shadow-black/50 transition-transform duration-200 ease-out ${
+                sheetIn ? "translate-y-0" : "translate-y-full"
+              }`}
+            >
+              <div className="mx-auto mb-3 mt-1.5 h-1.5 w-12 rounded-full bg-white/25" />
+              {actions}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

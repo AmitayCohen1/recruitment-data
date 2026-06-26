@@ -52,6 +52,17 @@ export default async function Home({
           <p className="mt-2.5 max-w-2xl text-sm leading-6 text-white/80 drop-shadow-md sm:text-base sm:leading-7">
             {t.hero.subtitle(TOTAL_SCHOOLS.toLocaleString(htmlLang(locale)))}
           </p>
+          <p className="mt-2 text-xs text-white/70 drop-shadow-md sm:text-sm">
+            הערות? כתבו לי{" "}
+            <a
+              href="https://x.com/amitay1599"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-white underline decoration-white/40 underline-offset-2 transition-colors hover:decoration-white"
+            >
+              amitay1599@
+            </a>
+          </p>
         </div>
       </header>
 

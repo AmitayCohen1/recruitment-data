@@ -1,26 +1,9 @@
 "use client";
 
 import * as React from "react";
-import {
-  Bar as RBar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  LabelList,
-  Line,
-  LineChart,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { ArrowDown, ArrowUp, Plus, Search, X } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
 import { GenderToggle } from "@/components/sectors/controls";
 import { cn } from "@/lib/utils";
 import {
@@ -31,7 +14,6 @@ import {
 } from "@/lib/data";
 import {
   cityRows,
-  citiesTrend,
   citySectorBreakdown,
   splitFeatured,
   BIG_CITIES,
@@ -262,12 +244,7 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
     [rows, g, sectorFilter, featuredNames],
   );
 
-  const trendData = React.useMemo(
-    () => citiesTrend(rows, featuredNames, g, metric, sectorFilter),
-    [rows, g, metric, sectorFilter, featuredNames],
-  );
-
-  // Shared scale so the trend lines, featured bars and ranking are comparable.
+  // Shared scale so the featured bars and the ranking are comparable.
   const max = React.useMemo(() => {
     const vals = [...featured, ...rest]
       .map((c) => c[metric])
@@ -278,15 +255,6 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
   const featuredSorted = React.useMemo(
     () => [...featured].sort((a, b) => (b[metric] ?? -1) - (a[metric] ?? -1)),
     [featured, metric],
-  );
-
-  const barData = featuredSorted.map((c) => ({
-    city: c.council,
-    value: c[metric],
-  }));
-  const featuredMax = Math.max(
-    ...featuredSorted.map((c) => c[metric] ?? 0),
-    1,
   );
 
   const ranked = React.useMemo(() => {
@@ -379,47 +347,8 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
         </div>
       </div>
 
-      {/* trend: the big cities over time, for the chosen metric */}
-      <div className="mb-2 text-sm font-medium text-muted-foreground">
-        {t.cities.trendHeading}
-      </div>
-      <ChartContainer config={trendConfig} className="mb-6 h-[260px] w-full">
-        <LineChart data={trendData} margin={{ left: 4, right: 16, top: 8, bottom: 4 }}>
-          <CartesianGrid vertical={false} strokeOpacity={0.35} />
-          <XAxis
-            dataKey="year"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={10}
-            tick={{ fontSize: 12 }}
-          />
-          <YAxis
-            orientation="right"
-            domain={[0, 100]}
-            width={40}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 11 }}
-            tickFormatter={(v) => `${v}%`}
-          />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          {featuredNames.map((c) => (
-            <Line
-              key={c}
-              dataKey={c}
-              stroke={colorFor(c)}
-              strokeWidth={2.25}
-              dot={false}
-              activeDot={{ r: 4 }}
-              connectNulls
-              isAnimationActive={false}
-            />
-          ))}
-        </LineChart>
-      </ChartContainer>
-
-      {/* shared city manager — removable chips (also the legend) + add picker.
-          Controls which cities appear in both the trend chart and the bar chart. */}
+      {/* city manager — removable chips + add picker. Controls which cities
+          are featured in the bar list below. */}
       <div className="mb-6 flex flex-wrap items-center gap-1.5">
         {featuredNames.map((c) => (
           <span
@@ -478,59 +407,52 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
       <div className="mb-2 text-sm font-medium text-muted-foreground">
         {t.cities.featuredHeading}
       </div>
-      <ChartContainer config={trendConfig} className="aspect-auto h-[240px] w-full">
-        <BarChart
-          data={barData}
-          margin={{ top: 24, right: 8, left: 8, bottom: 0 }}
-          onClick={(s) => {
-            const city =
-              typeof s?.activeLabel === "string" ? s.activeLabel : null;
-            setSelectedCity((cur) => (cur === city ? null : city));
-          }}
-          className="cursor-pointer"
-        >
-          <CartesianGrid vertical={false} strokeOpacity={0.25} />
-          <XAxis dataKey="city" tickLine={false} axisLine={false} tick={false} height={0} />
-          <YAxis hide domain={[0, featuredMax * 1.2]} />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-          <RBar dataKey="value" radius={[6, 6, 0, 0]}>
-            {barData.map((d) => (
-              <Cell
-                key={d.city}
-                fill={colorFor(d.city)}
-                fillOpacity={selectedCity && selectedCity !== d.city ? 0.4 : 1}
-              />
-            ))}
-            <LabelList
-              dataKey="value"
-              position="top"
-              offset={8}
-              className="fill-foreground"
-              fontSize={12}
-              formatter={(v: unknown) => (v == null ? "" : `${v}%`)}
-            />
-          </RBar>
-        </BarChart>
-      </ChartContainer>
-
-      {selectedCity && !sectorFilter && featuredNames.includes(selectedCity) ? (
-        <SectorBreakdown
-          council={selectedCity}
-          metric={metric}
-          max={max}
-          rows={rows}
-          gender={g}
-          locale={locale}
-          t={t}
-        />
-      ) : (
-        !sectorFilter && (
-          <p className="text-center text-xs text-muted-foreground">
+      <div className="mb-7 space-y-1">
+        {featuredSorted.map((c) => {
+          const selected = selectedCity === c.council;
+          const canExpand = !sectorFilter && featuredNames.includes(c.council);
+          return (
+            <div key={c.council}>
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedCity((cur) =>
+                    cur === c.council ? null : c.council,
+                  )
+                }
+                className={cn(
+                  "w-full rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-white/[0.03]",
+                  selected && "bg-white/[0.04]",
+                )}
+              >
+                <Bar
+                  label={c.council}
+                  value={c[metric]}
+                  max={max}
+                  accent={colorFor(c.council)}
+                  note={c.n > 0 ? t.cities.schoolsCount(c.n) : t.cities.noData}
+                />
+              </button>
+              {selected && canExpand && (
+                <SectorBreakdown
+                  council={c.council}
+                  metric={metric}
+                  max={max}
+                  rows={rows}
+                  gender={g}
+                  locale={locale}
+                  t={t}
+                />
+              )}
+            </div>
+          );
+        })}
+        {!sectorFilter && (
+          <p className="pt-1 text-center text-xs text-muted-foreground">
             {t.cities.clickHint}
           </p>
-        )
-      )}
-      <div className="mb-7" />
+        )}
+      </div>
 
       {/* section 2: all municipalities, ranked */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
