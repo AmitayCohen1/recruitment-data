@@ -34,20 +34,19 @@ const CITY_COLORS = [
 const cityColor = (name: string) =>
   CITY_COLORS[Math.max(0, BIG.indexOf(name)) % CITY_COLORS.length];
 
-const OFFICER = "#f8fafc"; // bright near-white — the top tier, distinct from every sector hue (incl. Haredi amber)
 const EMPTY = "rgba(255,255,255,0.06)";
 
 /* ---------- 1) Waffle: out of 100 youth ---------- */
 function WaffleCard({ d }: { d: Waffle }) {
   const color = SECTOR_COLOR[d.sector] ?? "#38bdf8";
   const cells = Array.from({ length: 100 }, (_, i) => {
-    if (i < d.officer) return OFFICER;
-    if (i < d.combat) return color;
-    if (i < d.enlisted) return `${color}55`;
+    if (i < d.officer) return color;
+    if (i < d.combat) return `${color}88`;
+    if (i < d.enlisted) return `${color}33`;
     return EMPTY;
   });
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+    <div className="rounded-xl border border-white/10 bg-white/3 p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <span className="font-bold text-foreground">{d.sector}</span>
         <span className="text-xs text-muted-foreground">מתוך 100 בני נוער</span>
@@ -61,15 +60,27 @@ function WaffleCard({ d }: { d: Waffle }) {
           />
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs">
-        <span className="text-muted-foreground">
+      <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground sm:text-xs">
+        <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ background: `${color}33` }}
+          />
           <span className="font-bold text-foreground">{d.enlisted}</span> גויסו
         </span>
-        <span style={{ color }}>
-          <span className="font-bold">{d.combat}</span> קרביים
+        <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ background: `${color}88` }}
+          />
+          <span className="font-bold text-foreground">{d.combat}</span> קרביים
         </span>
-        <span style={{ color: OFFICER }}>
-          <span className="font-bold">{d.officer}</span> קצינים
+        <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+          <span
+            className="size-2.5 rounded-[2px]"
+            style={{ background: color }}
+          />
+          <span className="font-bold text-foreground">{d.officer}</span> קצינים
         </span>
       </div>
     </div>
@@ -217,6 +228,30 @@ function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
   const my = py(medCombat);
   const sorted = [...points].sort((a, b) => Number(a.big) - Number(b.big));
 
+  // De-collide the big-city labels: stack clustered ones upward, above the dots.
+  const bigLabels = points
+    .filter((p) => p.big)
+    .map((p) => ({
+      council: p.council,
+      x: px(p.enlist),
+      dotY: py(p.combat),
+      r: rad(p.n),
+      y: py(p.combat) - rad(p.n) - 7,
+    }))
+    .sort((a, b) => a.x - b.x || a.y - b.y);
+  const LGAP = 14;
+  const XCLOSE = 90;
+  for (let i = 1; i < bigLabels.length; i++) {
+    for (let j = 0; j < i; j++) {
+      if (
+        Math.abs(bigLabels[i].x - bigLabels[j].x) < XCLOSE &&
+        Math.abs(bigLabels[i].y - bigLabels[j].y) < LGAP
+      ) {
+        bigLabels[i].y = bigLabels[j].y - LGAP;
+      }
+    }
+  }
+
   return (
     <div className="overflow-x-auto">
       <div className="relative min-w-[640px] pb-6 pl-6">
@@ -225,31 +260,29 @@ function QuadrantScatter({ data }: { data: ReturnType<typeof cityScatter> }) {
           <line x1={mx} x2={mx} y1={SC_PAD - 8} y2={SC_H - SC_PAD} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
           <line x1={SC_PAD} x2={SC_W - SC_PAD} y1={my} y2={my} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
           {sorted.map((p) => (
-            <g key={p.council}>
-              <circle
-                cx={px(p.enlist)}
-                cy={py(p.combat)}
-                r={rad(p.n)}
-                fill={p.big ? "#38bdf8" : "#475569"}
-                fillOpacity={p.big ? 0.95 : 0.55}
-                stroke={p.big ? "#bae6fd" : "none"}
-                strokeWidth={p.big ? 1 : 0}
-              >
-                <title>
-                  {p.council} — גיוס {p.enlist}% · קרבי {p.combat}%
-                </title>
-              </circle>
-              {p.big && (
-                <text
-                  x={px(p.enlist)}
-                  y={py(p.combat) - rad(p.n) - 4}
-                  fill="rgba(255,255,255,0.85)"
-                  fontSize="11"
-                  textAnchor="middle"
-                >
-                  {p.council}
-                </text>
+            <circle
+              key={p.council}
+              cx={px(p.enlist)}
+              cy={py(p.combat)}
+              r={rad(p.n)}
+              fill={p.big ? "#38bdf8" : "#475569"}
+              fillOpacity={p.big ? 0.95 : 0.55}
+              stroke={p.big ? "#bae6fd" : "none"}
+              strokeWidth={p.big ? 1 : 0}
+            >
+              <title>
+                {p.council} — גיוס {p.enlist}% · קרבי {p.combat}%
+              </title>
+            </circle>
+          ))}
+          {bigLabels.map((l) => (
+            <g key={l.council}>
+              {l.y < l.dotY - l.r - 9 && (
+                <line x1={l.x} y1={l.dotY - l.r} x2={l.x} y2={l.y + 3} stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
               )}
+              <text x={l.x} y={l.y} fill="rgba(255,255,255,0.88)" fontSize="11" textAnchor="middle">
+                {l.council}
+              </text>
             </g>
           ))}
         </svg>
@@ -287,6 +320,30 @@ function BumpChart({ data }: { data: ReturnType<typeof bump> }) {
   const y = (rank: number) =>
     BP_TOP + ((rank - 1) / Math.max(1, maxRank - 1)) * (BP_H - BP_TOP - BP_BOT);
 
+  // End labels, de-collided vertically (cities often finish at the same rank).
+  const endLabels = series
+    .flatMap((s) => {
+      const pts = s.points.filter((p) => p.rank != null);
+      if (!pts.length) return [];
+      const last = pts[pts.length - 1];
+      return [
+        {
+          council: s.council,
+          color: cityColor(s.council),
+          x: x(last.year),
+          dotY: y(last.rank as number),
+          y: y(last.rank as number),
+        },
+      ];
+    })
+    .sort((a, b) => a.dotY - b.dotY);
+  const GAP = 15;
+  for (let i = 1; i < endLabels.length; i++) {
+    if (endLabels[i].y - endLabels[i - 1].y < GAP) {
+      endLabels[i].y = endLabels[i - 1].y + GAP;
+    }
+  }
+
   return (
     <div className="overflow-x-auto">
       <svg viewBox={`0 0 ${BP_W} ${BP_H}`} className="h-auto w-full min-w-[640px]">
@@ -302,7 +359,6 @@ function BumpChart({ data }: { data: ReturnType<typeof bump> }) {
           const d = pts
             .map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.year)} ${y(p.rank as number)}`)
             .join(" ");
-          const last = pts[pts.length - 1];
           return (
             <g key={s.council}>
               <path d={d} fill="none" stroke={color} strokeWidth={2.25} strokeLinejoin="round" />
@@ -313,18 +369,19 @@ function BumpChart({ data }: { data: ReturnType<typeof bump> }) {
                   </title>
                 </circle>
               ))}
-              <text
-                x={x(last.year) + 8}
-                y={y(last.rank as number) + 4}
-                fill={color}
-                fontSize="11"
-                fontWeight={600}
-              >
-                {s.council}
-              </text>
             </g>
           );
         })}
+        {endLabels.map((l) => (
+          <g key={l.council}>
+            {Math.abs(l.y - l.dotY) > 1 && (
+              <line x1={l.x} y1={l.dotY} x2={l.x + 6} y2={l.y - 3} stroke={l.color} strokeOpacity={0.4} strokeWidth={1} />
+            )}
+            <text x={l.x + 9} y={l.y} fill={l.color} fontSize="11" fontWeight={600} dominantBaseline="middle">
+              {l.council}
+            </text>
+          </g>
+        ))}
       </svg>
     </div>
   );
@@ -360,7 +417,7 @@ export function Lab() {
       <Panel>
         <PanelHeader
           title="מתוך 100 בני נוער"
-          subtitle="לכל מגזר: מתוך 100 בני נוער — כמה התגייסו, מתוכם כמה שירתו כלוחמים, ומתוכם כמה הגיעו לקצונה. כל ריבוע = בן אדם אחד."
+          subtitle="לכל מגזר: מתוך 100 בני נוער — צבע חלש לגיוס, צבע בינוני לקרבי, וצבע מלא לקצונה. כל ריבוע = בן אדם אחד."
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {w.map((d) => (
