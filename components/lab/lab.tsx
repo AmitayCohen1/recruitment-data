@@ -79,28 +79,30 @@ function WaffleCard({ d }: { d: Waffle }) {
   );
 }
 
-/* ---------- 2) Beeswarm: every school is a dot ---------- */
+/* ---------- 2) Dot histogram: every school is a dot ---------- */
 const W = 880;
 const H = 320;
 const PAD = 28;
-const MID_Y = H / 2;
+const BASELINE = H - 24;
 const R = 3.1;
 const STEP = 2 * R + 0.6;
+const SECTOR_ORDER = ["חילוני", "דתי לאומי", "חרדי", "דרוזי"];
 
 function Beeswarm({ dots }: { dots: SchoolDot[] }) {
+  // Bin by combat rate (x); stack schools UP within each bin so a column's
+  // height = the NUMBER of schools at that rate. Vertical position = count.
   const placed = React.useMemo(() => {
-    const buckets = new Map<number, number>();
+    const order = (s: string | null) =>
+      s ? SECTOR_ORDER.indexOf(s) + 1 || 99 : 100;
+    const counts = new Map<number, number>();
     return [...dots]
-      .sort((a, b) => a.value - b.value)
+      .sort((a, b) => a.value - b.value || order(a.sector) - order(b.sector))
       .map((d) => {
-        const x = PAD + (d.value / 100) * (W - 2 * PAD);
-        const key = Math.round(x / STEP);
-        const slot = buckets.get(key) ?? 0;
-        buckets.set(key, slot + 1);
-        // alternate above/below the midline
-        const rank = Math.ceil(slot / 2);
-        const dir = slot % 2 === 0 ? 1 : -1;
-        const y = MID_Y + dir * rank * STEP;
+        const bin = Math.round(d.value);
+        const x = PAD + (bin / 100) * (W - 2 * PAD);
+        const slot = counts.get(bin) ?? 0;
+        counts.set(bin, slot + 1);
+        const y = BASELINE - (slot + 0.5) * STEP;
         return { ...d, x, y };
       });
   }, [dots]);
@@ -108,14 +110,14 @@ function Beeswarm({ dots }: { dots: SchoolDot[] }) {
   return (
     <div className="overflow-x-auto">
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[640px]">
-        {/* axis */}
-        <line x1={PAD} x2={W - PAD} y1={H - 12} y2={H - 12} stroke="rgba(255,255,255,0.12)" />
+        {/* baseline + axis */}
+        <line x1={PAD} x2={W - PAD} y1={BASELINE + 2} y2={BASELINE + 2} stroke="rgba(255,255,255,0.12)" />
         {[0, 25, 50, 75, 100].map((t) => {
           const x = PAD + (t / 100) * (W - 2 * PAD);
           return (
             <g key={t}>
-              <line x1={x} x2={x} y1={H - 16} y2={H - 8} stroke="rgba(255,255,255,0.2)" />
-              <text x={x} y={H - 20} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
+              <line x1={x} x2={x} y1={BASELINE + 2} y2={BASELINE + 8} stroke="rgba(255,255,255,0.2)" />
+              <text x={x} y={H - 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
                 {t}%
               </text>
             </g>
@@ -125,10 +127,10 @@ function Beeswarm({ dots }: { dots: SchoolDot[] }) {
           <circle
             key={`${d.key}-${d.value}`}
             cx={d.x}
-            cy={Math.max(10, Math.min(H - 26, d.y))}
+            cy={Math.max(8, d.y)}
             r={R}
             fill={d.sector ? (SECTOR_COLOR[d.sector] ?? "#94a3b8") : "#64748b"}
-            fillOpacity={0.82}
+            fillOpacity={0.85}
           >
             <title>
               {d.school}
@@ -422,7 +424,7 @@ export function Lab() {
       <Panel>
         <PanelHeader
           title="אין ׳ישראל אחת׳ — כל בית ספר כנקודה"
-          subtitle="שיעור השירות הקרבי בכל בית ספר בשנה האחרונה. כל נקודה היא בית ספר, צבועה לפי מגזר. הריכוז במקום מסוים מראה כמה בתי ספר שם."
+          subtitle="כל נקודה = בית ספר אחד, צבועה לפי מגזר. ככל שימינה — שיעור השירות הקרבי גבוה יותר. הגובה הוא מספר בתי הספר באותו שיעור (טור גבוה = הרבה בתי ספר שם)."
         />
         <Beeswarm dots={dots} />
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-4 text-sm text-muted-foreground">
