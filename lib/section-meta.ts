@@ -15,11 +15,13 @@ export async function sectionMetadata(
   const dict = getDictionary(locale);
   const title = `${dict.tabs[tab]} · ${dict.meta.title}`;
   const description = dict.meta.description;
-  // og:image / twitter:image are supplied by each section's opengraph-image route.
+  // Setting openGraph/twitter here overwrites (not merges) the layout's, so the
+  // shared static social-preview image must be repeated.
+  const images = [{ url: "/og.jpg", width: 1200, height: 630, alt: title }];
   return {
     title,
     description,
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary_large_image", title, description },
+    openGraph: { title, description, type: "website", images },
+    twitter: { card: "summary_large_image", title, description, images },
   };
 }

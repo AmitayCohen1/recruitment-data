@@ -53,22 +53,29 @@ export async function generateMetadata({
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000");
+  // Single static social-preview image, shared by every page/locale.
+  const ogImage = {
+    url: "/og.jpg",
+    width: 1200,
+    height: 630,
+    alt: dict.meta.title,
+  };
   return {
     metadataBase: new URL(base),
     title: dict.meta.title,
     description: dict.meta.description,
-    // og:image / twitter:image come from the file-based opengraph-image routes
-    // (one per section), so they're not set here.
     openGraph: {
       title: dict.meta.title,
       description: dict.meta.description,
       locale: htmlLang(locale).replace("-", "_"),
       type: "website",
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title: dict.meta.title,
       description: dict.meta.description,
+      images: [ogImage],
     },
   };
 }

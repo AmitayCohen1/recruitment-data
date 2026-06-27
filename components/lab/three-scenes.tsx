@@ -16,10 +16,8 @@ import type { Locale } from "@/lib/i18n/config";
 import {
   schoolCloud,
   sectorBars,
-  citySkyline,
   type CloudPoint,
   type SectorBar,
-  type Tower,
 } from "@/lib/lab";
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -510,137 +508,381 @@ function CloudScene({ points }: { points: CloudPoint[] }) {
 }
 
 /* ================================================================== *
- * 3) 3D skyline — one tower per municipality. Height = combat rate,
- *    footprint = #schools, laid out in a grid ordered by enlistment.
- *    A rotatable "city of recruitment".
+ * 3) Density terrain — the enlist×combat plane as ground, height = how
+ *    many schools sit at each spot (a smoothed 2D kernel density). The
+ *    one 3D view whose vertical axis carries real information.
  * ================================================================== */
-const SKY_MAXH = 6;
-const SKY_SP = 1.45; // grid spacing between towers
-const SKY_LO = new THREE.Color("#475569");
-const SKY_HI = new THREE.Color("#38bdf8");
+const TERR_N = 56; // grid resolution per side
+const TERR_SIZE = 10; // world span of the plane (x and z)
+const TERR_MAXH = 4.2; // peak height
+const TERR_BW = 7; // kernel bandwidth, in rate-% units
+const TERR_C0 = new THREE.Color("#0b2a4a"); // valleys (deep)
+const TERR_C1 = new THREE.Color("#22d3ee"); // mid slopes
+const TERR_C2 = new THREE.Color("#f0f9ff"); // peaks (near-white)
 
-function Tower3D({
-  x,
-  z,
-  base,
-  height,
-  color,
-  hovered,
-  onOver,
-  onOut,
+const TERR_WHITE = new THREE.Color("#f0f9ff");
+
+/** Color ramp keyed by `tint`: "main" = navy→cyan→white heat; any hex =
+ *  dark→that-sector-color→white. Returns rgb components in 0..1. */
+function makeRamp(tint: string): (h: number) => [number, number, number] {
+  const c = new THREE.Color();
+  if (tint === "main") {
+    return (h) => {
+      if (h < 0.5) c.copy(TERR_C0).lerp(TERR_C1, h / 0.5);
+      else c.copy(TERR_C1).lerp(TERR_C2, (h - 0.5) / 0.5);
+      return [c.r, c.g, c.b];
+    };
+  }
+  const base = new THREE.Color(tint);
+  const dark = base.clone().multiplyScalar(0.18);
+  return (h) => {
+    c.copy(dark).lerp(base, Math.min(1, h * 1.15));
+    if (h > 0.72) c.lerp(TERR_WHITE, ((h - 0.72) / 0.28) * 0.6);
+    return [c.r, c.g, c.b];
+  };
+}
+
+/** Build a density surface geometry from points over the enlist×combat plane.
+ *  Height is the smoothed school count, normalized to this set's own max. */
+function buildDensityGeometry(
+  points: { enlist: number; combat: number }[],
+  size: number,
+  maxH: number,
+  colorAt: (h: number) => [number, number, number],
+): THREE.BufferGeometry {
+  const n = TERR_N;
+  const field = new Float32Array(n * n);
+  const inv = 1 / (2 * TERR_BW * TERR_BW);
+  for (let gy = 0; gy < n; gy++) {
+    const cy = (gy / (n - 1)) * 100;
+    for (let gx = 0; gx < n; gx++) {
+      const cx = (gx / (n - 1)) * 100;
+      let s = 0;
+      for (const p of points) {
+        const dx = p.enlist - cx;
+        const dy = p.combat - cy;
+        s += Math.exp(-(dx * dx + dy * dy) * inv);
+      }
+      field[gy * n + gx] = s;
+    }
+  }
+  const max = Math.max(1, ...field);
+  const g = new THREE.PlaneGeometry(size, size, n - 1, n - 1);
+  g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position as THREE.BufferAttribute;
+  const colors = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const h = field[i] / max;
+    pos.setY(i, h * maxH);
+    const [r, gg, b] = colorAt(h);
+    colors[i * 3] = r;
+    colors[i * 3 + 1] = gg;
+    colors[i * 3 + 2] = b;
+  }
+  g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  g.computeVertexNormals();
+  return g;
+}
+
+/** A single rising density surface (lit mesh + faint wireframe), reused by
+ *  every terrain variant. Owns its own grow-from-flat reveal. */
+function TerrainSurface({
+  points,
+  tint = "main",
+  size = TERR_SIZE,
+  maxH = TERR_MAXH,
+  opacity = 1,
 }: {
-  x: number;
-  z: number;
-  base: number;
-  height: number;
-  color: string;
-  hovered: boolean;
-  onOver: () => void;
-  onOut: () => void;
+  points: { enlist: number; combat: number }[];
+  tint?: string;
+  size?: number;
+  maxH?: number;
+  opacity?: number;
 }) {
-  const ref = React.useRef<THREE.Mesh>(null);
+  const groupRef = React.useRef<THREE.Group>(null);
   const grow = React.useRef(0);
+  const geometry = React.useMemo(
+    () => buildDensityGeometry(points, size, maxH, makeRamp(tint)),
+    [points, size, maxH, tint],
+  );
+  React.useEffect(() => {
+    grow.current = 0;
+  }, [geometry]);
   useFrame((_, dt) => {
-    const m = ref.current;
-    if (!m) return;
-    grow.current = Math.min(1, grow.current + dt * 1.6);
-    const h = Math.max(0.001, height * easeOut(grow.current));
-    m.scale.set(1, h, 1);
-    m.position.y = h / 2;
+    const g = groupRef.current;
+    if (!g) return;
+    grow.current = Math.min(1, grow.current + dt * 1.4);
+    g.scale.y = Math.max(0.001, easeOut(grow.current));
   });
   return (
-    <mesh
-      ref={ref}
-      position={[x, 0, z]}
-      onPointerOver={(e: ThreeEvent<PointerEvent>) => {
-        e.stopPropagation();
-        onOver();
-      }}
-      onPointerOut={onOut}
-    >
-      <boxGeometry args={[base, 1, base]} />
-      <meshStandardMaterial
-        color={color}
-        roughness={0.5}
-        metalness={0.2}
-        emissive={color}
-        emissiveIntensity={hovered ? 0.5 : 0.04}
-      />
-    </mesh>
+    <group ref={groupRef}>
+      <mesh geometry={geometry}>
+        <meshStandardMaterial
+          vertexColors
+          roughness={0.6}
+          metalness={0.08}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+          transparent={opacity < 1}
+          opacity={opacity}
+        />
+      </mesh>
+      <mesh geometry={geometry}>
+        <meshBasicMaterial wireframe transparent opacity={0.07 * opacity} color="#ffffff" />
+      </mesh>
+    </group>
   );
 }
 
-function Skyline({ towers, t }: { towers: Tower[]; t: Dictionary }) {
-  const [hover, setHover] = React.useState<number | null>(null);
+function DensityLegend({ t }: { t: Dictionary }) {
+  return (
+    <div className="-mt-2 mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+      <span>{t.three.densityLow}</span>
+      <span
+        className="h-2 w-28 rounded-full"
+        style={{ background: "linear-gradient(90deg,#0b2a4a,#22d3ee,#f0f9ff)" }}
+      />
+      <span>{t.three.densityHigh}</span>
+    </div>
+  );
+}
 
-  const { cells, gridSize } = React.useMemo(() => {
-    const cols = Math.max(1, Math.ceil(Math.sqrt(towers.length)));
-    const rows = Math.ceil(towers.length / cols);
-    const maxCombat = Math.max(1, ...towers.map((c) => c.combat));
-    const maxN = Math.max(1, ...towers.map((c) => c.n));
-    const col = new THREE.Color();
-    const cells = towers.map((c, i) => {
-      const cx = ((i % cols) - (cols - 1) / 2) * SKY_SP;
-      const cz = (Math.floor(i / cols) - (rows - 1) / 2) * SKY_SP;
-      const base = 0.45 + 0.65 * Math.sqrt(c.n / maxN);
-      const height = (c.combat / 100) * SKY_MAXH;
-      col.copy(SKY_LO).lerp(SKY_HI, Math.min(1, c.combat / maxCombat));
-      const color = c.big ? "#7dd3fc" : `#${col.getHexString()}`;
-      return { tower: c, i, x: cx, z: cz, base, height, color };
-    });
-    return { cells, gridSize: Math.max(cols, rows) * SKY_SP + 2 };
-  }, [towers]);
+/** group points by sector (latest-year cloud), tagged points only */
+function groupBySector(points: CloudPoint[]): Map<string, CloudPoint[]> {
+  const m = new Map<string, CloudPoint[]>();
+  for (const p of points) {
+    if (!p.sector) continue;
+    let a = m.get(p.sector);
+    if (!a) m.set(p.sector, (a = []));
+    a.push(p);
+  }
+  return m;
+}
 
-  const hc = hover != null ? cells[hover] : null;
+/** The most common (enlist, combat) combination — the surface's tallest spot.
+ *  Coarse argmax over the same kernel, so the peak callout lands on the peak. */
+function peakCombo(points: CloudPoint[]): { enlist: number; combat: number } {
+  const n = 40;
+  const inv = 1 / (2 * TERR_BW * TERR_BW);
+  let best = -1;
+  let be = 50;
+  let bc = 50;
+  for (let gy = 0; gy < n; gy++) {
+    const cy = (gy / (n - 1)) * 100;
+    for (let gx = 0; gx < n; gx++) {
+      const cx = (gx / (n - 1)) * 100;
+      let s = 0;
+      for (const p of points) {
+        const dx = p.enlist - cx;
+        const dy = p.combat - cy;
+        s += Math.exp(-(dx * dx + dy * dy) * inv);
+      }
+      if (s > best) {
+        best = s;
+        be = cx;
+        bc = cy;
+      }
+    }
+  }
+  return { enlist: Math.round(be), combat: Math.round(bc) };
+}
 
+const TERR_TICKS = [0, 50, 100];
+
+/* Combined hero terrain (all schools): axis titles, floor tick numbers, and a
+ * callout pinned to the tallest spot so the peak explains itself. */
+function DensityTerrain({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
+  const half = TERR_SIZE / 2;
+  const fx = (e: number) => -half + (e / 100) * TERR_SIZE;
+  const fz = (c: number) => -half + (c / 100) * TERR_SIZE;
+  const peak = React.useMemo(() => peakCombo(points), [points]);
   return (
     <>
-      <gridHelper args={[gridSize, 16, "#ffffff", "#ffffff"]}>
-        <lineBasicMaterial transparent opacity={0.06} />
+      <gridHelper args={[TERR_SIZE + 1.5, 18, "#ffffff", "#ffffff"]}>
+        <lineBasicMaterial transparent opacity={0.05} />
       </gridHelper>
+      <TerrainSurface points={points} tint="main" />
 
-      {cells.map((c) => (
-        <Tower3D
-          key={c.tower.council}
-          x={c.x}
-          z={c.z}
-          base={c.base}
-          height={c.height}
-          color={c.color}
-          hovered={hover === c.i}
-          onOver={() => setHover(c.i)}
-          onOut={() => setHover((cur) => (cur === c.i ? null : cur))}
-        />
+      {/* axis titles */}
+      <Html position={[half + 0.9, 0.1, 0]} center className="pointer-events-none">
+        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
+          {t.three.enlistLabel} →
+        </span>
+      </Html>
+      <Html position={[0, 0.1, half + 0.9]} center className="pointer-events-none">
+        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
+          {t.three.combatLabel} →
+        </span>
+      </Html>
+
+      {/* floor tick numbers anchor the two rate axes */}
+      {TERR_TICKS.map((v) => (
+        <Html
+          key={`ex${v}`}
+          position={[fx(v), 0.02, -half - 0.5]}
+          center
+          className="pointer-events-none"
+        >
+          <span className="whitespace-nowrap text-[10px] tabular-nums text-white/45">
+            {v}%
+          </span>
+        </Html>
+      ))}
+      {TERR_TICKS.map((v) => (
+        <Html
+          key={`cz${v}`}
+          position={[-half - 0.5, 0.02, fz(v)]}
+          center
+          className="pointer-events-none"
+        >
+          <span className="whitespace-nowrap text-[10px] tabular-nums text-white/45">
+            {v}%
+          </span>
+        </Html>
       ))}
 
-      {/* labels for the big cities only, floating above their towers */}
-      {cells
-        .filter((c) => c.tower.big)
-        .map((c) => (
-          <Html
-            key={`lbl${c.tower.council}`}
-            position={[c.x, c.height + 0.35, c.z]}
-            center
-            className="pointer-events-none"
-          >
-            <span className="whitespace-nowrap text-[11px] font-semibold text-white/90">
-              {c.tower.council}
-            </span>
-          </Html>
-        ))}
-
-      {hc && (
-        <Tip position={[hc.x, hc.height + 0.2, hc.z]}>
-          <div className="font-bold text-foreground">{hc.tower.council}</div>
+      {/* callout pinned to the tallest spot — what the mountain means */}
+      <mesh position={[fx(peak.enlist), TERR_MAXH, fz(peak.combat)]}>
+        <sphereGeometry args={[0.07, 12, 12]} />
+        <meshBasicMaterial color="#ffffff" />
+      </mesh>
+      <Html
+        position={[fx(peak.enlist), TERR_MAXH + 0.15, fz(peak.combat)]}
+        center
+        className="pointer-events-none"
+      >
+        <div className="-translate-y-6 whitespace-nowrap rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl">
+          <div className="font-bold text-foreground">{t.three.terrainPeakLabel}</div>
           <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
-            {t.three.enlistLabel} {hc.tower.enlist}% · {t.three.combatLabel}{" "}
-            {hc.tower.combat}% · {t.three.officerLabel} {hc.tower.officer}%
+            {t.three.enlistLabel} ~{peak.enlist}% · {t.three.combatLabel} ~{peak.combat}%
           </div>
-          <div className="text-muted-foreground/70">
-            {t.three.schools(hc.tower.n)}
-          </div>
-        </Tip>
+        </div>
+      </Html>
+    </>
+  );
+}
+
+/* Floor ticks (0/50/100%) + enlist/combat axis labels for one square plane,
+ * so peak positions are readable. Reused by the sector tiles and the overlay. */
+function PlaneAxes({ size, t, small = false }: { size: number; t: Dictionary; small?: boolean }) {
+  const h = size / 2;
+  const fx = (e: number) => -h + (e / 100) * size;
+  const fz = (c: number) => -h + (c / 100) * size;
+  const tickCls = small ? "text-[9px]" : "text-[10px]";
+  const axisCls = small ? "text-[10px]" : "text-[14px]";
+  return (
+    <>
+      {[0, 50, 100].map((v) => (
+        <Html key={`ex${v}`} position={[fx(v), 0.02, -h - 0.4]} center className="pointer-events-none">
+          <span className={`tabular-nums text-white/40 ${tickCls}`}>{v}</span>
+        </Html>
+      ))}
+      {[0, 50, 100].map((v) => (
+        <Html key={`cz${v}`} position={[-h - 0.4, 0.02, fz(v)]} center className="pointer-events-none">
+          <span className={`tabular-nums text-white/40 ${tickCls}`}>{v}</span>
+        </Html>
+      ))}
+      <Html position={[h + 0.6, 0.05, -h - 0.4]} center className="pointer-events-none">
+        <span className={`whitespace-nowrap font-semibold text-white/80 ${axisCls}`}>
+          {t.three.enlistLabel} →
+        </span>
+      </Html>
+      <Html position={[-h - 0.4, 0.05, h + 0.6]} center className="pointer-events-none">
+        <span className={`whitespace-nowrap font-semibold text-white/80 ${axisCls}`}>
+          {t.three.combatLabel} →
+        </span>
+      </Html>
+    </>
+  );
+}
+
+/* VARIANT A — four small sector landscapes in a 2×2 grid, one shared scene. */
+const TILE = 5.2;
+const TILE_GAP = 0.9;
+function SectorTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
+  const locale: Locale = useLocale();
+  const bySector = React.useMemo(() => groupBySector(points), [points]);
+  const sectors = Object.entries(SECTOR_COLOR);
+  const off = (TILE + TILE_GAP) / 2;
+  const spots: [number, number][] = [
+    [-off, -off],
+    [off, -off],
+    [-off, off],
+    [off, off],
+  ];
+  return (
+    <>
+      {sectors.map(([name, color], i) => {
+        const [ox, oz] = spots[i] ?? [0, 0];
+        return (
+          <group key={name} position={[ox, 0, oz]}>
+            <TerrainSurface
+              points={bySector.get(name) ?? []}
+              tint={color}
+              size={TILE}
+              maxH={2.6}
+            />
+            <PlaneAxes size={TILE} t={t} small />
+            <Html position={[0, 3.0, 0]} center className="pointer-events-none">
+              <span className="whitespace-nowrap rounded bg-zinc-900/70 px-1.5 py-0.5 text-[12px] font-semibold text-white">
+                {sectorLabel(name, locale)}
+              </span>
+            </Html>
+          </group>
+        );
+      })}
+    </>
+  );
+}
+
+/* Sector breakdown panel — a toggle between "side by side" (a small landscape
+ * per sector) and "together" (all four overlaid, translucent). Each mode gets
+ * its own Stage (keyed) so the camera framing fits that layout. */
+function SectorTerrainPanel({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
+  const locale: Locale = useLocale();
+  const [mode, setMode] = React.useState<"grid" | "overlay">("grid");
+  const tab = (active: boolean) =>
+    `rounded-md px-3 py-1 text-sm font-medium transition ${
+      active ? "bg-white/15 text-white" : "text-muted-foreground hover:text-foreground"
+    }`;
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="inline-flex rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
+          <button type="button" onClick={() => setMode("grid")} className={tab(mode === "grid")}>
+            {t.three.terrainViewGrid}
+          </button>
+          <button type="button" onClick={() => setMode("overlay")} className={tab(mode === "overlay")}>
+            {t.three.terrainViewOverlay}
+          </button>
+        </div>
+        <SectorLegend locale={locale} />
+      </div>
+      {mode === "grid" ? (
+        <Stage key="grid" camera={[2, 16, 15]} hint={t.three.terrainHint} t={t}>
+          <SectorTerrains points={points} t={t} />
+        </Stage>
+      ) : (
+        <Stage key="overlay" camera={[9, 8, 11]} hint={t.three.terrainHint} t={t}>
+          <OverlayTerrains points={points} t={t} />
+        </Stage>
       )}
+    </div>
+  );
+}
+
+/* VARIANT C — all four sector surfaces overlaid, translucent. */
+function OverlayTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
+  const bySector = React.useMemo(() => groupBySector(points), [points]);
+  return (
+    <>
+      <gridHelper args={[TERR_SIZE + 1.5, 18, "#ffffff", "#ffffff"]}>
+        <lineBasicMaterial transparent opacity={0.05} />
+      </gridHelper>
+      {Object.entries(SECTOR_COLOR).map(([name, color]) => (
+        <TerrainSurface key={name} points={bySector.get(name) ?? []} tint={color} opacity={0.5} />
+      ))}
+      <PlaneAxes size={TERR_SIZE} t={t} />
     </>
   );
 }
@@ -727,6 +969,97 @@ function SectorLegend({ locale }: { locale: Locale }) {
 
 export function ThreeScenes() {
   const t = useT();
+  const [gender, setGender] = React.useState<SGender>("בנים");
+  const g: Gender = gender === "בנים" ? "m" : "f";
+
+  const [webgl, setWebgl] = React.useState<boolean | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => setWebgl(hasWebGL()), []);
+
+  const terrain = React.useMemo(() => schoolCloud(g), [g]); // latest year only
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-end">
+        <GenderToggle value={gender} onChange={setGender} />
+      </div>
+
+      {/* 3 — density terrain (all schools): height = #schools at each enlist×combat mix */}
+      <Panel>
+        <PanelHeader title={t.three.terrainTitle} subtitle={t.three.terrainSubtitle} />
+        <DensityLegend t={t} />
+        {webgl === false ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">
+            {t.three.webglError}
+          </p>
+        ) : (
+          webgl && (
+            <Stage camera={[9, 8, 11]} hint={t.three.terrainHint} t={t}>
+              <DensityTerrain key={g} points={terrain} t={t} />
+            </Stage>
+          )
+        )}
+      </Panel>
+
+      {/* 4 — same terrain split by sector: toggle side-by-side / together */}
+      <Panel>
+        <PanelHeader
+          title={t.three.sectorTerrainTitle}
+          subtitle={t.three.sectorTerrainSubtitle}
+        />
+        <DensityLegend t={t} />
+        {webgl === false ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">
+            {t.three.webglError}
+          </p>
+        ) : (
+          webgl && <SectorTerrainPanel key={g} points={terrain} t={t} />
+        )}
+      </Panel>
+    </div>
+  );
+}
+
+/** Standalone 3D school point cloud (enlist × combat × officer), for the
+ *  Schools tab. Self-contained: owns its gender toggle, WebGL gate and the
+ *  cloud's built-in search/pin. Loaded client-only via the wrapper. */
+export function SchoolCloudScene() {
+  const t = useT();
+  const locale: Locale = useLocale();
+  const [gender, setGender] = React.useState<SGender>("בנים");
+  const g: Gender = gender === "בנים" ? "m" : "f";
+
+  const [webgl, setWebgl] = React.useState<boolean | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => setWebgl(hasWebGL()), []);
+
+  const cloud = React.useMemo(() => schoolCloud(g, true), [g]);
+
+  return (
+    <Panel>
+      <PanelHeader
+        title={t.three.cloudTitle}
+        subtitle={t.three.cloudSubtitle(cloud.length)}
+      >
+        <GenderToggle value={gender} onChange={setGender} />
+      </PanelHeader>
+      <SectorLegend locale={locale} />
+      {webgl === false ? (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          {t.three.webglError}
+        </p>
+      ) : (
+        webgl && <CloudScene points={cloud} />
+      )}
+    </Panel>
+  );
+}
+
+/** Standalone 3D grouped bars — enlistment / combat / officer rates per sector.
+ *  Lives on the Overview tab. Self-contained: owns its gender toggle and WebGL
+ *  gate. Loaded client-only via the wrapper. */
+export function SectorBarsScene() {
+  const t = useT();
   const locale: Locale = useLocale();
   const [gender, setGender] = React.useState<SGender>("בנים");
   const g: Gender = gender === "בנים" ? "m" : "f";
@@ -736,63 +1069,24 @@ export function ThreeScenes() {
   React.useEffect(() => setWebgl(hasWebGL()), []);
 
   const bars = React.useMemo(() => sectorBars(g), [g]);
-  const cloud = React.useMemo(() => schoolCloud(g, true), [g]);
-  const towers = React.useMemo(() => citySkyline(g), [g]);
 
   return (
-    <div className="space-y-8">
-      <div className="flex justify-end">
+    <Panel>
+      <PanelHeader title={t.three.barTitle} subtitle={t.three.barSubtitle}>
         <GenderToggle value={gender} onChange={setGender} />
-      </div>
-
-      {/* 1 — 3D grouped bars */}
-      <Panel>
-        <PanelHeader title={t.three.barTitle} subtitle={t.three.barSubtitle} />
-        <SectorLegend locale={locale} />
-        {webgl === false ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            {t.three.webglError}
-          </p>
-        ) : (
-          webgl && (
-            <Stage camera={[8, 7, 9]} hint={t.three.barHint} t={t}>
-              <BarMatrix key={g} bars={bars} t={t} locale={locale} />
-            </Stage>
-          )
-        )}
-      </Panel>
-
-      {/* 2 — 3D school cloud: enlist × combat × officer, colored by sector */}
-      <Panel>
-        <PanelHeader
-          title={t.three.cloudTitle}
-          subtitle={t.three.cloudSubtitle(cloud.length)}
-        />
-        <SectorLegend locale={locale} />
-        {webgl === false ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            {t.three.webglError}
-          </p>
-        ) : (
-          webgl && <CloudScene points={cloud} />
-        )}
-      </Panel>
-
-      {/* 3 — 3D skyline: one tower per city (height = combat, base = #schools) */}
-      <Panel>
-        <PanelHeader title={t.three.skylineTitle} subtitle={t.three.skylineSubtitle} />
-        {webgl === false ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            {t.three.webglError}
-          </p>
-        ) : (
-          webgl && (
-            <Stage camera={[11, 9, 13]} hint={t.three.skylineHint} t={t}>
-              <Skyline key={g} towers={towers} t={t} />
-            </Stage>
-          )
-        )}
-      </Panel>
-    </div>
+      </PanelHeader>
+      <SectorLegend locale={locale} />
+      {webgl === false ? (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          {t.three.webglError}
+        </p>
+      ) : (
+        webgl && (
+          <Stage camera={[8, 7, 9]} hint={t.three.barHint} t={t}>
+            <BarMatrix key={g} bars={bars} t={t} locale={locale} />
+          </Stage>
+        )
+      )}
+    </Panel>
   );
 }

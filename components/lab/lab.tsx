@@ -1,28 +1,18 @@
 "use client";
 
 import * as React from "react";
-import {
-  forceSimulation,
-  forceX,
-  forceY,
-  forceCollide,
-  type Simulation,
-} from "d3-force";
 import { scaleLinear } from "d3-scale";
 import { ArrowDown, ArrowUp, Pause, Play } from "lucide-react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
 import { SectionSkeleton } from "@/components/ui/skeleton";
-import { GenderToggle } from "@/components/sectors/controls";
+import { GenderPanel } from "@/components/lab/gender-panel";
 import { cn } from "@/lib/utils";
-import type { Gender } from "@/lib/data";
-import { SECTOR_COLOR, NEUTRAL, sectorColor, type SGender } from "@/lib/sectors";
+import { NEUTRAL, sectorColor } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import {
   waffles,
-  schoolDots,
   movers,
   cityScatter,
   bump,
@@ -31,15 +21,11 @@ import {
   ridgeline,
   sankeyFlow,
   outliers,
-  schoolProfiles,
   cityTrajectories,
-  PARALLEL_AXES,
   LAB_FIRST,
   LAB_LAST,
   type Waffle,
-  type SchoolDot,
   type CityPoint,
-  type SchoolProfile,
   type Trajectory,
 } from "@/lib/lab";
 import { BIG_CITIES, cityColor } from "@/lib/cities";
@@ -105,68 +91,6 @@ function WaffleCard({
           <span className="font-bold text-foreground">{d.officer}</span> {t.lab.officer}
         </span>
       </div>
-    </div>
-  );
-}
-
-/* ---------- 2) Force-directed beeswarm: every school finds its place ----------
- *  Moved here from the old D3 lab. A d3-force simulation pushes each school to
- *  its rate on the x-axis (forceX) while forceCollide stops dots overlapping —
- *  so the true density at each rate emerges as vertical thickness, no binning. */
-const BEE_W = 880;
-const BEE_H = 300;
-const BEE_PAD = 30;
-const BEE_R = 3.8;
-
-type BeeNode = {
-  x: number;
-  y: number;
-  vx?: number;
-  vy?: number;
-  d: SchoolDot;
-};
-
-function Beeswarm({ dots }: { dots: SchoolDot[] }) {
-  const x = scaleLinear().domain([0, 100]).range([BEE_PAD, BEE_W - BEE_PAD]);
-  const nodes = React.useMemo(() => {
-    const xs = scaleLinear().domain([0, 100]).range([BEE_PAD, BEE_W - BEE_PAD]);
-    const ns: BeeNode[] = dots.map((d) => ({ x: xs(d.value), y: BEE_H / 2, d }));
-    const sim: Simulation<BeeNode, undefined> = forceSimulation(ns)
-      .force("x", forceX<BeeNode>((n) => xs(n.d.value)).strength(0.9))
-      .force("y", forceY<BeeNode>(BEE_H / 2).strength(0.06))
-      .force("collide", forceCollide<BeeNode>(BEE_R + 0.7).iterations(2))
-      .stop();
-    for (let i = 0; i < 280; i++) sim.tick();
-    return ns;
-  }, [dots]);
-
-  return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${BEE_W} ${BEE_H}`} className="h-auto w-full min-w-[640px]">
-        {[0, 25, 50, 75, 100].map((tick) => (
-          <g key={tick}>
-            <line x1={x(tick)} x2={x(tick)} y1={BEE_PAD - 8} y2={BEE_H - BEE_PAD} stroke="rgba(255,255,255,0.06)" />
-            <text x={x(tick)} y={BEE_H - 6} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
-              {tick}%
-            </text>
-          </g>
-        ))}
-        {nodes.map((n) => (
-          <circle
-            key={`${n.d.key}-${n.d.value}`}
-            cx={n.x}
-            cy={n.y}
-            r={BEE_R}
-            fill={sectorColor(n.d.sector)}
-            fillOpacity={0.85}
-          >
-            <title>
-              {n.d.school}
-              {n.d.council ? ` · ${n.d.council}` : ""} — {n.d.value}%
-            </title>
-          </circle>
-        ))}
-      </svg>
     </div>
   );
 }
@@ -1107,159 +1031,6 @@ function Outliers({
   );
 }
 
-/* ---------- 11) Parallel coordinates — four metrics at once ---------- */
-const PC_W = 880;
-const PC_H = 440;
-const PC_PADX = 64;
-const PC_TOP = 30;
-const PC_BOT = 46;
-
-/** Sector legend whose entries highlight their whole group on hover. */
-function InteractiveSectorLegend({
-  locale,
-  active,
-  onHover,
-}: {
-  locale: Locale;
-  active: string | null;
-  onHover: (sector: string | null) => void;
-}) {
-  return (
-    <div className="-mt-2 mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-      {Object.entries(SECTOR_COLOR).map(([s, c]) => (
-        <button
-          key={s}
-          type="button"
-          onMouseEnter={() => onHover(s)}
-          onMouseLeave={() => onHover(null)}
-          className="flex items-center gap-2 transition-opacity"
-          style={{ opacity: active && active !== s ? 0.35 : 1 }}
-        >
-          <span className="size-3 rounded-full" style={{ background: c }} />
-          {sectorLabel(s, locale)}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ParallelCoords({
-  schools,
-  t,
-  locale,
-}: {
-  schools: SchoolProfile[];
-  t: Dictionary;
-  locale: Locale;
-}) {
-  const [hoverKey, setHoverKey] = React.useState<number | null>(null);
-  const [hoverSector, setHoverSector] = React.useState<string | null>(null);
-  const [tip, setTip] = React.useState<{ x: number; y: number } | null>(null);
-  const boxRef = React.useRef<HTMLDivElement>(null);
-
-  const n = PARALLEL_AXES.length;
-  const axisX = (i: number) => PC_PADX + (i / (n - 1)) * (PC_W - 2 * PC_PADX);
-  const y = scaleLinear().domain([0, 100]).range([PC_H - PC_BOT, PC_TOP]);
-  const lineFor = (s: SchoolProfile) =>
-    PARALLEL_AXES.map((a, i) => `${axisX(i)},${y(s[a.key])}`).join(" L ");
-
-  const hovered = hoverKey != null ? schools.find((s) => s.key === hoverKey) : null;
-
-  // draw the highlighted line last so it sits on top
-  const ordered = React.useMemo(() => {
-    if (hoverKey == null) return schools;
-    return [
-      ...schools.filter((s) => s.key !== hoverKey),
-      ...schools.filter((s) => s.key === hoverKey),
-    ];
-  }, [schools, hoverKey]);
-
-  const opacityOf = (s: SchoolProfile) => {
-    if (hoverKey != null) return s.key === hoverKey ? 0.95 : 0.05;
-    if (hoverSector) return s.sector === hoverSector ? 0.7 : 0.04;
-    return 0.22;
-  };
-
-  return (
-    <>
-      <InteractiveSectorLegend locale={locale} active={hoverSector} onHover={setHoverSector} />
-      <div className="relative overflow-x-auto" ref={boxRef}>
-        <svg
-          viewBox={`0 0 ${PC_W} ${PC_H}`}
-          className="h-auto w-full min-w-[640px]"
-          onMouseLeave={() => {
-            setHoverKey(null);
-            setTip(null);
-          }}
-        >
-          {PARALLEL_AXES.map((a, i) => {
-            const x = axisX(i);
-            return (
-              <g key={a.key}>
-                <line x1={x} x2={x} y1={y(0)} y2={y(100)} stroke="rgba(255,255,255,0.18)" />
-                {[0, 25, 50, 75, 100].map((tk) => (
-                  <g key={tk}>
-                    <line x1={x - 3} x2={x + 3} y1={y(tk)} y2={y(tk)} stroke="rgba(255,255,255,0.25)" />
-                    <text
-                      x={i === 0 ? x - 8 : x + 8}
-                      y={y(tk) + 4}
-                      fill="rgba(255,255,255,0.4)"
-                      fontSize="10"
-                      textAnchor={i === 0 ? "end" : "start"}
-                      className="tabular-nums"
-                    >
-                      {tk}
-                    </text>
-                  </g>
-                ))}
-                <text x={x} y={PC_H - 14} fill="rgba(255,255,255,0.85)" fontSize="13" fontWeight={600} textAnchor="middle">
-                  {t.metrics[a.key].label}
-                </text>
-              </g>
-            );
-          })}
-
-          {ordered.map((s) => (
-            <path
-              key={s.key}
-              d={`M ${lineFor(s)}`}
-              fill="none"
-              stroke={sectorColor(s.sector)}
-              strokeWidth={hoverKey === s.key ? 2.5 : 1}
-              strokeOpacity={opacityOf(s)}
-              className="cursor-pointer"
-              onMouseEnter={(e) => {
-                setHoverKey(s.key);
-                const box = boxRef.current?.getBoundingClientRect();
-                if (box) setTip({ x: e.clientX - box.left, y: e.clientY - box.top });
-              }}
-              onMouseMove={(e) => {
-                const box = boxRef.current?.getBoundingClientRect();
-                if (box) setTip({ x: e.clientX - box.left, y: e.clientY - box.top });
-              }}
-            />
-          ))}
-        </svg>
-
-        {hovered && tip && (
-          <div
-            className="pointer-events-none absolute z-20 w-max max-w-[240px] -translate-x-1/2 -translate-y-full rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl"
-            style={{ left: tip.x, top: tip.y - 10 }}
-          >
-            <div className="font-bold text-foreground">{hovered.school}</div>
-            {hovered.council && (
-              <div className="text-muted-foreground/70">{hovered.council}</div>
-            )}
-            <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
-              {PARALLEL_AXES.map((a) => `${hovered[a.key]}%`).join(" · ")}
-            </div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
 /* ---------- 12) City trajectories — each city's path over the years ---------- */
 const TR_W = 880;
 const TR_H = 470;
@@ -1353,37 +1124,6 @@ function CityTrajectories({
   );
 }
 
-/** A lab panel that owns its OWN gender filter — each chart is independent,
- *  so toggling boys/girls on one view doesn't change the others. The data for
- *  the view is computed in the render callback from the panel's current gender;
- *  it only recomputes when this panel's own toggle flips. */
-function GenderPanel({
-  title,
-  subtitle,
-  surface,
-  note,
-  children,
-}: {
-  title: React.ReactNode;
-  subtitle?: React.ReactNode;
-  surface?: string;
-  /** muted caption under the chart — e.g. a data-method disclosure */
-  note?: React.ReactNode;
-  children: (g: Gender, gender: SGender) => React.ReactNode;
-}) {
-  const [gender, setGender] = React.useState<SGender>("בנים");
-  const g: Gender = gender === "בנים" ? "m" : "f";
-  return (
-    <Panel>
-      <PanelHeader title={title} subtitle={subtitle}>
-        <GenderToggle value={gender} onChange={setGender} surface={surface} />
-      </PanelHeader>
-      {children(g, gender)}
-      {note && <p className="mt-3 text-xs text-muted-foreground/70">{note}</p>}
-    </Panel>
-  );
-}
-
 export function Lab() {
   const t = useT();
   const locale = useLocale();
@@ -1412,23 +1152,6 @@ export function Lab() {
       {/* 2 — sankey (the pipeline) */}
       <GenderPanel title={t.lab.sankeyTitle} subtitle={t.lab.sankeySubtitle} surface="lab_sankey">
         {(g) => <Sankey data={sankeyFlow(g)} t={t} locale={locale} />}
-      </GenderPanel>
-
-      {/* 3 — beeswarm */}
-      <GenderPanel title={t.lab.histTitle} subtitle={t.lab.histSubtitle} surface="lab_beeswarm">
-        {(g) => (
-          <>
-            <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-              {Object.entries(SECTOR_COLOR).map(([s, c]) => (
-                <span key={s} className="flex items-center gap-2">
-                  <span className="size-3 rounded-full" style={{ background: c }} />
-                  {sectorLabel(s, locale)}
-                </span>
-              ))}
-            </div>
-            <Beeswarm dots={schoolDots(g, "combat")} />
-          </>
-        )}
       </GenderPanel>
 
       {/* 4 — two-armies scatter */}
@@ -1467,11 +1190,6 @@ export function Lab() {
       {/* 10 — outliers */}
       <GenderPanel title={t.lab.outlierTitle} subtitle={t.lab.outlierSubtitle} surface="lab_outliers" note={t.lab.unweightedNote}>
         {(g) => <Outliers data={outliers(g)} t={t} />}
-      </GenderPanel>
-
-      {/* 11 — parallel coordinates */}
-      <GenderPanel title={t.lab.parallelTitle} subtitle={t.lab.parallelSubtitle} surface="lab_parallel">
-        {(g) => <ParallelCoords schools={schoolProfiles(g)} t={t} locale={locale} />}
       </GenderPanel>
 
       {/* 12 — city trajectories */}

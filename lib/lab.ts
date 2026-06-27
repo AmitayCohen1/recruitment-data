@@ -533,41 +533,6 @@ export function cityTrajectories(
 }
 
 /* ------------------------------------------------------------------ *
- * 12) 3D city skyline — one "tower" per municipality, sorted by
- *     enlistment. Height = combat rate, footprint = #schools. A
- *     rotatable city of recruitment.
- * ------------------------------------------------------------------ */
-export type Tower = {
-  council: string;
-  enlist: number;
-  combat: number;
-  officer: number;
-  n: number;
-  big: boolean;
-};
-
-export function citySkyline(gender: Gender, minSchools = 3): Tower[] {
-  const big = new Set<string>(BIG_CITIES);
-  return cityRows(ROWS, gender, LATEST)
-    .filter(
-      (c) =>
-        c.n >= minSchools &&
-        c.enlist != null &&
-        c.combat != null &&
-        c.officer != null,
-    )
-    .map((c) => ({
-      council: c.council,
-      enlist: c.enlist as number,
-      combat: c.combat as number,
-      officer: c.officer as number,
-      n: c.n,
-      big: big.has(c.council),
-    }))
-    .sort((a, b) => b.enlist - a.enlist);
-}
-
-/* ------------------------------------------------------------------ *
  * 14) Sector bars — the core comparison (one bar per sector × metric),
  *     enlistee/cohort-weighted rates. Classic grouped-bar data, reused
  *     for the 3D bar matrix.
