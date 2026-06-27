@@ -31,11 +31,16 @@ import {
   ridgeline,
   sankeyFlow,
   outliers,
+  schoolProfiles,
+  cityTrajectories,
+  PARALLEL_AXES,
   LAB_FIRST,
   LAB_LAST,
   type Waffle,
   type SchoolDot,
   type CityPoint,
+  type SchoolProfile,
+  type Trajectory,
 } from "@/lib/lab";
 import { BIG_CITIES, cityColor } from "@/lib/cities";
 
@@ -1102,6 +1107,252 @@ function Outliers({
   );
 }
 
+/* ---------- 11) Parallel coordinates — four metrics at once ---------- */
+const PC_W = 880;
+const PC_H = 440;
+const PC_PADX = 64;
+const PC_TOP = 30;
+const PC_BOT = 46;
+
+/** Sector legend whose entries highlight their whole group on hover. */
+function InteractiveSectorLegend({
+  locale,
+  active,
+  onHover,
+}: {
+  locale: Locale;
+  active: string | null;
+  onHover: (sector: string | null) => void;
+}) {
+  return (
+    <div className="-mt-2 mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+      {Object.entries(SECTOR_COLOR).map(([s, c]) => (
+        <button
+          key={s}
+          type="button"
+          onMouseEnter={() => onHover(s)}
+          onMouseLeave={() => onHover(null)}
+          className="flex items-center gap-2 transition-opacity"
+          style={{ opacity: active && active !== s ? 0.35 : 1 }}
+        >
+          <span className="size-3 rounded-full" style={{ background: c }} />
+          {sectorLabel(s, locale)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ParallelCoords({
+  schools,
+  t,
+  locale,
+}: {
+  schools: SchoolProfile[];
+  t: Dictionary;
+  locale: Locale;
+}) {
+  const [hoverKey, setHoverKey] = React.useState<number | null>(null);
+  const [hoverSector, setHoverSector] = React.useState<string | null>(null);
+  const [tip, setTip] = React.useState<{ x: number; y: number } | null>(null);
+  const boxRef = React.useRef<HTMLDivElement>(null);
+
+  const n = PARALLEL_AXES.length;
+  const axisX = (i: number) => PC_PADX + (i / (n - 1)) * (PC_W - 2 * PC_PADX);
+  const y = scaleLinear().domain([0, 100]).range([PC_H - PC_BOT, PC_TOP]);
+  const lineFor = (s: SchoolProfile) =>
+    PARALLEL_AXES.map((a, i) => `${axisX(i)},${y(s[a.key])}`).join(" L ");
+
+  const hovered = hoverKey != null ? schools.find((s) => s.key === hoverKey) : null;
+
+  // draw the highlighted line last so it sits on top
+  const ordered = React.useMemo(() => {
+    if (hoverKey == null) return schools;
+    return [
+      ...schools.filter((s) => s.key !== hoverKey),
+      ...schools.filter((s) => s.key === hoverKey),
+    ];
+  }, [schools, hoverKey]);
+
+  const opacityOf = (s: SchoolProfile) => {
+    if (hoverKey != null) return s.key === hoverKey ? 0.95 : 0.05;
+    if (hoverSector) return s.sector === hoverSector ? 0.7 : 0.04;
+    return 0.22;
+  };
+
+  return (
+    <>
+      <InteractiveSectorLegend locale={locale} active={hoverSector} onHover={setHoverSector} />
+      <div className="relative overflow-x-auto" ref={boxRef}>
+        <svg
+          viewBox={`0 0 ${PC_W} ${PC_H}`}
+          className="h-auto w-full min-w-[640px]"
+          onMouseLeave={() => {
+            setHoverKey(null);
+            setTip(null);
+          }}
+        >
+          {PARALLEL_AXES.map((a, i) => {
+            const x = axisX(i);
+            return (
+              <g key={a.key}>
+                <line x1={x} x2={x} y1={y(0)} y2={y(100)} stroke="rgba(255,255,255,0.18)" />
+                {[0, 25, 50, 75, 100].map((tk) => (
+                  <g key={tk}>
+                    <line x1={x - 3} x2={x + 3} y1={y(tk)} y2={y(tk)} stroke="rgba(255,255,255,0.25)" />
+                    <text
+                      x={i === 0 ? x - 8 : x + 8}
+                      y={y(tk) + 4}
+                      fill="rgba(255,255,255,0.4)"
+                      fontSize="10"
+                      textAnchor={i === 0 ? "end" : "start"}
+                      className="tabular-nums"
+                    >
+                      {tk}
+                    </text>
+                  </g>
+                ))}
+                <text x={x} y={PC_H - 14} fill="rgba(255,255,255,0.85)" fontSize="13" fontWeight={600} textAnchor="middle">
+                  {t.metrics[a.key].label}
+                </text>
+              </g>
+            );
+          })}
+
+          {ordered.map((s) => (
+            <path
+              key={s.key}
+              d={`M ${lineFor(s)}`}
+              fill="none"
+              stroke={sectorColor(s.sector)}
+              strokeWidth={hoverKey === s.key ? 2.5 : 1}
+              strokeOpacity={opacityOf(s)}
+              className="cursor-pointer"
+              onMouseEnter={(e) => {
+                setHoverKey(s.key);
+                const box = boxRef.current?.getBoundingClientRect();
+                if (box) setTip({ x: e.clientX - box.left, y: e.clientY - box.top });
+              }}
+              onMouseMove={(e) => {
+                const box = boxRef.current?.getBoundingClientRect();
+                if (box) setTip({ x: e.clientX - box.left, y: e.clientY - box.top });
+              }}
+            />
+          ))}
+        </svg>
+
+        {hovered && tip && (
+          <div
+            className="pointer-events-none absolute z-20 w-max max-w-[240px] -translate-x-1/2 -translate-y-full rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl"
+            style={{ left: tip.x, top: tip.y - 10 }}
+          >
+            <div className="font-bold text-foreground">{hovered.school}</div>
+            {hovered.council && (
+              <div className="text-muted-foreground/70">{hovered.council}</div>
+            )}
+            <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
+              {PARALLEL_AXES.map((a) => `${hovered[a.key]}%`).join(" · ")}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ---------- 12) City trajectories — each city's path over the years ---------- */
+const TR_W = 880;
+const TR_H = 470;
+const TR_PAD = 52;
+
+function CityTrajectories({
+  data,
+  t,
+}: {
+  data: ReturnType<typeof cityTrajectories>;
+  t: Dictionary;
+}) {
+  const { trajectories, xBounds, yBounds } = data;
+  const [hover, setHover] = React.useState<string | null>(null);
+  if (!trajectories.length) return null;
+
+  const [xMin, xMax] = xBounds;
+  const [yMin, yMax] = yBounds;
+  const px = scaleLinear().domain([xMin, xMax]).range([TR_PAD, TR_W - TR_PAD]);
+  const py = scaleLinear().domain([yMin, yMax]).range([TR_H - TR_PAD, TR_PAD]);
+  const xticks = [xMin, Math.round((xMin + xMax) / 2), xMax];
+  const yticks = [yMin, Math.round((yMin + yMax) / 2), yMax];
+
+  const ordered = hover
+    ? [
+        ...trajectories.filter((tr) => tr.council !== hover),
+        ...trajectories.filter((tr) => tr.council === hover),
+      ]
+    : trajectories;
+  const dim = (tr: Trajectory) => (hover && hover !== tr.council ? 0.18 : 1);
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${TR_W} ${TR_H}`} className="h-auto w-full min-w-[640px]">
+        {xticks.map((v) => (
+          <g key={`x${v}`}>
+            <line x1={px(v)} x2={px(v)} y1={TR_PAD - 10} y2={TR_H - TR_PAD} stroke="rgba(255,255,255,0.07)" />
+            <text x={px(v)} y={TR_H - TR_PAD + 18} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle" className="tabular-nums">
+              {v}%
+            </text>
+          </g>
+        ))}
+        {yticks.map((v) => (
+          <g key={`y${v}`}>
+            <line x1={TR_PAD} x2={TR_W - TR_PAD} y1={py(v)} y2={py(v)} stroke="rgba(255,255,255,0.07)" />
+            <text x={TR_PAD - 8} y={py(v) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end" className="tabular-nums">
+              {v}%
+            </text>
+          </g>
+        ))}
+
+        {ordered.map((tr) => {
+          const color = cityColor(tr.council);
+          const pts = tr.points;
+          const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${px(p.enlist)} ${py(p.combat)}`).join(" ");
+          const first = pts[0];
+          const last = pts[pts.length - 1];
+          return (
+            <g
+              key={tr.council}
+              style={{ opacity: dim(tr) }}
+              className="cursor-pointer"
+              onMouseEnter={() => setHover(tr.council)}
+              onMouseLeave={() => setHover((c) => (c === tr.council ? null : c))}
+            >
+              <path d={d} fill="none" stroke={color} strokeWidth={hover === tr.council ? 3 : 2} strokeLinejoin="round" strokeOpacity={0.9} />
+              {pts.map((p) => (
+                <circle key={p.year} cx={px(p.enlist)} cy={py(p.combat)} r={2.5} fill={color} fillOpacity={0.85}>
+                  <title>
+                    {tr.council} · {p.year} — {t.lab.scatterTip(p.enlist, p.combat)}
+                  </title>
+                </circle>
+              ))}
+              <circle cx={px(first.enlist)} cy={py(first.combat)} r={4} fill="none" stroke={color} strokeWidth={1.5} />
+              <circle cx={px(last.enlist)} cy={py(last.combat)} r={5} fill={color} />
+              <text x={px(last.enlist) + 8} y={py(last.combat) + 4} fill={color} fontSize="11" fontWeight={600}>
+                {tr.council}
+              </text>
+            </g>
+          );
+        })}
+
+        <text x={TR_W / 2} y={TR_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
+          {t.lab.axisEnlist}
+        </text>
+        <text x={14} y={TR_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${TR_H / 2})`}>
+          {t.lab.axisCombat}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 /** A lab panel that owns its OWN gender filter — each chart is independent,
  *  so toggling boys/girls on one view doesn't change the others. The data for
  *  the view is computed in the render callback from the panel's current gender;
@@ -1216,6 +1467,16 @@ export function Lab() {
       {/* 10 — outliers */}
       <GenderPanel title={t.lab.outlierTitle} subtitle={t.lab.outlierSubtitle} surface="lab_outliers" note={t.lab.unweightedNote}>
         {(g) => <Outliers data={outliers(g)} t={t} />}
+      </GenderPanel>
+
+      {/* 11 — parallel coordinates */}
+      <GenderPanel title={t.lab.parallelTitle} subtitle={t.lab.parallelSubtitle} surface="lab_parallel">
+        {(g) => <ParallelCoords schools={schoolProfiles(g)} t={t} locale={locale} />}
+      </GenderPanel>
+
+      {/* 12 — city trajectories */}
+      <GenderPanel title={t.lab.trajTitle} subtitle={t.lab.trajSubtitle} surface="lab_trajectories" note={t.lab.unweightedNote}>
+        {(g) => <CityTrajectories data={cityTrajectories(g)} t={t} />}
       </GenderPanel>
     </div>
   );

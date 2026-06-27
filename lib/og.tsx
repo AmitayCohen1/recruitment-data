@@ -14,7 +14,6 @@ export type OgSection =
   | "schools"
   | "lab"
   | "three"
-  | "d3"
   | "sources";
 
 export const OG_SIZE = { width: 1200, height: 630 };
@@ -33,8 +32,6 @@ function copy(section: OgSection, t: ReturnType<typeof getDictionary>) {
       return { title: t.labTab.title, sub: t.labTab.subtitle };
     case "three":
       return { title: t.threeTab.title, sub: t.threeTab.subtitle };
-    case "d3":
-      return { title: t.d3Tab.title, sub: t.d3Tab.subtitle };
     case "gaps":
       return { title: t.tabs.gaps, sub: t.meta.description };
     case "sources":

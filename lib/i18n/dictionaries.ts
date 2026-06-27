@@ -30,7 +30,6 @@ const he = {
     sources: "מקורות נתונים",
     lab: "ניסויים",
     three: "תלת-ממד",
-    d3: "D3",
   },
   citiesTab: {
     title: "גיוס לפי אזור ועיר",
@@ -52,37 +51,11 @@ const he = {
     subtitle:
       "אותם נתונים, בשלושה ממדים. גררו לסובב, גלגלו לזום. ניסיוני וכבד — דורש דפדפן עם WebGL.",
   },
-  d3Tab: {
-    title: "D3 ו-Visx",
-    subtitle:
-      "אותם נתונים, דרך מנוע הויזואליזציה של D3: סימולציית כוחות, מפות צפיפות, היררכיות וזרמים. ניסיוני.",
-  },
   armyStream: {
-    title: "זרם: מי ממלא את הצבא לאורך הזמן",
+    title: (a: number | string, b: number | string) =>
+      `הרכב הלוחמים: ${a} מול ${b}`,
     subtitle:
-      "מספר הלוחמים (משוקלל) מכל מגזר בכל שנה, כזרם רציף. עובי הזרם = מספר הלוחמים מאותו מגזר באותה שנה.",
-  },
-  d3: {
-    beeTitle: "נחיל כוחות: כל בית ספר נמצא את מקומו",
-    beeSubtitle:
-      "כל נקודה היא בית ספר, צבועה לפי מגזר. סימולציית כוחות (d3-force) דוחפת כל נקודה לעבר השיעור שלה על הציר ומונעת חפיפה — הצפיפות האמיתית מתגלה מעצמה.",
-    contourTitle: "מפת צפיפות: גיוס מול קרבי",
-    contourSubtitle:
-      "במקום נקודות בודדות, שדה צפיפות חלק (d3-contour) מראה היכן באמת מתרכזים בתי הספר במרחב הגיוס×קרבי. אזורים בהירים = ריכוז גבוה.",
-    voronoiTitle: "פיזור עם וורונוי: ריחוף בכל מקום",
-    voronoiSubtitle:
-      "כל רשות היא נקודה. רשת וורונוי (d3-delaunay) מחלקת את כל השטח לתאים, כך שריחוף בכל מקום קופץ לרשות הקרובה ביותר — אין צורך לכוון לנקודה זעירה.",
-    treemapTitle: "מפת עץ: המגזרים והערים שלהם",
-    treemapSubtitle:
-      "כל מלבן הוא רשות, מקובצת לפי מגזר. גודל = מספר בתי הספר; עוצמת הצבע = שיעור הקרבי. מבנה הצבא במבט אחד.",
-    packTitle: "אריזת מעגלים: אותה היררכיה, צורה אחרת",
-    packSubtitle:
-      "אותם נתונים כמו מפת העץ, אבל כמעגלים מקוננים. גודל = מספר בתי הספר; עוצמת הצבע = שיעור הקרבי.",
-    streamTitle: "זרם: מי ממלא את הצבא לאורך הזמן",
-    streamSubtitle:
-      "מספר הלוחמים (משוקלל) מכל מגזר בכל שנה, כזרם רציף (d3-shape). עובי הזרם = מספר הלוחמים מאותו מגזר באותה שנה.",
-    densityLow: "צפיפות נמוכה",
-    densityHigh: "צפיפות גבוהה",
+      "מספר הלוחמים (המשוקלל) מכל מגזר, בהשוואה בין שתי השנים. גובה העמודה = סך הלוחמים; כל מקטע = חלקו של מגזר.",
   },
   three: {
     barTitle: "השוואת המגזרים בתלת-ממד",
@@ -187,6 +160,12 @@ const he = {
       "הקו המקווקו הוא הקשר הצפוי בין שיעור הגיוס לשיעור הקרבי בכל הרשויות. רשויות הרחק מעל הקו מפיקות הרבה יותר קרביים ממה שהגיוס שלהן מנבא; הרחק מתחת — הרבה פחות.",
     outlierOver: "הרבה מעל הצפוי",
     outlierUnder: "הרבה מתחת לצפוי",
+    parallelTitle: "פרופיל בית הספר: ארבעה מדדים בבת אחת",
+    parallelSubtitle:
+      "כל קו הוא בית ספר בשנה האחרונה, צבוע לפי מגזר, החוצה ארבעה צירים — גיוס, קרבי, קצונה ושירות משמעותי. בניגוד לפיזור, כאן רואים את הפרופיל המלא בבת אחת, וגם הצירים השטוחים (קצונה, משמעות) נקראים בהגינות זה לצד זה. רחפו על קו כדי להדגיש אותו, או על מקרא המגזר כדי להאיר מגזר שלם.",
+    trajTitle: "מסלול הערים: לאן זזה כל עיר",
+    trajSubtitle:
+      "כל קו עוקב אחרי עיר גדולה במרחב גיוס×קרבי, נקודה לכל שנה לאורך התקופה. הנקודה הקטנה היא השנה הראשונה, הנקודה המסומנת היא האחרונה. כל השנים במבט אחד — הגרסה הסטטית של מרוץ הבועות.",
   },
   common: {
     noData: "אין נתונים מספיקים עבור צירוף זה.",
@@ -432,7 +411,6 @@ const en: Dictionary = {
     sources: "Data Sources",
     lab: "Lab",
     three: "3D",
-    d3: "D3",
   },
   citiesTab: {
     title: "Enlistment by Region & City",
@@ -454,37 +432,11 @@ const en: Dictionary = {
     subtitle:
       "The same data, in three dimensions. Drag to rotate, scroll to zoom. Experimental and heavy — needs a WebGL-capable browser.",
   },
-  d3Tab: {
-    title: "D3 & Visx",
-    subtitle:
-      "The same data through D3's visualization engine: a force simulation, density fields, hierarchies and streams. Experimental.",
-  },
   armyStream: {
-    title: "Stream: who fills the army over time",
+    title: (a: number | string, b: number | string) =>
+      `Fighter composition: ${a} vs ${b}`,
     subtitle:
-      "The (weighted) number of combat soldiers from each sector per year, as a flowing stream. Stream thickness = soldiers from that sector that year.",
-  },
-  d3: {
-    beeTitle: "Force swarm: every school finds its place",
-    beeSubtitle:
-      "Each dot is a school, colored by sector. A force simulation (d3-force) pushes every dot toward its rate on the axis while preventing overlap — the real density emerges on its own.",
-    contourTitle: "Density field: enlistment vs combat",
-    contourSubtitle:
-      "Instead of scattered dots, a smooth density field (d3-contour) shows where schools actually cluster in enlist×combat space. Brighter regions = higher concentration.",
-    voronoiTitle: "Voronoi scatter: hover anywhere",
-    voronoiSubtitle:
-      "Each municipality is a dot. A Voronoi mesh (d3-delaunay) tiles the whole area into cells, so hovering anywhere snaps to the nearest city — no need to aim at a tiny dot.",
-    treemapTitle: "Treemap: sectors and their cities",
-    treemapSubtitle:
-      "Each rectangle is a municipality, grouped by sector. Size = number of schools; color intensity = combat rate. The army's composition at a glance.",
-    packTitle: "Circle packing: same hierarchy, another shape",
-    packSubtitle:
-      "The same data as the treemap, but as nested circles. Size = number of schools; color intensity = combat rate.",
-    streamTitle: "Stream: who fills the army over time",
-    streamSubtitle:
-      "The (weighted) number of combat soldiers from each sector per year, as a flowing stream (d3-shape). Stream thickness = soldiers from that sector that year.",
-    densityLow: "Lower density",
-    densityHigh: "Higher density",
+      "The (weighted) number of combat soldiers from each sector, comparing the two years. Bar height = total fighters; each segment = a sector's share.",
   },
   three: {
     barTitle: "Sectors compared, in 3D",
@@ -589,6 +541,12 @@ const en: Dictionary = {
       "The dashed line is the expected link between enlistment and combat rate across all municipalities. Municipalities far above it produce far more combat soldiers than their enlistment predicts; far below, far fewer.",
     outlierOver: "Far above expected",
     outlierUnder: "Far below expected",
+    parallelTitle: "School profile: four metrics at once",
+    parallelSubtitle:
+      "Each line is a school in the latest year, colored by sector, crossing four axes — enlistment, combat, officer and meaningful service. Unlike the scatter, you see the whole profile at once, and the flat axes (officer, meaning) read honestly side by side. Hover a line to highlight it, or a sector in the legend to light up the whole group.",
+    trajTitle: "City trajectories: where each city moved",
+    trajSubtitle:
+      "Each line follows a big city through enlist×combat space, one node per year across the period. The small node is the first year, the labeled node is the latest. All years at once — the static counterpart to the bubble race.",
   },
   common: {
     noData: "Not enough data for this combination.",

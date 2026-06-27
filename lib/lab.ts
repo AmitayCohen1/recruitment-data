@@ -446,6 +446,93 @@ export function schoolCloud(gender: Gender, allYears = false): CloudPoint[] {
 }
 
 /* ------------------------------------------------------------------ *
+ *  Parallel coordinates — one polyline per school across all four
+ *  metrics (enlist → combat → officer → meaning), latest year. Unlike
+ *  the scatter, this view shows the full multivariate profile, so the
+ *  low-spread officer/meaning axes still read honestly side by side.
+ * ------------------------------------------------------------------ */
+export const PARALLEL_AXES: { key: MetricKey; label?: string }[] = [
+  { key: "enlist" },
+  { key: "combat" },
+  { key: "officer" },
+  { key: "meaning" },
+];
+
+export type SchoolProfile = {
+  key: number;
+  school: string;
+  council: string | null;
+  sector: string | null;
+  enlist: number;
+  combat: number;
+  officer: number;
+  meaning: number;
+};
+
+export function schoolProfiles(gender: Gender): SchoolProfile[] {
+  return ROWS.flatMap((r) => {
+    if (r.g !== gender || r.y !== LATEST) return [];
+    const e = r.e as number | null;
+    const cb = r.cb as number | null;
+    const o = r.o as number | null;
+    const m = r.m as number | null;
+    if (e == null || cb == null || o == null || m == null) return [];
+    return [
+      {
+        key: r.k,
+        school: r.s,
+        council: r.c,
+        sector: SCHOOL_SECTOR[String(r.k)] ?? null,
+        enlist: e,
+        combat: cb,
+        officer: o,
+        meaning: m,
+      },
+    ];
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ *  City trajectories — each tracked city's PATH through (enlist,
+ *  combat) space, one node per year. The static, see-all-years
+ *  counterpart to the animated bubble race.
+ * ------------------------------------------------------------------ */
+export type TrajPoint = { year: number; enlist: number; combat: number };
+export type Trajectory = { council: string; points: TrajPoint[] };
+
+export function cityTrajectories(
+  gender: Gender,
+  cities: readonly string[] = BIG_CITIES,
+  minSchools = 3,
+): { trajectories: Trajectory[]; xBounds: [number, number]; yBounds: [number, number] } {
+  const want = new Set(cities);
+  const byCity = new Map<string, TrajPoint[]>();
+  for (const year of YEARS) {
+    for (const c of cityRows(ROWS, gender, year)) {
+      if (!want.has(c.council) || c.n < minSchools) continue;
+      if (c.enlist == null || c.combat == null) continue;
+      const arr = byCity.get(c.council) ?? [];
+      arr.push({ year, enlist: c.enlist as number, combat: c.combat as number });
+      byCity.set(c.council, arr);
+    }
+  }
+  const trajectories = [...byCity.entries()]
+    .map(([council, points]) => ({ council, points }))
+    .filter((tr) => tr.points.length >= 2);
+  const xs = trajectories.flatMap((tr) => tr.points.map((p) => p.enlist));
+  const ys = trajectories.flatMap((tr) => tr.points.map((p) => p.combat));
+  const pad = (lo: number, hi: number): [number, number] => [
+    Math.max(0, Math.floor((lo - 3) / 5) * 5),
+    Math.min(100, Math.ceil((hi + 3) / 5) * 5),
+  ];
+  return {
+    trajectories,
+    xBounds: xs.length ? pad(Math.min(...xs), Math.max(...xs)) : [0, 100],
+    yBounds: ys.length ? pad(Math.min(...ys), Math.max(...ys)) : [0, 100],
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * 12) 3D city skyline — one "tower" per municipality, sorted by
  *     enlistment. Height = combat rate, footprint = #schools. A
  *     rotatable city of recruitment.
