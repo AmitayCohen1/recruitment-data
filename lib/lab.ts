@@ -403,6 +403,169 @@ export function armyComposition(
 }
 
 /* ------------------------------------------------------------------ *
+ * 11) 3D school cloud — every school as a point in (enlist, combat,
+ *     officer) space, colored by sector. Three real axes you can't
+ *     show flat; orbit to read the joint distribution.
+ * ------------------------------------------------------------------ */
+export type CloudPoint = {
+  key: number;
+  school: string;
+  council: string | null;
+  sector: string | null;
+  enlist: number;
+  combat: number;
+  officer: number;
+};
+
+export function schoolCloud(gender: Gender): CloudPoint[] {
+  return ROWS.flatMap((r) => {
+    if (r.y !== LATEST || r.g !== gender) return [];
+    const e = r.e as number | null;
+    const cb = r.cb as number | null;
+    const o = r.o as number | null;
+    if (e == null || cb == null || o == null) return [];
+    return [
+      {
+        key: r.k,
+        school: r.s,
+        council: r.c,
+        sector: SCHOOL_SECTOR[String(r.k)] ?? null,
+        enlist: e,
+        combat: cb,
+        officer: o,
+      },
+    ];
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * 12) 3D city skyline — one "tower" per municipality, sorted by
+ *     enlistment. Height = combat rate, footprint = #schools. A
+ *     rotatable city of recruitment.
+ * ------------------------------------------------------------------ */
+export type Tower = {
+  council: string;
+  enlist: number;
+  combat: number;
+  officer: number;
+  n: number;
+  big: boolean;
+};
+
+export function citySkyline(gender: Gender, minSchools = 3): Tower[] {
+  const big = new Set<string>(BIG_CITIES);
+  return cityRows(ROWS, gender, LATEST)
+    .filter(
+      (c) =>
+        c.n >= minSchools &&
+        c.enlist != null &&
+        c.combat != null &&
+        c.officer != null,
+    )
+    .map((c) => ({
+      council: c.council,
+      enlist: c.enlist as number,
+      combat: c.combat as number,
+      officer: c.officer as number,
+      n: c.n,
+      big: big.has(c.council),
+    }))
+    .sort((a, b) => b.enlist - a.enlist);
+}
+
+/* ------------------------------------------------------------------ *
+ * 14) Sector bars — the core comparison (one bar per sector × metric),
+ *     enlistee/cohort-weighted rates. Classic grouped-bar data, reused
+ *     for the 3D bar matrix.
+ * ------------------------------------------------------------------ */
+export type SectorBar = {
+  sector: string;
+  color: string;
+  enlist: number;
+  combat: number;
+  officer: number;
+};
+
+export function sectorBars(gender: Gender): SectorBar[] {
+  return SECTORS.map((s) => {
+    const p = profile(s, toS(gender));
+    return {
+      sector: s,
+      color: SECTOR_COLOR[s] ?? "#94a3b8",
+      enlist: Math.round(p.enlist ?? 0),
+      combat: Math.round(p.combat ?? 0),
+      officer: Math.round(p.officer ?? 0),
+    };
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * 13) Sector → city hierarchy — every school grouped by sector then by
+ *     municipality, for treemap / circle-packing. Leaf value = number
+ *     of schools; combat is the city mean (drives color intensity).
+ * ------------------------------------------------------------------ */
+export type CityLeaf = {
+  city: string;
+  n: number;
+  combat: number;
+  enlist: number;
+};
+export type SectorBranch = {
+  sector: string;
+  color: string;
+  n: number;
+  cities: CityLeaf[];
+};
+
+export function sectorCityTree(
+  gender: Gender,
+  minSchools = 2,
+): SectorBranch[] {
+  // group latest-year rows: sector → council → rows
+  const bySector = new Map<string, Map<string, { cb: number[]; e: number[] }>>();
+  for (const r of ROWS) {
+    if (r.y !== LATEST || r.g !== gender || !r.c) continue;
+    const sector = SCHOOL_SECTOR[String(r.k)];
+    if (!sector) continue; // only the tagged sectors
+    const cb = r.cb as number | null;
+    const e = r.e as number | null;
+    if (cb == null || e == null) continue;
+    let cities = bySector.get(sector);
+    if (!cities) bySector.set(sector, (cities = new Map()));
+    let acc = cities.get(r.c);
+    if (!acc) cities.set(r.c, (acc = { cb: [], e: [] }));
+    acc.cb.push(cb);
+    acc.e.push(e);
+  }
+
+  const mean = (xs: number[]) =>
+    xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : 0;
+
+  return SECTORS.flatMap((sector) => {
+    const cities = bySector.get(sector);
+    if (!cities) return [];
+    const leaves: CityLeaf[] = [...cities.entries()]
+      .filter(([, v]) => v.cb.length >= minSchools)
+      .map(([city, v]) => ({
+        city,
+        n: v.cb.length,
+        combat: mean(v.cb),
+        enlist: mean(v.e),
+      }))
+      .sort((a, b) => b.n - a.n);
+    if (!leaves.length) return [];
+    return [
+      {
+        sector,
+        color: SECTOR_COLOR[sector] ?? "#94a3b8",
+        n: leaves.reduce((a, b) => a + b.n, 0),
+        cities: leaves,
+      },
+    ];
+  });
+}
+
+/* ------------------------------------------------------------------ *
  *  9) Outliers — fit combat ≈ a·enlist + b across municipalities, then
  *     rank by residual: who serves combat far above/below what their
  *     enlistment rate predicts. The buck-the-trend story.

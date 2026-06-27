@@ -61,9 +61,13 @@ function WaffleCard({
   t: Dictionary;
   locale: Locale;
 }) {
+  // combat first (solid), then officers as a SEPARATE slice of enlistees — not
+  // nested inside combat — then the remaining enlistees, then non-enlisted.
+  // (officers are a % of enlistees, independent of combat; see sankey note.)
+  const offEnd = Math.min(d.enlisted, d.combat + d.officer);
   const cells = Array.from({ length: 100 }, (_, i) => {
-    if (i < d.officer) return WAFFLE_STAGE.officer;
     if (i < d.combat) return WAFFLE_STAGE.combat;
+    if (i < offEnd) return WAFFLE_STAGE.officer;
     if (i < d.enlisted) return WAFFLE_STAGE.enlisted;
     return EMPTY;
   });
@@ -699,22 +703,24 @@ function ArmyComposition({
               </title>
             </path>
           ))}
-          {/* end-of-band share labels for the latest year */}
+          {/* end-of-band share labels for the latest year — white with a dark
+              halo (paint-order: stroke) so they read on any band color */}
           {bands.map((b) => {
             const mid = (b.lower[n - 1] + b.upper[n - 1]) / 2;
             if (b.upper[n - 1] - b.lower[n - 1] < 6) return null;
-            const light =
-              b.color === "#fbbf24" || b.color === "#34d399" || b.color === "#c084fc";
             return (
               <text
                 key={`v${b.sector}`}
-                x={x(n - 1) - 6}
+                x={x(n - 1) - 8}
                 y={y(mid) + 4}
-                fill={light ? "#0b1220" : "rgba(255,255,255,0.95)"}
+                fill="#fff"
+                stroke="#0b1220"
+                strokeWidth={2.75}
                 fontSize="12"
                 fontWeight={700}
                 textAnchor="end"
                 className="tabular-nums"
+                style={{ paintOrder: "stroke" }}
               >
                 {b.shares[n - 1]}%
               </text>
@@ -734,7 +740,7 @@ function ArmyComposition({
 
 /* ---------- 8) Ridgeline — the distribution shifting year by year ---------- */
 const RG_W = 880;
-const RG_H = 420;
+const RG_H = 540;
 const RG_PADX = 64;
 const RG_TOP = 18;
 const RG_BOT = 40;
@@ -742,7 +748,8 @@ function Ridgeline({ data, t }: { data: ReturnType<typeof ridgeline>; t: Diction
   const { years, ridges, maxDensity } = data;
   const n = years.length;
   const rowH = (RG_H - RG_TOP - RG_BOT) / n;
-  const amp = rowH * 2.3;
+  // keep each ridge inside its own band (amp < rowH) so the years don't tangle
+  const amp = rowH * 0.9;
   const bins = ridges[0]?.density.length ?? 1;
   const x = (i: number) => RG_PADX + (i / (bins - 1)) * (RG_W - 2 * RG_PADX);
   const xPct = (v: number) => RG_PADX + (v / 100) * (RG_W - 2 * RG_PADX);
@@ -778,7 +785,8 @@ function Ridgeline({ data, t }: { data: ReturnType<typeof ridgeline>; t: Diction
           const mx = xPct(ridge.median);
           return (
             <g key={ridge.year}>
-              <path d={area} fill={color} fillOpacity={0.42} />
+              <line x1={x(0)} x2={x(bins - 1)} y1={base} y2={base} stroke="rgba(255,255,255,0.1)" />
+              <path d={area} fill={color} fillOpacity={0.5} />
               <path d={line} fill="none" stroke={color} strokeWidth={1.5} />
               {/* median marker: a tick rising from the baseline + its value */}
               <line x1={mx} x2={mx} y1={base} y2={base - amp * 0.62} stroke="#fff" strokeOpacity={0.7} strokeWidth={1.25} />
@@ -805,15 +813,21 @@ function Ridgeline({ data, t }: { data: ReturnType<typeof ridgeline>; t: Diction
   );
 }
 
-/* ---------- 9) Sankey — enlist → combat → officer pipeline ---------- */
+/* ---------- 9) Sankey — cohort → enlisted, then combat & officers ---------- *
+ *  IMPORTANT: combat and officers are BOTH subsets of enlistees, not of each
+ *  other. So officers branch off the enlisted node in PARALLEL with combat —
+ *  never downstream of it (an earlier version implied officers ⊂ combat, which
+ *  badly overstated the officer share, especially for girls). The two outflows
+ *  are drawn as disjoint slices of the enlisted bar; in reality they overlap
+ *  slightly (combat officers), noted in the caption. */
 const SK_W = 880;
 const SK_H = 470;
 const SK_PADX = 64;
 const SK_TOP = 18;
-const SK_BOT = 42;
-const SK_COL = 18;
+const SK_BOT = 44;
+const SK_COL = 16;
 const SK_LANE_GAP = 16;
-const SANKEY_KEYS = ["cohort", "enlist", "combat", "officer"] as const;
+const SK_OFF_GAP = 7;
 function Sankey({
   data,
   t,
@@ -824,34 +838,49 @@ function Sankey({
   locale: Locale;
 }) {
   const { stages, sectors } = data;
+  const val = (stageIdx: number, sector: string) =>
+    stages[stageIdx]?.slices.find((s) => s.sector === sector)?.value ?? 0;
   const totalCohort = stages[0]?.total || 1;
   const usableH =
     SK_H - SK_TOP - SK_BOT - SK_LANE_GAP * Math.max(0, sectors.length - 1);
   const scale = usableH / totalCohort;
-  const nStages = stages.length;
+  // 3 visual columns: cohort, enlisted, outcomes (combat over officers)
   const xOf = (i: number) =>
-    SK_PADX + (i / (nStages - 1)) * (SK_W - 2 * SK_PADX - SK_COL);
+    SK_PADX + (i / 2) * (SK_W - 2 * SK_PADX - SK_COL);
+  const [x0, x1, x2] = [xOf(0), xOf(1), xOf(2)];
 
-  // vertical lane per sector, sized by its cohort. Lane top = cumulative
-  // height of the lanes above it (computed without mutation so the new
-  // react-hooks immutability rule stays happy).
-  const cohortOf = (sector: string) =>
-    stages[0].slices.find((s) => s.sector === sector)?.value ?? 0;
-  const lanes = sectors.map((sector, i) => ({
-    sector,
-    laneTop:
+  const cohortOf = (sector: string) => val(0, sector);
+  const lanes = sectors.map((sector, i) => {
+    const laneTop =
       SK_TOP +
       sectors
         .slice(0, i)
-        .reduce((acc, s) => acc + cohortOf(s) * scale + SK_LANE_GAP, 0),
-    color: SECTOR_COLOR[sector] ?? "#94a3b8",
-    heights: stages.map(
-      (st) => (st.slices.find((s) => s.sector === sector)?.value ?? 0) * scale,
-    ),
-  }));
+        .reduce((acc, s) => acc + cohortOf(s) * scale + SK_LANE_GAP, 0);
+    return {
+      sector,
+      laneTop,
+      color: SECTOR_COLOR[sector] ?? "#94a3b8",
+      cohortH: val(0, sector) * scale,
+      enlH: val(1, sector) * scale,
+      combH: val(2, sector) * scale,
+      offH: val(3, sector) * scale,
+    };
+  });
 
   const fmt = (n: number) =>
     n >= 1000 ? `${Math.round(n / 100) / 10}k` : `${Math.round(n)}`;
+  // a tapering ribbon from (xa, top-aligned height ha) to (xb, top yb height hb)
+  const ribbon = (
+    xa: number,
+    ha: number,
+    ya: number,
+    xb: number,
+    hb: number,
+    yb: number,
+  ) => {
+    const mid = (xa + xb) / 2;
+    return `M ${xa},${ya} C ${mid},${ya} ${mid},${yb} ${xb},${yb} L ${xb},${yb + hb} C ${mid},${yb + hb} ${mid},${ya + ha} ${xa},${ya + ha} Z`;
+  };
 
   return (
     <div>
@@ -862,49 +891,73 @@ function Sankey({
             {sectorLabel(s, locale)}
           </span>
         ))}
+        <span className="flex items-center gap-2">
+          <span className="h-3 w-4 rounded-[2px] border border-dashed border-white/50 bg-white/10" />
+          {t.lab.sankeyOfficerLegend}
+        </span>
       </div>
       <div className="overflow-x-auto">
         <svg viewBox={`0 0 ${SK_W} ${SK_H}`} className="h-auto w-full min-w-[640px]">
-          {lanes.map((lane) => (
-            <g key={lane.sector}>
-              {/* ribbons between consecutive stages */}
-              {lane.heights.slice(0, -1).map((h0, i) => {
-                const h1 = lane.heights[i + 1];
-                const x0 = xOf(i) + SK_COL;
-                const x1 = xOf(i + 1);
-                const mid = (x0 + x1) / 2;
-                const top = lane.laneTop;
-                const d = `M ${x0},${top} L ${x1},${top} L ${x1},${top + h1} C ${mid},${top + h1} ${mid},${top + h0} ${x0},${top + h0} Z`;
-                return <path key={i} d={d} fill={lane.color} fillOpacity={0.22} />;
-              })}
-              {/* stage nodes */}
-              {lane.heights.map((h, i) => (
-                <rect
-                  key={i}
-                  x={xOf(i)}
-                  y={lane.laneTop}
-                  width={SK_COL}
-                  height={Math.max(0.5, h)}
-                  rx={2}
+          {lanes.map((lane) => {
+            const top = lane.laneTop;
+            const offTop = top + lane.combH + SK_OFF_GAP;
+            return (
+              <g key={lane.sector}>
+                {/* cohort → enlisted */}
+                <path d={ribbon(x0 + SK_COL, lane.cohortH, top, x1, lane.enlH, top)} fill={lane.color} fillOpacity={0.2} />
+                {/* enlisted → combat (top slice of the enlisted bar) */}
+                <path d={ribbon(x1 + SK_COL, lane.combH, top, x2, lane.combH, top)} fill={lane.color} fillOpacity={0.28} />
+                {/* enlisted → officers (next slice; a parallel outflow, not after combat) */}
+                <path
+                  d={ribbon(x1 + SK_COL, lane.offH, top + lane.combH, x2, lane.offH, offTop)}
                   fill={lane.color}
-                  fillOpacity={0.95}
+                  fillOpacity={0.16}
                 />
-              ))}
+                {/* nodes */}
+                <rect x={x0} y={top} width={SK_COL} height={Math.max(0.5, lane.cohortH)} rx={2} fill={lane.color} fillOpacity={0.92} />
+                <rect x={x1} y={top} width={SK_COL} height={Math.max(0.5, lane.enlH)} rx={2} fill={lane.color} fillOpacity={0.92} />
+                <rect x={x2} y={top} width={SK_COL} height={Math.max(0.5, lane.combH)} rx={2} fill={lane.color} fillOpacity={0.92} />
+                {lane.offH > 0.5 && (
+                  <rect
+                    x={x2}
+                    y={offTop}
+                    width={SK_COL}
+                    height={lane.offH}
+                    rx={2}
+                    fill={lane.color}
+                    fillOpacity={0.4}
+                    stroke="rgba(255,255,255,0.55)"
+                    strokeWidth={0.75}
+                    strokeDasharray="2 1.5"
+                  />
+                )}
+              </g>
+            );
+          })}
+          {/* column labels + totals */}
+          {[
+            { x: x0, label: t.lab.sankeyStages.cohort, total: stages[0].total },
+            { x: x1, label: t.lab.sankeyStages.enlist, total: stages[1].total },
+          ].map((c) => (
+            <g key={c.label}>
+              <text x={c.x + SK_COL / 2} y={SK_H - 24} fill="rgba(255,255,255,0.7)" fontSize="12" fontWeight={600} textAnchor="middle">
+                {c.label}
+              </text>
+              <text x={c.x + SK_COL / 2} y={SK_H - 9} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle" className="tabular-nums">
+                {fmt(c.total)}
+              </text>
             </g>
           ))}
-          {/* stage labels + totals */}
-          {stages.map((st, i) => (
-            <g key={st.key}>
-              <text x={xOf(i) + SK_COL / 2} y={SK_H - 22} fill="rgba(255,255,255,0.7)" fontSize="12" fontWeight={600} textAnchor="middle">
-                {t.lab.sankeyStages[SANKEY_KEYS[i]]}
-              </text>
-              <text x={xOf(i) + SK_COL / 2} y={SK_H - 8} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle" className="tabular-nums">
-                {fmt(st.total)}
-              </text>
-            </g>
-          ))}
+          {/* outcomes column carries two labels (combat + officers) */}
+          <text x={x2 + SK_COL / 2} y={SK_H - 24} fill="rgba(255,255,255,0.7)" fontSize="12" fontWeight={600} textAnchor="middle">
+            {t.lab.sankeyStages.combat} · {fmt(stages[2].total)}
+          </text>
+          <text x={x2 + SK_COL / 2} y={SK_H - 9} fill="rgba(255,255,255,0.5)" fontSize="11" textAnchor="middle" className="tabular-nums">
+            {t.lab.sankeyStages.officer} · {fmt(stages[3].total)}
+          </text>
         </svg>
       </div>
+      <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.sankeyNote}</p>
     </div>
   );
 }
@@ -1062,11 +1115,14 @@ function GenderPanel({
   title,
   subtitle,
   surface,
+  note,
   children,
 }: {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   surface?: string;
+  /** muted caption under the chart — e.g. a data-method disclosure */
+  note?: React.ReactNode;
   children: (g: Gender, gender: SGender) => React.ReactNode;
 }) {
   const [gender, setGender] = React.useState<SGender>("בנים");
@@ -1077,6 +1133,7 @@ function GenderPanel({
         <GenderToggle value={gender} onChange={setGender} surface={surface} />
       </PanelHeader>
       {children(g, gender)}
+      {note && <p className="mt-3 text-xs text-muted-foreground/70">{note}</p>}
     </Panel>
   );
 }
@@ -1129,17 +1186,17 @@ export function Lab() {
       </GenderPanel>
 
       {/* 4 — two-armies scatter */}
-      <GenderPanel title={t.lab.scatterTitle} subtitle={t.lab.scatterSubtitle} surface="lab_scatter">
+      <GenderPanel title={t.lab.scatterTitle} subtitle={t.lab.scatterSubtitle} surface="lab_scatter" note={t.lab.unweightedNote}>
         {(g) => <QuadrantScatter data={cityScatter(g)} t={t} />}
       </GenderPanel>
 
       {/* 5 — bump chart */}
-      <GenderPanel title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.bumpSubtitle} surface="lab_bump">
+      <GenderPanel title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.bumpSubtitle} surface="lab_bump" note={t.lab.unweightedNote}>
         {(g) => <BumpChart data={bump(g, "combat")} t={t} />}
       </GenderPanel>
 
       {/* 6 — movers */}
-      <GenderPanel title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.moversSubtitle} surface="lab_movers">
+      <GenderPanel title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.moversSubtitle} surface="lab_movers" note={t.lab.moversNote}>
         {(g) => {
           const all = movers(g, "combat");
           return <Movers risers={all.slice(0, 6)} fallers={all.slice(-6).reverse()} t={t} />;
@@ -1147,7 +1204,7 @@ export function Lab() {
       </GenderPanel>
 
       {/* 7 — bubble race */}
-      <GenderPanel title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle} surface="lab_race">
+      <GenderPanel title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle} surface="lab_race" note={t.lab.unweightedNote}>
         {(g) => <BubbleRace data={bubbleRace(g, "enlist", "combat")} t={t} />}
       </GenderPanel>
 
@@ -1162,7 +1219,7 @@ export function Lab() {
       </GenderPanel>
 
       {/* 10 — outliers */}
-      <GenderPanel title={t.lab.outlierTitle} subtitle={t.lab.outlierSubtitle} surface="lab_outliers">
+      <GenderPanel title={t.lab.outlierTitle} subtitle={t.lab.outlierSubtitle} surface="lab_outliers" note={t.lab.unweightedNote}>
         {(g) => <Outliers data={outliers(g)} t={t} />}
       </GenderPanel>
     </div>
