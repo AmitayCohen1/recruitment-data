@@ -16,8 +16,10 @@ import type { Locale } from "@/lib/i18n/config";
 import {
   schoolCloud,
   sectorBars,
+  citySkyline,
   type CloudPoint,
   type SectorBar,
+  type Tower,
 } from "@/lib/lab";
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -445,7 +447,7 @@ function CloudScene({ points }: { points: CloudPoint[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t.three.cloudSearch}
-            className="h-9 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-white/25 focus:outline-none"
+            className="h-9 w-full rounded-lg border border-white/10 bg-white/4 px-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-white/25 focus:outline-none"
           />
           {q && (
             <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-xl">
@@ -507,6 +509,142 @@ function CloudScene({ points }: { points: CloudPoint[] }) {
   );
 }
 
+/* ================================================================== *
+ * 3) 3D skyline — one tower per municipality. Height = combat rate,
+ *    footprint = #schools, laid out in a grid ordered by enlistment.
+ *    A rotatable "city of recruitment".
+ * ================================================================== */
+const SKY_MAXH = 6;
+const SKY_SP = 1.45; // grid spacing between towers
+const SKY_LO = new THREE.Color("#475569");
+const SKY_HI = new THREE.Color("#38bdf8");
+
+function Tower3D({
+  x,
+  z,
+  base,
+  height,
+  color,
+  hovered,
+  onOver,
+  onOut,
+}: {
+  x: number;
+  z: number;
+  base: number;
+  height: number;
+  color: string;
+  hovered: boolean;
+  onOver: () => void;
+  onOut: () => void;
+}) {
+  const ref = React.useRef<THREE.Mesh>(null);
+  const grow = React.useRef(0);
+  useFrame((_, dt) => {
+    const m = ref.current;
+    if (!m) return;
+    grow.current = Math.min(1, grow.current + dt * 1.6);
+    const h = Math.max(0.001, height * easeOut(grow.current));
+    m.scale.set(1, h, 1);
+    m.position.y = h / 2;
+  });
+  return (
+    <mesh
+      ref={ref}
+      position={[x, 0, z]}
+      onPointerOver={(e: ThreeEvent<PointerEvent>) => {
+        e.stopPropagation();
+        onOver();
+      }}
+      onPointerOut={onOut}
+    >
+      <boxGeometry args={[base, 1, base]} />
+      <meshStandardMaterial
+        color={color}
+        roughness={0.5}
+        metalness={0.2}
+        emissive={color}
+        emissiveIntensity={hovered ? 0.5 : 0.04}
+      />
+    </mesh>
+  );
+}
+
+function Skyline({ towers, t }: { towers: Tower[]; t: Dictionary }) {
+  const [hover, setHover] = React.useState<number | null>(null);
+
+  const { cells, gridSize } = React.useMemo(() => {
+    const cols = Math.max(1, Math.ceil(Math.sqrt(towers.length)));
+    const rows = Math.ceil(towers.length / cols);
+    const maxCombat = Math.max(1, ...towers.map((c) => c.combat));
+    const maxN = Math.max(1, ...towers.map((c) => c.n));
+    const col = new THREE.Color();
+    const cells = towers.map((c, i) => {
+      const cx = ((i % cols) - (cols - 1) / 2) * SKY_SP;
+      const cz = (Math.floor(i / cols) - (rows - 1) / 2) * SKY_SP;
+      const base = 0.45 + 0.65 * Math.sqrt(c.n / maxN);
+      const height = (c.combat / 100) * SKY_MAXH;
+      col.copy(SKY_LO).lerp(SKY_HI, Math.min(1, c.combat / maxCombat));
+      const color = c.big ? "#7dd3fc" : `#${col.getHexString()}`;
+      return { tower: c, i, x: cx, z: cz, base, height, color };
+    });
+    return { cells, gridSize: Math.max(cols, rows) * SKY_SP + 2 };
+  }, [towers]);
+
+  const hc = hover != null ? cells[hover] : null;
+
+  return (
+    <>
+      <gridHelper args={[gridSize, 16, "#ffffff", "#ffffff"]}>
+        <lineBasicMaterial transparent opacity={0.06} />
+      </gridHelper>
+
+      {cells.map((c) => (
+        <Tower3D
+          key={c.tower.council}
+          x={c.x}
+          z={c.z}
+          base={c.base}
+          height={c.height}
+          color={c.color}
+          hovered={hover === c.i}
+          onOver={() => setHover(c.i)}
+          onOut={() => setHover((cur) => (cur === c.i ? null : cur))}
+        />
+      ))}
+
+      {/* labels for the big cities only, floating above their towers */}
+      {cells
+        .filter((c) => c.tower.big)
+        .map((c) => (
+          <Html
+            key={`lbl${c.tower.council}`}
+            position={[c.x, c.height + 0.35, c.z]}
+            center
+            className="pointer-events-none"
+          >
+            <span className="whitespace-nowrap text-[11px] font-semibold text-white/90">
+              {c.tower.council}
+            </span>
+          </Html>
+        ))}
+
+      {hc && (
+        <Tip position={[hc.x, hc.height + 0.2, hc.z]}>
+          <div className="font-bold text-foreground">{hc.tower.council}</div>
+          <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
+            {t.three.enlistLabel} {hc.tower.enlist}% · {t.three.combatLabel}{" "}
+            {hc.tower.combat}% · {t.three.officerLabel} {hc.tower.officer}%
+          </div>
+          <div className="text-muted-foreground/70">
+            {t.three.schools(hc.tower.n)}
+          </div>
+        </Tip>
+      )}
+    </>
+  );
+}
+
 /* ---------- stage shell: canvas + auto-rotate toggle + hint ---------- */
 function Stage({
   camera,
@@ -523,6 +661,8 @@ function Stage({
   return (
     <div className="relative h-[440px] w-full overflow-hidden rounded-xl border border-white/10 bg-black/20 sm:h-[520px]">
       <Canvas
+        className="absolute inset-0 h-full w-full"
+        style={{ width: "100%", height: "100%" }}
         camera={{ position: camera, fov: 45 }}
         // preserveDrawingBuffer keeps the last rendered frame readable so the
         // PNG export (html-to-image → canvas.toDataURL) captures the scene
@@ -547,7 +687,7 @@ function Stage({
         type="button"
         onClick={() => setRotate((r) => !r)}
         aria-label={rotate ? t.lab.racePause : t.lab.racePlay}
-        className="absolute end-3 top-3 inline-flex size-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/70 text-foreground backdrop-blur transition hover:bg-zinc-800/80"
+        className="absolute inset-e-3 top-3 inline-flex size-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/70 text-foreground backdrop-blur transition hover:bg-zinc-800/80"
       >
         {rotate ? <Pause className="size-4" /> : <Play className="size-4" />}
       </button>
@@ -597,6 +737,7 @@ export function ThreeScenes() {
 
   const bars = React.useMemo(() => sectorBars(g), [g]);
   const cloud = React.useMemo(() => schoolCloud(g, true), [g]);
+  const towers = React.useMemo(() => citySkyline(g), [g]);
 
   return (
     <div className="space-y-8">
@@ -634,6 +775,22 @@ export function ThreeScenes() {
           </p>
         ) : (
           webgl && <CloudScene points={cloud} />
+        )}
+      </Panel>
+
+      {/* 3 — 3D skyline: one tower per city (height = combat, base = #schools) */}
+      <Panel>
+        <PanelHeader title={t.three.skylineTitle} subtitle={t.three.skylineSubtitle} />
+        {webgl === false ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">
+            {t.three.webglError}
+          </p>
+        ) : (
+          webgl && (
+            <Stage camera={[11, 9, 13]} hint={t.three.skylineHint} t={t}>
+              <Skyline key={g} towers={towers} t={t} />
+            </Stage>
+          )
         )}
       </Panel>
     </div>

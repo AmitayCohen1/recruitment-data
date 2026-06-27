@@ -9,7 +9,7 @@ import {
 } from "@/lib/sectors";
 import { MetricTabsS } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
-import { sectorLabel } from "@/lib/i18n/labels";
+import { genderLabel, sectorLabel } from "@/lib/i18n/labels";
 
 export function GenderGap() {
   const t = useT();
@@ -30,6 +30,8 @@ export function GenderGap() {
       <ul className="space-y-4">
         {rows.map((r) => {
           const color = SECTOR_COLOR[r.sector];
+          const width = (Math.abs(r.gap) / max) * 50;
+          const left = r.gap >= 0 ? 50 : 50 - width;
           return (
             <li key={r.sector}>
               <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
@@ -43,11 +45,29 @@ export function GenderGap() {
                   </span>
                 </span>
               </div>
-              <div className="relative h-6 overflow-hidden rounded-lg bg-white/[0.04]">
+              <div
+                dir="ltr"
+                className="relative h-7 overflow-hidden rounded-lg bg-white/4"
+              >
+                <div className="absolute inset-y-1 left-1/4 w-px bg-white/6" />
+                <div className="absolute inset-y-1 left-3/4 w-px bg-white/6" />
+                <div className="absolute inset-y-0 left-1/2 w-px bg-white/35" />
                 <div
-                  className="absolute inset-y-0 right-0 rounded-lg"
-                  style={{ width: `${(Math.abs(r.gap) / max) * 100}%`, background: color }}
+                  className="absolute inset-y-1 rounded-md"
+                  style={{
+                    left: `${left}%`,
+                    width: `${width}%`,
+                    background: color,
+                  }}
                 />
+              </div>
+              <div
+                dir="ltr"
+                className="mt-1 grid grid-cols-3 text-[10px] text-muted-foreground/70"
+              >
+                <span>{genderLabel("בנות", locale)}</span>
+                <span className="text-center tabular-nums">0</span>
+                <span className="text-right">{genderLabel("בנים", locale)}</span>
               </div>
             </li>
           );

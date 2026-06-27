@@ -27,6 +27,42 @@ type Pt = {
   color: string;
 };
 
+function ScatterTip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: Pt }[];
+}) {
+  const t = useT();
+  const locale = useLocale();
+  const numberLocale = locale === "he" ? "he-IL" : "en-US";
+
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="rounded-lg border border-white/10 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur-sm">
+      <p className="mb-1 font-semibold" style={{ color: d.color }}>
+        {sectorLabel(d.sector, locale)}
+      </p>
+      <p className="text-muted-foreground">
+        {t.combatParadox.tipEnlist}:{" "}
+        <b className="text-foreground tabular-nums">{d.enlist}%</b>
+      </p>
+      <p className="text-muted-foreground">
+        {t.combatParadox.tipCombat}:{" "}
+        <b className="text-foreground tabular-nums">{d.combat}%</b>
+      </p>
+      <p className="text-muted-foreground">
+        {t.combatParadox.tipFighters}:{" "}
+        <b className="text-foreground tabular-nums">
+          {d.fighters.toLocaleString(numberLocale)}
+        </b>
+      </p>
+    </div>
+  );
+}
+
 export function CombatParadox({
   gender: genderProp,
 }: { gender?: SGender } = {}) {
@@ -36,38 +72,6 @@ export function CombatParadox({
   const [genderState, setGender] = React.useState<SGender>("בנים");
   const gender = genderProp ?? genderState;
   const data = sectorScatter(gender);
-
-  function ScatterTip({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: { payload: Pt }[];
-  }) {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="rounded-lg border border-white/10 bg-background/95 px-3 py-2 text-xs shadow-xl backdrop-blur-sm">
-        <p className="mb-1 font-semibold" style={{ color: d.color }}>
-          {sectorLabel(d.sector, locale)}
-        </p>
-        <p className="text-muted-foreground">
-          {t.combatParadox.tipEnlist}:{" "}
-          <b className="text-foreground tabular-nums">{d.enlist}%</b>
-        </p>
-        <p className="text-muted-foreground">
-          {t.combatParadox.tipCombat}:{" "}
-          <b className="text-foreground tabular-nums">{d.combat}%</b>
-        </p>
-        <p className="text-muted-foreground">
-          {t.combatParadox.tipFighters}:{" "}
-          <b className="text-foreground tabular-nums">
-            {d.fighters.toLocaleString("he")}
-          </b>
-        </p>
-      </div>
-    );
-  }
 
   return (
     <Panel>

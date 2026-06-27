@@ -30,6 +30,8 @@ export function ArmyStream() {
   const locale = useLocale();
   const [gender, setGender] = React.useState<SGender>("בנים");
   const g: Gender = gender === "בנים" ? "m" : "f";
+  const numberLocale = locale === "he" ? "he-IL" : "en-US";
+  const yAxisLabel = locale === "he" ? "מספר לוחמים" : "Fighters";
 
   const data = React.useMemo(() => armyComposition(g, "nFighters"), [g]);
   const { years, series } = data;
@@ -88,7 +90,12 @@ export function ArmyStream() {
         <GenderToggle value={gender} onChange={setGender} />
       </div>
       <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[640px]">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          role="img"
+          aria-label={t.armyStream.title(years[0], years[years.length - 1])}
+          className="h-auto w-full min-w-[640px]"
+        >
           {/* y gridlines + count labels */}
           {ticks.map((v, i) => (
             <g key={`t${i}`}>
@@ -110,6 +117,23 @@ export function ArmyStream() {
               </text>
             </g>
           ))}
+          <line
+            x1={PADX}
+            x2={PADX}
+            y1={PADTOP}
+            y2={H - PADBOT}
+            stroke="#ffffff"
+            strokeOpacity={0.18}
+          />
+          <text
+            x={18}
+            y={(PADTOP + H - PADBOT) / 2}
+            transform={`rotate(-90 18 ${(PADTOP + H - PADBOT) / 2})`}
+            textAnchor="middle"
+            className="fill-white/45 text-[11px] font-medium"
+          >
+            {yAxisLabel}
+          </text>
 
           {bars.map((bar) => (
             <g key={bar.year}>
@@ -125,7 +149,7 @@ export function ArmyStream() {
                   >
                     <title>
                       {sectorLabel(sg.sector, locale)} · {bar.year} —{" "}
-                      {Math.round(sg.value).toLocaleString()}
+                      {Math.round(sg.value).toLocaleString(numberLocale)}
                     </title>
                   </rect>
                   {sg.height >= 16 && (
