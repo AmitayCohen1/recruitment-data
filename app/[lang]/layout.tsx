@@ -98,7 +98,7 @@ export default async function RootLayout({
       <body className="min-h-full">
         <LocaleProvider locale={lang}>
           <SectionTracker />
-          <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-6 sm:pb-10">
+          <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 sm:pb-10">
             {/* hero — contained width, touching the top, rounded only at bottom */}
             <header className="relative -mx-4 mb-8 h-[32vh] min-h-[240px] overflow-hidden border-b border-white/10 sm:mx-0 sm:h-[36vh] sm:rounded-b-2xl sm:border-x">
               <Image
@@ -107,7 +107,7 @@ export default async function RootLayout({
                 fill
                 priority
                 placeholder="blur"
-                sizes="(max-width: 1024px) 100vw, 1024px"
+                sizes="(max-width: 1152px) 100vw, 1152px"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-linear-to-t from-black via-black/65 to-black/10" />

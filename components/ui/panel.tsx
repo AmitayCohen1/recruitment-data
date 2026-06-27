@@ -65,12 +65,12 @@ export function PanelHeader({
         className,
       )}
     >
-      <div className="min-w-0 space-y-1">
+      <div className="min-w-0 space-y-1.5">
         <h3 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
           {title}
         </h3>
         {subtitle && (
-          <p className="text-[15px] leading-7 text-foreground/80 sm:text-base">
+          <p className="max-w-3xl text-base leading-7 text-foreground/95 sm:text-lg sm:leading-8">
             {subtitle}
           </p>
         )}

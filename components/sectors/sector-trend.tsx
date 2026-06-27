@@ -39,7 +39,7 @@ export function SectorTrend({
         subtitle={t.trend.subtitle}
         exportCaption={`${t.metrics[metric].short} · ${genderLabel(gender, locale)}`}
       />
-      <ChartContainer config={config} className="h-[300px] w-full">
+      <ChartContainer config={config} className="h-[360px] w-full">
         <LineChart data={data} margin={{ left: 4, right: 16, top: 12, bottom: 4 }}>
           <CartesianGrid vertical={false} strokeOpacity={0.35} />
           <XAxis

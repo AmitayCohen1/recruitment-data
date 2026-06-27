@@ -86,7 +86,7 @@ export function CombatParadox({
         {!controlled && <GenderToggle value={gender} onChange={setGender} surface="combat-paradox" />}
       </ChartHeader>
 
-      <ChartContainer config={{}} className="h-[360px] w-full">
+      <ChartContainer config={{}} className="h-[420px] w-full">
         <ScatterChart margin={{ top: 16, right: 16, bottom: 24, left: 8 }}>
           <CartesianGrid strokeOpacity={0.15} />
           <XAxis

@@ -354,7 +354,7 @@ export function SchoolCharts() {
 
   return (
     <ChartPanel>
-      <ChartHeader title={t.lab.histTitle(t.metrics[metric].short)} subtitle={t.lab.histSubtitle}>
+      <ChartHeader title={t.lab.histTitle} subtitle={t.lab.histSubtitle}>
         <SchoolFilterBar
           gender={gender}
           onGender={setGender}
