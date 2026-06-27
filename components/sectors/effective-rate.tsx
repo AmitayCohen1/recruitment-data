@@ -38,7 +38,9 @@ export function EffectiveRate({
                 type="button"
                 onClick={() => setMetric(k)}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  // fixed height + centered keeps the active highlight aligned in
+                  // html-to-image PNG export, where emoji metrics shift the box.
+                  "flex h-8 items-center justify-center rounded-lg px-3 text-sm font-medium leading-none transition-colors",
                   metric === k
                     ? "bg-white/10 text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",

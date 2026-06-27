@@ -13,8 +13,13 @@ export async function sectionMetadata(
   const { lang } = await params;
   const locale: Locale = isLocale(lang) ? lang : "he";
   const dict = getDictionary(locale);
+  const title = `${dict.tabs[tab]} · ${dict.meta.title}`;
+  const description = dict.meta.description;
+  // og:image / twitter:image are supplied by each section's opengraph-image route.
   return {
-    title: `${dict.tabs[tab]} · ${dict.meta.title}`,
-    description: dict.meta.description,
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }

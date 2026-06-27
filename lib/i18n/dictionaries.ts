@@ -57,6 +57,11 @@ const he = {
     subtitle:
       "אותם נתונים, דרך מנוע הויזואליזציה של D3: סימולציית כוחות, מפות צפיפות, היררכיות וזרמים. ניסיוני.",
   },
+  armyStream: {
+    title: "זרם: מי ממלא את הצבא לאורך הזמן",
+    subtitle:
+      "מספר הלוחמים (משוקלל) מכל מגזר בכל שנה, כזרם רציף. עובי הזרם = מספר הלוחמים מאותו מגזר באותה שנה.",
+  },
   d3: {
     beeTitle: "נחיל כוחות: כל בית ספר נמצא את מקומו",
     beeSubtitle:
@@ -90,9 +95,9 @@ const he = {
     donutHint: "גררו לסובב · גלגלו לזום · רחפו על פלח לפרטים",
     shareTip: (share: number | string, count: number | string) =>
       `${share}% · ${count} לוחמים`,
-    cloudTitle: "כל בית ספר כנקודה במרחב",
-    cloudSubtitle:
-      "כל נקודה היא בית ספר בשנה האחרונה, צבועה לפי מגזר. הצירים: ימינה = שיעור גיוס, למעלה = שיעור קרבי, לעומק = שיעור קצונה. גררו לסובב את הענן.",
+    cloudTitle: "בתי הספר כנקודות במרחב",
+    cloudSubtitle: (n: number | string) =>
+      `כל נקודה היא אחד מ-${n} בתי הספר עם נתוני גיוס, קרבי וקצונה בשנה האחרונה, צבועה לפי מגזר. הצירים: ימינה = שיעור גיוס, למעלה = שיעור קרבי, לעומק = שיעור קצונה. גררו לסובב את הענן.`,
     cloudHint: "גררו לסובב · גלגלו לזום · רחפו על נקודה לפרטים",
     axisEnlist: "גיוס →",
     axisCombat: "קרבי ↑",
@@ -451,6 +456,11 @@ const en: Dictionary = {
     subtitle:
       "The same data through D3's visualization engine: a force simulation, density fields, hierarchies and streams. Experimental.",
   },
+  armyStream: {
+    title: "Stream: who fills the army over time",
+    subtitle:
+      "The (weighted) number of combat soldiers from each sector per year, as a flowing stream. Stream thickness = soldiers from that sector that year.",
+  },
   d3: {
     beeTitle: "Force swarm: every school finds its place",
     beeSubtitle:
@@ -484,9 +494,9 @@ const en: Dictionary = {
     donutHint: "Drag to rotate · scroll to zoom · hover a slice for details",
     shareTip: (share: number | string, count: number | string) =>
       `${share}% · ${count} fighters`,
-    cloudTitle: "Every school as a point in space",
-    cloudSubtitle:
-      "Each point is a school in the latest year, colored by sector. Axes: right = enlistment rate, up = combat rate, depth = officer rate. Drag to rotate the cloud.",
+    cloudTitle: "Schools as points in space",
+    cloudSubtitle: (n: number | string) =>
+      `Each point is one of the ${n} schools with enlistment, combat and officer data for the latest year, colored by sector. Axes: right = enlistment rate, up = combat rate, depth = officer rate. Drag to rotate the cloud.`,
     cloudHint: "Drag to rotate · scroll to zoom · hover a point for details",
     axisEnlist: "Enlist →",
     axisCombat: "Combat ↑",

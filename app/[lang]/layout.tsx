@@ -27,6 +27,7 @@ import { LocaleProvider } from "@/components/i18n/locale-provider";
 import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { TabNav, type NavItem } from "@/components/dashboard/tab-nav";
 import { Notes } from "@/components/dashboard/notes";
+import { SectionTracker } from "@/components/analytics/section-tracker";
 import { TOTAL_SCHOOLS } from "@/lib/data";
 
 const heebo = Heebo({
@@ -47,20 +48,28 @@ export async function generateMetadata({
   const { lang } = await params;
   const locale: Locale = isLocale(lang) ? lang : "he";
   const dict = getDictionary(locale);
+  // Absolute base so generated og:image URLs resolve on every deploy.
+  const base =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000");
   return {
+    metadataBase: new URL(base),
     title: dict.meta.title,
     description: dict.meta.description,
+    // og:image / twitter:image come from the file-based opengraph-image routes
+    // (one per section), so they're not set here.
     openGraph: {
       title: dict.meta.title,
       description: dict.meta.description,
-      images: [{ url: "/og.jpg", width: 1200, height: 669 }],
       locale: htmlLang(locale).replace("-", "_"),
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: dict.meta.title,
-      images: ["/og.jpg"],
+      description: dict.meta.description,
     },
   };
 }
@@ -95,6 +104,7 @@ export default async function RootLayout({
     >
       <body className="min-h-full">
         <LocaleProvider locale={lang}>
+          <SectionTracker />
           <div className="mx-auto max-w-5xl px-4 pb-8 sm:px-6 sm:pb-10">
             {/* hero — contained width, touching the top, rounded only at bottom */}
             <header className="relative -mx-4 mb-8 h-[32vh] min-h-[240px] overflow-hidden border-b border-white/10 sm:mx-0 sm:h-[36vh] sm:rounded-b-2xl sm:border-x">

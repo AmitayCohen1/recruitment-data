@@ -12,14 +12,6 @@ import { contourDensity } from "d3-contour";
 import { Delaunay } from "d3-delaunay";
 import { scaleLinear } from "d3-scale";
 import { extent } from "d3-array";
-import {
-  stack,
-  stackOffsetWiggle,
-  stackOrderInsideOut,
-  area,
-  curveBasis,
-  type SeriesPoint,
-} from "d3-shape";
 import { hierarchy, type HierarchyNode } from "d3-hierarchy";
 import { Treemap, Pack } from "@visx/hierarchy";
 
@@ -36,7 +28,6 @@ import {
   schoolDots,
   schoolCloud,
   cityScatter,
-  armyComposition,
   sectorCityTree,
   type SchoolDot,
   type CloudPoint,
@@ -689,99 +680,6 @@ function PackView({
 }
 
 /* ================================================================== *
- * 6) Streamgraph — army composition over time
- * ================================================================== */
-const ST_W = 880;
-const ST_H = 380;
-const ST_PADX = 44;
-const ST_PADY = 28;
-
-function Streamgraph({
-  data,
-  locale,
-}: {
-  data: ReturnType<typeof armyComposition>;
-  locale: Locale;
-}) {
-  const { years, series } = data;
-
-  const { layers, x, y, colorOf } = React.useMemo(() => {
-    const keys = series.map((s) => s.sector);
-    const colorOf = new Map(series.map((s) => [s.sector, s.color]));
-    const rows: Record<string, number>[] = years.map((year, i) => {
-      const row: Record<string, number> = { year };
-      series.forEach((s) => (row[s.sector] = s.counts[i]));
-      return row;
-    });
-    const layers = stack<Record<string, number>>()
-      .keys(keys)
-      .offset(stackOffsetWiggle)
-      .order(stackOrderInsideOut)(rows);
-
-    let lo = Infinity;
-    let hi = -Infinity;
-    for (const layer of layers)
-      for (const p of layer) {
-        lo = Math.min(lo, p[0]);
-        hi = Math.max(hi, p[1]);
-      }
-    const x = scaleLinear()
-      .domain([0, years.length - 1])
-      .range([ST_PADX, ST_W - ST_PADX]);
-    const y = scaleLinear()
-      .domain([lo, hi])
-      .range([ST_H - ST_PADY, ST_PADY]);
-    return { layers, x, y, colorOf };
-  }, [series, years]);
-
-  const areaGen = area<SeriesPoint<Record<string, number>>>()
-    .x((_d, i) => x(i))
-    .y0((d) => y(d[0]))
-    .y1((d) => y(d[1]))
-    .curve(curveBasis);
-
-  return (
-    <div>
-      <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-        {series.map((s) => (
-          <span key={s.sector} className="flex items-center gap-2">
-            <span className="size-3 rounded-full" style={{ background: s.color }} />
-            {sectorLabel(s.sector, locale)}
-          </span>
-        ))}
-      </div>
-      <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${ST_W} ${ST_H}`} className="h-auto w-full min-w-[640px]">
-          {layers.map((layer) => (
-            <path
-              key={layer.key}
-              d={areaGen(layer) ?? undefined}
-              fill={colorOf.get(layer.key) ?? SLATE}
-              fillOpacity={0.85}
-            >
-              <title>{sectorLabel(layer.key, locale)}</title>
-            </path>
-          ))}
-          {years.map((yr, i) => (
-            <text
-              key={yr}
-              x={x(i)}
-              y={ST_H - 8}
-              fill="rgba(255,255,255,0.45)"
-              fontSize="12"
-              textAnchor="middle"
-              className="tabular-nums"
-            >
-              {yr}
-            </text>
-          ))}
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-/* ================================================================== *
  * root
  * ================================================================== */
 export function D3Lab() {
@@ -799,7 +697,6 @@ export function D3Lab() {
   const cloud = React.useMemo(() => schoolCloud(g), [g]);
   const scatter = React.useMemo(() => cityScatter(g), [g]);
   const tree = React.useMemo(() => sectorCityTree(g), [g]);
-  const stream = React.useMemo(() => armyComposition(g, "nFighters"), [g]);
 
   if (!mounted) return <div className="min-h-[480px]" />;
 
@@ -842,12 +739,6 @@ export function D3Lab() {
       <Panel>
         <PanelHeader title={t.d3.packTitle} subtitle={t.d3.packSubtitle} />
         <PackView branches={tree} locale={locale} />
-      </Panel>
-
-      {/* 6 — streamgraph */}
-      <Panel>
-        <PanelHeader title={t.d3.streamTitle} subtitle={t.d3.streamSubtitle} />
-        <Streamgraph data={stream} locale={locale} />
       </Panel>
     </div>
   );

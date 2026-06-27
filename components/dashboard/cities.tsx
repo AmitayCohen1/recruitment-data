@@ -244,7 +244,9 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
     "inline-flex flex-wrap items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1";
   const pillBtn = (active: boolean) =>
     cn(
-      "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+      // fixed height + centered keeps the active highlight aligned in
+      // html-to-image PNG export, where emoji metrics shift the box.
+      "flex h-8 items-center justify-center rounded-md px-3 text-sm font-medium leading-none transition-colors",
       active
         ? "bg-white/10 text-foreground shadow-sm"
         : "text-muted-foreground hover:text-foreground",

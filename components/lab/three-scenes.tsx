@@ -179,7 +179,7 @@ function BarMatrix({
           center
           className="pointer-events-none"
         >
-          <span className="whitespace-nowrap text-[15px] font-semibold text-[#38bdf8]">
+          <span className="whitespace-nowrap text-[15px] font-semibold text-white">
             {m.label}
           </span>
         </Html>
@@ -274,17 +274,17 @@ function PointCloud({ points }: { points: CloudPoint[] }) {
       </instancedMesh>
 
       <Html position={[AX + 0.4, -AX, -AX]} center className="pointer-events-none">
-        <span className="whitespace-nowrap text-[15px] font-semibold text-[#38bdf8]">
+        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
           {t.three.axisEnlist}
         </span>
       </Html>
       <Html position={[-AX, AX + 0.4, -AX]} center className="pointer-events-none">
-        <span className="whitespace-nowrap text-[15px] font-semibold text-[#38bdf8]">
+        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
           {t.three.axisCombat}
         </span>
       </Html>
       <Html position={[-AX, -AX, AX + 0.4]} center className="pointer-events-none">
-        <span className="whitespace-nowrap text-[15px] font-semibold text-[#38bdf8]">
+        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
           {t.three.axisOfficer}
         </span>
       </Html>
@@ -328,7 +328,10 @@ function Stage({
     <div className="relative h-[440px] w-full overflow-hidden rounded-xl border border-white/10 bg-black/20 sm:h-[520px]">
       <Canvas
         camera={{ position: camera, fov: 45 }}
-        gl={{ antialias: true, alpha: true }}
+        // preserveDrawingBuffer keeps the last rendered frame readable so the
+        // PNG export (html-to-image → canvas.toDataURL) captures the scene
+        // instead of a cleared/black buffer.
+        gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
         dpr={[1, 2]}
       >
         <Lights />
@@ -428,7 +431,10 @@ export function ThreeScenes() {
 
       {/* 2 — school point cloud (3D-only bonus) */}
       <Panel>
-        <PanelHeader title={t.three.cloudTitle} subtitle={t.three.cloudSubtitle} />
+        <PanelHeader
+          title={t.three.cloudTitle}
+          subtitle={t.three.cloudSubtitle(cloud.length)}
+        />
         <SectorLegend locale={locale} />
         {webgl && (
           <Stage camera={[9, 7, 11]} hint={t.three.cloudHint} t={t}>
