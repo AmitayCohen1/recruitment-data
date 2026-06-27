@@ -3,6 +3,7 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 import { useT } from "@/components/i18n/locale-provider";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /** Three.js / WebGL is heavy and touches `window`, so the scenes load
  *  client-only (no SSR) and only once this tab is on screen. */
@@ -22,8 +23,11 @@ export function ThreeLab() {
 
   if (!show) {
     return (
-      <div className="flex min-h-[440px] items-center justify-center text-sm text-muted-foreground">
-        {t.three.loading}
+      <div className="relative">
+        <Skeleton className="h-[440px] w-full rounded-2xl" />
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
+          {t.three.loading}
+        </span>
       </div>
     );
   }

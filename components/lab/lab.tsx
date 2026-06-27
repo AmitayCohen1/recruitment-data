@@ -1,8 +1,17 @@
 "use client";
 
 import * as React from "react";
+import {
+  forceSimulation,
+  forceX,
+  forceY,
+  forceCollide,
+  type Simulation,
+} from "d3-force";
+import { scaleLinear } from "d3-scale";
 import { ArrowDown, ArrowUp, Pause, Play } from "lucide-react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
+import { SectionSkeleton } from "@/components/ui/skeleton";
 import { GenderToggle } from "@/components/sectors/controls";
 import { cn } from "@/lib/utils";
 import type { Gender } from "@/lib/data";
@@ -95,62 +104,60 @@ function WaffleCard({
   );
 }
 
-/* ---------- 2) Dot histogram: every school is a dot ---------- */
-const W = 880;
-const H = 320;
-const PAD = 28;
-const BASELINE = H - 24;
-const R = 3.1;
-const STEP = 2 * R + 0.6;
-const SECTOR_ORDER = ["חילוני", "דתי לאומי", "חרדי", "דרוזי"];
+/* ---------- 2) Force-directed beeswarm: every school finds its place ----------
+ *  Moved here from the old D3 lab. A d3-force simulation pushes each school to
+ *  its rate on the x-axis (forceX) while forceCollide stops dots overlapping —
+ *  so the true density at each rate emerges as vertical thickness, no binning. */
+const BEE_W = 880;
+const BEE_H = 300;
+const BEE_PAD = 30;
+const BEE_R = 3.8;
+
+type BeeNode = {
+  x: number;
+  y: number;
+  vx?: number;
+  vy?: number;
+  d: SchoolDot;
+};
 
 function Beeswarm({ dots }: { dots: SchoolDot[] }) {
-  // Bin by combat rate (x); stack schools UP within each bin so a column's
-  // height = the NUMBER of schools at that rate. Vertical position = count.
-  const placed = React.useMemo(() => {
-    const order = (s: string | null) =>
-      s ? SECTOR_ORDER.indexOf(s) + 1 || 99 : 100;
-    const counts = new Map<number, number>();
-    return [...dots]
-      .sort((a, b) => a.value - b.value || order(a.sector) - order(b.sector))
-      .map((d) => {
-        const bin = Math.round(d.value);
-        const x = PAD + (bin / 100) * (W - 2 * PAD);
-        const slot = counts.get(bin) ?? 0;
-        counts.set(bin, slot + 1);
-        const y = BASELINE - (slot + 0.5) * STEP;
-        return { ...d, x, y };
-      });
+  const x = scaleLinear().domain([0, 100]).range([BEE_PAD, BEE_W - BEE_PAD]);
+  const nodes = React.useMemo(() => {
+    const xs = scaleLinear().domain([0, 100]).range([BEE_PAD, BEE_W - BEE_PAD]);
+    const ns: BeeNode[] = dots.map((d) => ({ x: xs(d.value), y: BEE_H / 2, d }));
+    const sim: Simulation<BeeNode, undefined> = forceSimulation(ns)
+      .force("x", forceX<BeeNode>((n) => xs(n.d.value)).strength(0.9))
+      .force("y", forceY<BeeNode>(BEE_H / 2).strength(0.06))
+      .force("collide", forceCollide<BeeNode>(BEE_R + 0.7).iterations(2))
+      .stop();
+    for (let i = 0; i < 280; i++) sim.tick();
+    return ns;
   }, [dots]);
 
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[640px]">
-        {/* baseline + axis */}
-        <line x1={PAD} x2={W - PAD} y1={BASELINE + 2} y2={BASELINE + 2} stroke="rgba(255,255,255,0.12)" />
-        {[0, 25, 50, 75, 100].map((t) => {
-          const x = PAD + (t / 100) * (W - 2 * PAD);
-          return (
-            <g key={t}>
-              <line x1={x} x2={x} y1={BASELINE + 2} y2={BASELINE + 8} stroke="rgba(255,255,255,0.2)" />
-              <text x={x} y={H - 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
-                {t}%
-              </text>
-            </g>
-          );
-        })}
-        {placed.map((d) => (
+      <svg viewBox={`0 0 ${BEE_W} ${BEE_H}`} className="h-auto w-full min-w-[640px]">
+        {[0, 25, 50, 75, 100].map((tick) => (
+          <g key={tick}>
+            <line x1={x(tick)} x2={x(tick)} y1={BEE_PAD - 8} y2={BEE_H - BEE_PAD} stroke="rgba(255,255,255,0.06)" />
+            <text x={x(tick)} y={BEE_H - 6} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
+              {tick}%
+            </text>
+          </g>
+        ))}
+        {nodes.map((n) => (
           <circle
-            key={`${d.key}-${d.value}`}
-            cx={d.x}
-            cy={Math.max(8, d.y)}
-            r={R}
-            fill={sectorColor(d.sector)}
+            key={`${n.d.key}-${n.d.value}`}
+            cx={n.x}
+            cy={n.y}
+            r={BEE_R}
+            fill={sectorColor(n.d.sector)}
             fillOpacity={0.85}
           >
             <title>
-              {d.school}
-              {d.council ? ` · ${d.council}` : ""} — {d.value}%
+              {n.d.school}
+              {n.d.council ? ` · ${n.d.council}` : ""} — {n.d.value}%
             </title>
           </circle>
         ))}
@@ -1136,7 +1143,7 @@ export function Lab() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
-  if (!mounted) return <div className="min-h-[480px]" />;
+  if (!mounted) return <SectionSkeleton panels={3} />;
 
   return (
     <div className="space-y-8">

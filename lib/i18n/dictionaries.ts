@@ -97,7 +97,7 @@ const he = {
       `${share}% · ${count} לוחמים`,
     cloudTitle: "בתי הספר כנקודות במרחב",
     cloudSubtitle: (n: number | string) =>
-      `כל נקודה היא בית ספר בשנה מסוימת (2018–2024) — אותו בית ספר מופיע כמה פעמים, אחת לכל שנה עם נתוני גיוס, קרבי וקצונה. ${n} נקודות בסך הכל, צבועות לפי מגזר. הצירים: ימינה = שיעור גיוס, למעלה = שיעור קרבי, לעומק = שיעור קצונה.`,
+      `כל נקודה היא בית ספר בשנה מסוימת (2018–2024) — אותו בית ספר מופיע כמה פעמים, אחת לכל שנה עם נתוני גיוס, קרבי וקצונה. ${n} נקודות בסך הכל, צבועות לפי מגזר. הצירים: ימינה = גיוס, למעלה = קרבי, לעומק = קצונה. חפשו בית ספר כדי לעקוב אחריו לאורך השנים.`,
     cloudHint: "גררו לסובב · גלגלו לזום · רחפו על נקודה · לחצו לנעיצה",
     cloudSearch: "חיפוש בית ספר…",
     cloudNoResults: "אין תוצאות",
@@ -124,9 +124,9 @@ const he = {
     enlisted: "גויסו",
     combat: "קרביים",
     officer: "קצינים",
-    histTitle: "כל בית ספר כנקודה",
+    histTitle: "נחיל כוחות: כל בית ספר נמצא את מקומו",
     histSubtitle:
-      "כל נקודה היא בית ספר אחד בשנה האחרונה, צבועה לפי מגזר. ימינה = שיעור קרבי גבוה יותר; טור גבוה = הרבה בתי ספר סביב אותו שיעור.",
+      "כל נקודה היא בית ספר אחד בשנה האחרונה, צבועה לפי מגזר. סימולציית כוחות (d3-force) דוחפת כל נקודה לעבר השיעור הקרבי שלה על הציר ומונעת חפיפה — כך שהצפיפות האמיתית בכל שיעור מתגלה כעובי אנכי, בלי חלוקה לעמודות.",
     scatterTitle: "גיוס מול שירות קרבי ברשויות",
     scatterSubtitle:
       "כל נקודה היא רשות עם 3+ בתי ספר. ימינה = יותר מתגייסים מתוך המחזור; למעלה = יותר קרביים מתוך המתגייסים. הקווים המקווקווים מסמנים את החציון, ולחיצה על נקודה מציגה או מסתירה את שם הרשות.",
@@ -499,7 +499,7 @@ const en: Dictionary = {
       `${share}% · ${count} fighters`,
     cloudTitle: "Schools as points in space",
     cloudSubtitle: (n: number | string) =>
-      `Each point is a school in a given year (2018–2024) — the same school appears several times, once per year that reports enlistment, combat and officer data. ${n} points in total, colored by sector. Axes: right = enlistment rate, up = combat rate, depth = officer rate.`,
+      `Each point is a school in a given year (2018–2024) — the same school appears several times, once per year with enlistment, combat and officer data. ${n} points in total, colored by sector. Axes: right = enlistment, up = combat, depth = officer. Search a school to trace it across the years.`,
     cloudHint: "Drag to rotate · scroll to zoom · hover a point · click to pin",
     cloudSearch: "Search a school…",
     cloudNoResults: "No matches",
@@ -526,9 +526,9 @@ const en: Dictionary = {
     enlisted: "enlisted",
     combat: "combat",
     officer: "officers",
-    histTitle: "Every school as a dot",
+    histTitle: "Force swarm: every school finds its place",
     histSubtitle:
-      "Each dot is one school in the latest year, colored by sector. Right = higher combat rate; a tall column = many schools around that rate.",
+      "Each dot is one school in the latest year, colored by sector. A d3-force simulation pushes every dot toward its combat rate on the axis while preventing overlap — so the true density at each rate emerges as vertical thickness, with no binning.",
     scatterTitle: "Enlistment vs. combat service, by municipality",
     scatterSubtitle:
       "Each dot is a municipality with 3+ schools. Right = more enlist out of the cohort; up = more combat out of enlistees. Dashed lines mark the medians; click a dot to show or hide its name.",

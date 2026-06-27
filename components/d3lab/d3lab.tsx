@@ -24,6 +24,7 @@ import { SECTOR_COLOR, NEUTRAL, sectorColor, type SGender } from "@/lib/sectors"
 import type { Gender, MetricKey } from "@/lib/data";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
+import { SectionSkeleton } from "@/components/ui/skeleton";
 import {
   schoolDots,
   schoolCloud,
@@ -696,7 +697,7 @@ export function D3Lab() {
   const scatter = React.useMemo(() => cityScatter(g), [g]);
   const tree = React.useMemo(() => sectorCityTree(g), [g]);
 
-  if (!mounted) return <div className="min-h-[480px]" />;
+  if (!mounted) return <SectionSkeleton panels={3} />;
 
   return (
     <div className="space-y-8">
