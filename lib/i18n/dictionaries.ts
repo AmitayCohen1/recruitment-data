@@ -77,12 +77,12 @@ const he = {
       "תצוגה ניסיונית שמראה את אותם נתונים במרחב תלת-ממדי. גררו לסובב וגלגלו לזום.",
   },
   armyStream: {
-    title: "מי ממלא את השורות בפועל",
+    title: "מספר מתגייסים, לוחמים וקצינים לפי מגזר",
     subtitle:
-      "השוואה במספרים מוחלטים ובהרכב מתוך כלל הקבוצה שנבחרה. כאן מודדים אנשים, לא רק שיעורים.",
-    shareTitle: "הרכב הקבוצה שנבחרה",
+      "התרשים מציג מספרים מוחלטים, ולא רק אחוזים, לפי המגזר והמדד שנבחרו.",
+    shareTitle: "חלוקה לפי מגזר",
     shareSubtitle:
-      "חלקו של כל מגזר מתוך כלל הקבוצה שנבחרה, לפי המספרים המוחלטים המשוקללים.",
+      "כל חלק מציג את חלקו של מגזר מתוך כלל הקבוצה שנבחרה.",
     pieSubtitle:
       "תרשים עוגה של חלקו של כל מגזר מתוך כלל הקבוצה שנבחרה, לפי המספרים המוחלטים המשוקללים.",
     shareNote: (noun: string) =>
@@ -95,13 +95,13 @@ const he = {
     viewPie: "עוגה",
   },
   three: {
-    barTitle: "שלושה מדדי שירות, מגזר אחר מגזר",
+    barTitle: "מדדי השירות לפי מגזר",
     barSubtitle:
-      "כל עמודה מציגה את שיעור הגיוס, השירות הקרבי או הקצונה במגזר אחד. גובה העמודה הוא השיעור באחוזים.",
+      "כל עמודה מציגה אחוז גיוס, שירות קרבי או קצונה במגזר אחד.",
     barHint: "גררו לסובב · גלגלו לזום · רחפו על עמודה לפרטים",
-    cloudTitle: "בתי ספר במרחב גיוס-קרבי-קצונה",
+    cloudTitle: "בתי ספר לפי גיוס, קרבי וקצונה",
     cloudSubtitle:
-      "כל נקודה היא בית ספר בשנה אחת, ולכן אותו בית ספר יכול להופיע כמה פעמים. הנקודות צבועות לפי מגזר. הצירים: ימינה = גיוס, למעלה = קרבי, לעומק = קצונה.",
+      "כל נקודה היא בית ספר. המיקום שלה נקבע לפי שיעורי הגיוס, הקרבי והקצונה.",
     cloudHint: "גררו לסובב · גלגלו לזום · רחפו על נקודה · לחצו לנעיצה",
     cloudSearch: "חיפוש בית ספר…",
     cloudNoResults: "אין תוצאות",
@@ -109,40 +109,34 @@ const he = {
     axisEnlist: "🪖 גיוס →",
     axisCombat: "⚔️ קרבי ↑",
     axisOfficer: "🎖️ קצונה ↗",
-    terrainTitle: "האשכולות שמאחורי הממוצעים",
+    terrainTitle: "ריכוז בתי ספר לפי גיוס וקרבי",
     terrainSubtitle:
-      "כל בית ספר ממוקם על הקרקע לפי שני מספרים: שיעור הגיוס שלו (ציר אחד) ושיעור הקרבי שלו (ציר שני). הגובה בכל נקודה סופר כמה בתי ספר נופלים על אותו שילוב — פסגה = שילוב נפוץ (הרבה בתי ספר), עמק = שילוב נדיר.",
+      "הגובה מציג כמה בתי ספר נמצאים באותו שילוב של שיעור גיוס ושיעור קרבי.",
     terrainHint: "גררו לסובב · גלגלו לזום",
     densityLow: "מעט בתי ספר",
     densityHigh: "הרבה בתי ספר",
-    sectorTerrainTitle: "כמה אחיד כל מגזר מבפנים",
+    sectorTerrainTitle: "דמיון בין בתי ספר באותו מגזר",
     sectorTerrainSubtitle:
-      "אותו נוף, מופרד לפי מגזר (גובה = מספר בתי הספר על כל שילוב גיוס×קרבי, מנורמל לכל מגזר בנפרד). פסגה גבוהה וצרה = המגזר אחיד, יש “בית ספר טיפוסי”; שטח נמוך ומרוח = בתי הספר מפוזרים, בלי דפוס אחד. חילוני, דתי-לאומי ודרוזי הם פסגות חדות בגיוס גבוה — חרדי הוא מישור נמוך ומפוזר. כלומר המגזר קובע לא רק כמה מתגייסים, אלא כמה אחידים בתי הספר.",
+      "כל משטח מציג מגזר אחר. פסגה גבוהה אומרת שהרבה בתי ספר באותו מגזר דומים זה לזה.",
     terrainViewSingle: "כל בתי הספר",
     terrainViewGrid: "זה לצד זה",
     terrainViewOverlay: "יחד (שכבות)",
     terrainPeakLabel: "כאן מצטופפים רוב בתי הספר",
     schools: (n: number | string) => `${n} בתי ספר`,
-    enlistLabel: "🪖 גיוס",
-    combatLabel: "⚔️ קרבי",
-    officerLabel: "🎖️ קצונה",
     webglError: "הדפדפן לא תומך ב-WebGL, ולכן אי אפשר להציג את התצוגה התלת-ממדית.",
     loading: "טוען תצוגה תלת-ממדית…",
   },
   lab: {
-    waffleTitle: "מה נשאר מתוך 100 בני נוער",
+    waffleTitle: "מתוך 100 בני נוער",
     waffleSubtitle:
-      "בכל מגזר, כל ריבוע מייצג בן או בת נוער אחד מתוך 100. כחול מלא = שירות קרבי, סגול = קצונה, כחול חלש = התגייסו אך לא לקרבי או לקצונה.",
+      "כל ריבוע מייצג בן או בת נוער אחד. הצבעים מראים כמה התגייסו, כמה הגיעו לקרבי וכמה לקצונה.",
     per100: "מתוך 100 בני נוער",
-    enlisted: "🪖 גויסו",
-    combat: "⚔️ קרביים",
-    officer: "🎖️ קצינים",
-    histTitle: "איפה בתי הספר מתרכזים בקרבי",
+    histTitle: (metric: string) => `התפלגות בתי הספר — ${metric}`,
     histSubtitle:
-      "כל נקודה היא בית ספר בשנה האחרונה, צבועה לפי מגזר. המיקום האופקי הוא שיעור השירות הקרבי; העובי האנכי מראה כמה בתי ספר נמצאים סביב אותו שיעור.",
-    scatterTitle: "רשויות בין גיוס רחב לקרבי גבוה",
+      "כל נקודה היא בית ספר. הציר האופקי מציג את שיעור המדד שנבחר בבית הספר.",
+    scatterTitle: "גיוס וקרבי לפי רשות",
     scatterSubtitle:
-      "כל נקודה היא רשות עם לפחות 3 בתי ספר. ימינה = שיעור גיוס גבוה יותר מתוך המחזור; למעלה = שיעור קרבי גבוה יותר מתוך המתגייסים. הקווים המקווקווים מסמנים את החציון.",
+      "כל נקודה היא רשות. ימינה פירושו יותר גיוס, ולמעלה פירושו יותר שירות קרבי.",
     qTopRight: "🪖 גיוס גבוה · ⚔️ קרבי גבוה",
     qTopLeft: "🪖 גיוס נמוך · ⚔️ קרבי גבוה",
     qBottomRight: "🪖 גיוס גבוה · ⚔️ קרבי נמוך",
@@ -153,12 +147,12 @@ const he = {
     scatterTip: (e: number | string, c: number | string) =>
       `🪖 גיוס ${e}% · ⚔️ קרבי ${c}%`,
     schools: (n: number | string) => `${n} בתי ספר`,
-    bumpTitle: "הערים הגדולות: מי נשארת גבוה",
+    bumpTitle: "דירוג הערים הגדולות בשירות קרבי",
     bumpSubtitle:
-      "בכל שנה הערים הגדולות מדורגות לפי שיעור השירות הקרבי מול כל הרשויות עם מספיק נתונים. קו גבוה יותר מציין דירוג טוב יותר.",
-    moversTitle: "הקפיצות הגדולות",
+      "כל קו מציג את הדירוג של עיר גדולה לאורך השנים לפי שיעור השירות הקרבי.",
+    moversTitle: "השינוי הגדול ביותר במדד",
     moversSubtitle:
-      "הרשויות שבהן המדד הנבחר עלה או ירד הכי הרבה בין השנה הראשונה לשנה האחרונה.",
+      "התרשים מציג את הרשויות שבהן המדד שנבחר עלה או ירד הכי הרבה.",
     moversNote:
       "ממוצע בתי ספר לא משוקלל; מוצגות רק רשויות עם 4+ בתי ספר. חלק מהשינוי עשוי לנבוע גם משינוי בהרכב בתי הספר המדווחים בין השנים.",
     unweightedNote:
@@ -166,19 +160,14 @@ const he = {
     risers: "העלייה הגדולה ביותר",
     fallers: "הירידה הגדולה ביותר",
     points: "נק׳",
-    raceTitle: "מסע הרשויות משנה לשנה",
+    raceTitle: "שינוי גיוס וקרבי לאורך השנים",
     raceSubtitle:
-      "כל בועה היא רשות עם לפחות 3 בתי ספר; גודל הבועה מציג מספר בתי ספר. לחצו על נגן כדי לראות איך הרשויות זזות במרחב גיוס×קרבי משנה לשנה.",
+      "כל בועה היא רשות. לחצו על נגן כדי לראות איך שיעורי הגיוס והקרבי משתנים משנה לשנה.",
     racePlay: "נגן",
     racePause: "השהה",
-    ridgeTitle: "איך מרכז ההתפלגות זז",
-    ridgeSubtitle:
-      "בחרו מדד. כל רכס הוא שנה: הגובה מראה איפה הרבה בתי ספר מרוכזים, והסמן הלבן הוא החציון.",
-    ridgeAxis: "שיעור המדד",
-    ridgeCount: (nn: number | string) => `${nn} בי״ס`,
-    sankeyTitle: "צווארי הבקבוק במסלול השירות",
+    sankeyTitle: "מהמחזור לגיוס, קרבי וקצונה",
     sankeySubtitle:
-      "מתוך כלל המחזור המשוקלל, כמה מתגייסים; ומתוך המתגייסים, כמה משרתים בקרבי וכמה מגיעים לקצונה. קרבי וקצונה מוצגים כזרמים מקבילים לפי מגזר.",
+      "התרשים מציג כמה בני נוער מתגייסים, וכמה מהמתגייסים מגיעים לקרבי או לקצונה.",
     sankeyStages: {
       cohort: "מחזור",
       enlist: "🪖 מתגייסים",
@@ -188,17 +177,17 @@ const he = {
     sankeyOfficerLegend: "🎖️ קצינים (מתוך ה־🪖 מתגייסים)",
     sankeyNote:
       "קרבי וקצונה נמדדים שניהם מתוך המתגייסים, ולכן הם שני זרמים מקבילים — לא שלב אחרי שלב. ייתכן חפיפה קלה (קצינים קרביים נכללים בשניהם).",
-    outlierTitle: "רשויות שמכות את התחזית",
+    outlierTitle: "רשויות מעל ומתחת לצפוי",
     outlierSubtitle:
-      "הקו המקווקו מראה את הקשר הצפוי בין שיעור הגיוס למדד הנבחר. רשויות מעל הקו מגיעות למדד גבוה מהצפוי לפי שיעור הגיוס שלהן; מתחת לקו — נמוך מהצפוי.",
+      "הקו מציג את הערך הצפוי לפי שיעור הגיוס. נקודות מעל הקו גבוהות מהצפוי.",
     outlierOver: "הרבה מעל הצפוי",
     outlierUnder: "הרבה מתחת לצפוי",
-    parallelTitle: "פרופיל השירות של כל בית ספר",
+    parallelTitle: "גיוס, קרבי וקצונה בכל בית ספר",
     parallelSubtitle:
-      "כל קו הוא בית ספר בשנה האחרונה, צבוע לפי מגזר, ועובר דרך שלושה צירים: גיוס, קרבי וקצונה. רחפו על קו כדי להדגיש בית ספר.",
-    trajTitle: "המסלול הרב-שנתי של הערים",
+      "כל קו הוא בית ספר. הקו עובר דרך שיעור הגיוס, שיעור הקרבי ושיעור הקצונה.",
+    trajTitle: "גיוס וקרבי בערים לאורך השנים",
     trajSubtitle:
-      "כל קו עוקב אחרי עיר גדולה במרחב גיוס×קרבי לאורך השנים. נקודה קטנה מסמנת את השנה הראשונה, ונקודה מלאה מסמנת את השנה האחרונה.",
+      "כל קו מציג עיר גדולה ומראה איך שיעורי הגיוס והקרבי שלה השתנו לאורך השנים.",
   },
   common: {
     noData: "אין נתונים מספיקים עבור צירוף זה.",
@@ -236,49 +225,50 @@ const he = {
     officer: "🎖️ קצינים",
   },
   genderGap: {
-    title: "פערי מגדר: איפה הם נפתחים",
+    title: "פער בין בנים לבנות",
     subtitle: "הפרש נקודות האחוז בין בנים לבנות בכל מגזר, עבור המדד שנבחר.",
     gap: (g: number | string) => `פער ${g} נק׳`,
     footnote:
       "ערך חיובי מציין שהמדד גבוה יותר אצל בנים; ערך שלילי מציין יתרון לבנות.",
   },
   sectorDonuts: {
-    title: "מי מוביל במדד שנבחר",
-    subtitle: "הערך של כל מגזר במדד ובמגדר שנבחרו.",
+    title: "המדד שנבחר לפי מגזר",
+    subtitle: "התרשים מציג את הערך של כל מגזר במדד ובמגדר שנבחרו.",
   },
   leaderboards: {
     unclassified: "לא מסווג",
     title: "קצות הטבלה: בתי ספר חריגים",
-    subtitle: "עשרת בתי הספר עם הערכים הגבוהים והנמוכים ביותר במדד שנבחר.",
+    subtitle:
+      "הקצה העליון והתחתון של המדד שנבחר. הקצוות טובים לאיתור חריגים, לא להבנת הכלל — ערכי הקצה נשענים לרוב על בתי ספר קטנים או מיוחדים.",
     topTitle: "10 הגבוהים",
     bottomTitle: "10 הנמוכים",
     legend: "הנקודה הצבעונית מציינת את המגזר:",
   },
   regionView: {
-    title: "איפה האזור משנה",
-    subtitle: "דירוג אזורים גאוגרפיים לפי המדד, המגדר והמגזר שנבחרו.",
+    title: "המדד שנבחר לפי אזור",
+    subtitle: "התרשים מדרג אזורים גאוגרפיים לפי המדד, המגדר והמגזר שנבחרו.",
     footnote: "רוחב העמודה יחסי לערך הגבוה ביותר בתצוגה הנוכחית.",
   },
   subgroups: {
-    title: "המגזר לא תמיד מקשה אחת",
+    title: "תת-קבוצות בתוך כל מגזר",
     subtitle:
-      "השוואה בין תתי־קבוצות בתוך כל מגזר לפי מדדי הגיוס המרכזיים.",
+      "השוואה בין תת-קבוצות בתוך כל מגזר לפי מדדי הגיוס המרכזיים.",
     noData: "אין מספיק תת-קבוצות להצגה עבור צירוף זה.",
     schools: (n: number | string) => `${n} בתי ספר`,
     footnote:
       "רוחב העמודה יחסי לערך הגבוה ביותר בתת-הקבוצות שמוצגות כעת.",
   },
   effectiveRate: {
-    title: "כמה באמת מגיעים לקרבי או לקצונה",
+    title: "קרבי וקצונה — לכל 100 בני נוער",
     subtitle:
-      "בכל מגזר, כמה מכל 100 בני נוער מגיעים בפועל לשירות קרבי או לקצונה.",
+      "בכל מגזר, התרשים מציג כמה מתוך 100 בני נוער מגיעים לשירות קרבי או לקצונה.",
     footnote:
       "חישוב המדד: שיעור גיוס מתוך המחזור × שיעור התפקיד מתוך המתגייסים.",
   },
   sectorFunnel: {
-    title: "מה נשאר אחרי כל שלב",
+    title: "מהמחזור לגיוס, קרבי וקצונה",
     subtitle:
-      "בכל מגזר, כמה מתוך 100 בני נוער מתגייסים, כמה מגיעים לשירות קרבי וכמה לקצונה.",
+      "בכל מגזר, התרשים מציג כמה מתגייסים, כמה מגיעים לקרבי וכמה לקצונה.",
     footnote:
       "כל שלב מוצג ביחס ל־100 בני נוער במחזור, לא רק ביחס למתגייסים.",
   },
@@ -286,7 +276,7 @@ const he = {
     tipEnlist: "🪖 שיעור גיוס",
     tipCombat: "⚔️ שיעור קרבי",
     tipFighters: "⚔️ לוחמים בפועל",
-    title: "שיעור גבוה, תרומה קטנה?",
+    title: "גיוס, קרבי ומספר לוחמים לפי מגזר",
     subtitle:
       "כל בועה היא מגזר: הציר האופקי מציג שיעור גיוס, הציר האנכי מציג שיעור קרבי, וגודל הבועה מציג את מספר הלוחמים בפועל.",
     axisEnlist: "🪖 שיעור גיוס",
@@ -295,15 +285,15 @@ const he = {
       "מגזר יכול להציג שיעור קרבי גבוה אך לתרום מעט לוחמים בפועל (בועה קטנה), ולהפך — שיעור בינוני עם תרומה גדולה (בועה גדולה).",
   },
   contribution: {
-    title: "מי סוחב את המספרים הארציים",
+    title: "שיעור וגודל קבוצה — שני צירים שונים",
     subtitle:
-      "חלקו של כל מגזר מכלל הקבוצה שנבחרה בארץ. כאן מודדים מספר אנשים, ולכן שיעור גבוה לא תמיד אומר תרומה גדולה.",
+      "התרשים מציג את חלקו של כל מגזר מתוך כלל הקבוצה שנבחרה בארץ.",
     ofEnlistees: (rate: number | string) => `(${rate}% מה־🪖 מתגייסים)`,
     footnote:
       "מגזר גדול עם שיעור בינוני עשוי לספק יותר לוחמים ממגזר קטן עם שיעור גבוה. המספרים המוחלטים מוערכים לפי גודל המחזור ושיעור המדד.",
   },
   heatmap: {
-    title: "כל הפערים במקום אחד",
+    title: "כל המדדים לפי מגזר ומגדר",
     subtitle:
       "כל תא מציג שיעור באחוזים עבור מגזר ומגדר. צבע כהה יותר מציין ערך גבוה יותר בתוך אותו מדד.",
     sectorHeader: "מגזר",
@@ -311,13 +301,13 @@ const he = {
       "הצבע מחושב בנפרד לכל מדד, כדי להבליט מי גבוה או נמוך בתוך אותה עמודה.",
   },
   trend: {
-    title: "האם הפער נסגר או נפתח",
-    subtitle: "שינוי המדד שנבחר בכל מגזר לאורך השנים.",
+    title: "שינוי המדד לאורך זמן",
+    subtitle: "התרשים מציג איך המדד שנבחר השתנה בכל מגזר לאורך השנים.",
   },
   notes: {
-    title: "מה חשוב לדעת לפני שמשווים",
+    title: "הערות ומקורות",
     subtitle:
-      "הגדרות המדדים, מקור הנתונים וההסתייגויות שחשוב להכיר לפני השוואה.",
+      "כאן מופיעים מקור הנתונים, שיטת החישוב והערות חשובות על המדדים.",
     items: [
       {
         label: "שנתון",
@@ -346,8 +336,8 @@ const he = {
     ],
   },
   fullData: {
-    title: "הנתונים להורדה",
-    subtitle: "קובצי Excel להמשך בדיקה, הצלבה או ניתוח עצמאי של הנתונים.",
+    title: "הורדת קובצי הנתונים",
+    subtitle: "כאן אפשר להוריד את קובצי הנתונים בפורמט Excel.",
     footnote:
       "הנתונים התקבלו מצה״ל במסגרת חוק חופש המידע, באדיבות התנועה לחופש המידע.",
     items: [
@@ -365,9 +355,9 @@ const he = {
     colSchool: "בית ספר",
     colMeaning: "שירות משמעותי",
     colMeaningShort: "משמעותי",
-    title: "מצאו בית ספר והשוו אותו",
+    title: "חיפוש והשוואה בין בתי ספר",
     subtitle:
-      "חיפוש וסינון בתי ספר לפי שנה, מגדר, רשות ומדדי הגיוס המרכזיים.",
+      "חפשו בתי ספר וסננו אותם לפי שנה, מגדר, רשות ומדדי גיוס.",
     searchPlaceholder: "חיפוש לפי שם בית ספר או רשות…",
     genderAll: "הכל",
     genderBoys: "👨 בנים",
@@ -385,7 +375,7 @@ const he = {
     colCountShort: "בת״ס",
     colMeaning: "שירות משמעותי",
     colMeaningShort: "משמעותי",
-    title: "הרשויות לפי המדד שנבחר",
+    title: "המדד שנבחר לפי רשות",
     featuredHeading: "הערים הגדולות בישראל",
     restHeading: "כל שאר הרשויות",
     schoolsCount: (n: number | string) => `${n} בת״ס`,
@@ -480,21 +470,21 @@ const en: Dictionary = {
   },
   hero: {
     imageAlt: "Enlistment data by school and sector",
-    title: "Where Students Enlist, Reach Combat and Become Officers",
+    title: "Enlistment and Service Data by School",
     subtitle:
-      "An interactive school comparison: enlistment, combat and officer rates by sector, gender and year. Averages are weighted by the number of 12th-grade students.",
+      "This site shows enlistment, combat-service and officer rates by school, sector, region, gender and year.",
     feedback: "Feedback? Message me",
   },
   tabs: {
-    overview: "Main Picture",
+    overview: "Overview",
     sectors: "Sectors",
-    gaps: "Gender Gaps",
+    gaps: "Gaps",
     breakdowns: "Breakdowns",
     cities: "Regions",
     search: "Schools",
     sources: "Data Sources",
-    lab: "Deep Dives",
-    three: "3D Space",
+    lab: "Analysis",
+    three: "3D",
   },
   delta: {
     vs: (y: number | string) => `vs ${y}`,
@@ -502,24 +492,24 @@ const en: Dictionary = {
       `Arrows: change in percentage points vs ${y} · green = up, red = down`,
   },
   overviewTab: {
-    title: "The Starting Picture",
+    title: "Overview",
     subtitle:
-      "A short entry point: sector picture and gender gaps before the deeper views.",
+      "Start here for the main picture before moving into detailed breakdowns.",
   },
   sectorsTab: {
-    title: "Sectors: Rates vs Real Numbers",
+    title: "Compare Sectors",
     subtitle:
-      "Why groups differ: rates, absolute contribution, change over time and the service pipeline.",
+      "Compare enlistment, combat service and officer rates by sector, gender and year.",
   },
   citiesTab: {
-    title: "Geography and Municipalities",
+    title: "Compare Regions and Municipalities",
     subtitle:
-      "From macro region to municipality: rankings, comparisons, change over time and outliers.",
+      "See how the metrics differ between regions, cities and local municipalities.",
   },
   searchTab: {
-    title: "Schools: Search and Outliers",
+    title: "Search Schools",
     subtitle:
-      "Find a school, compare the extremes, and see how schools distribute across enlistment, combat and officers.",
+      "Search for a school and see its enlistment, combat-service and officer data.",
   },
   schoolFilter: {
     add: "Add a school…",
@@ -535,17 +525,17 @@ const en: Dictionary = {
     selectedLabel: "Highlighted municipalities",
   },
   threeTab: {
-    title: "The Same Data, in Space",
+    title: "3D View",
     subtitle:
-      "The same data, in three dimensions. Drag to rotate, scroll to zoom. Experimental and heavy — needs a WebGL-capable browser.",
+      "An experimental view of the same data in 3D. Drag to rotate and scroll to zoom.",
   },
   armyStream: {
-    title: "Who Fills the Ranks",
+    title: "Enlistees, Combat Soldiers and Officers by Sector",
     subtitle:
-      "A comparison of absolute counts and composition within the selected group. This counts people, not just rates.",
-    shareTitle: "The Selected Group by Sector",
+      "This chart shows absolute numbers, not only percentages, by sector and selected metric.",
+    shareTitle: "Breakdown by Sector",
     shareSubtitle:
-      "Each sector's share of the selected group, based on weighted absolute counts.",
+      "Each part shows one sector's share of the selected group.",
     pieSubtitle:
       "A pie chart of each sector's share of the selected group, based on weighted absolute counts.",
     shareNote: (noun: string) =>
@@ -559,13 +549,13 @@ const en: Dictionary = {
     viewPie: "Pie",
   },
   three: {
-    barTitle: "Three Service Metrics, Sector by Sector",
+    barTitle: "Service Metrics by Sector",
     barSubtitle:
-      "Each bar shows one sector's enlistment, combat-service or officer rate. Bar height is the percentage rate.",
+      "Each bar shows the enlistment, combat-service or officer rate for one sector.",
     barHint: "Drag to rotate · scroll to zoom · hover a bar for details",
-    cloudTitle: "Schools in Enlistment-Combat-Officer Space",
+    cloudTitle: "Schools by Enlistment, Combat and Officers",
     cloudSubtitle:
-      "Each point is one school in one year, so the same school may appear more than once. Points are colored by sector. Axes: right = enlistment, up = combat, depth = officers.",
+      "Each point is one school. Its position is based on the three service metrics.",
     cloudHint: "Drag to rotate · scroll to zoom · hover a point · click to pin",
     cloudSearch: "Search a school…",
     cloudNoResults: "No matches",
@@ -573,40 +563,34 @@ const en: Dictionary = {
     axisEnlist: "🪖 Enlist →",
     axisCombat: "⚔️ Combat ↑",
     axisOfficer: "🎖️ Officer ↗",
-    terrainTitle: "The Clusters Behind the Averages",
+    terrainTitle: "School Clusters by Enlistment and Combat",
     terrainSubtitle:
-      "Each school is placed on the ground by two numbers: its enlistment rate (one axis) and its combat rate (the other). The height at any point counts how many schools land on that combination — a peak = a common mix (many schools), a valley = a rare one.",
+      "The height shows how many schools share the same mix of enlistment rate and combat-service rate.",
     terrainHint: "Drag to rotate · scroll to zoom",
     densityLow: "Fewer schools",
     densityHigh: "More schools",
-    sectorTerrainTitle: "How Uniform Each Sector Is Inside",
+    sectorTerrainTitle: "Similarity of Schools Within Each Sector",
     sectorTerrainSubtitle:
-      "The same landscape, split by sector (height = number of schools at each enlist×combat mix, normalized per sector). A tall, narrow spike = the sector is uniform — there's a “typical school”; a low, spread-out sheet = schools are all over the place, with no single pattern. Secular, national-religious and Druze are sharp spikes at high enlistment — Haredi is a low, sprawling plain. So sector predicts not just how much schools enlist, but how consistent they are.",
+      "Each surface shows one sector. A high peak means many schools in that sector look similar.",
     terrainViewSingle: "All schools",
     terrainViewGrid: "Side by side",
     terrainViewOverlay: "Together (layers)",
     terrainPeakLabel: "Most schools cluster here",
     schools: (n: number | string) => `${n} schools`,
-    enlistLabel: "🪖 Enlist",
-    combatLabel: "⚔️ Combat",
-    officerLabel: "🎖️ Officer",
     webglError: "Your browser doesn't support WebGL, so the 3D view can't render.",
     loading: "Loading 3D view…",
   },
   lab: {
-    waffleTitle: "What Remains Out of 100 Youth",
+    waffleTitle: "Out of 100 Youth",
     waffleSubtitle:
-      "In each sector, every square represents one young person out of 100. Solid blue = combat service, purple = officers, faint blue = enlisted but not combat or officer.",
+      "Each square is one young person. The colors show how many enlisted, reached combat service or became officers.",
     per100: "of 100 youth",
-    enlisted: "🪖 enlisted",
-    combat: "⚔️ combat",
-    officer: "🎖️ officers",
-    histTitle: "Where Schools Cluster on Combat Service",
+    histTitle: (metric: string) => `School Distribution — ${metric}`,
     histSubtitle:
-      "Each dot is one school in the latest year, colored by sector. The horizontal position is the combat-service rate; vertical thickness shows how many schools cluster around that rate.",
-    scatterTitle: "Municipalities Between Broad Enlistment and High Combat",
+      "Each dot is a school. The horizontal axis shows the school's rate for the selected metric.",
+    scatterTitle: "Enlistment and Combat by Municipality",
     scatterSubtitle:
-      "Each dot is a municipality with at least 3 schools. Right = a higher enlistment rate out of the cohort; up = a higher combat-service rate among enlistees. Dashed lines mark the medians.",
+      "Each dot is a municipality. Right means more enlistment, and up means more combat service.",
     qTopRight: "High 🪖 enlist · high ⚔️ combat",
     qTopLeft: "Low 🪖 enlist · high ⚔️ combat",
     qBottomRight: "High 🪖 enlist · low ⚔️ combat",
@@ -617,12 +601,12 @@ const en: Dictionary = {
     scatterTip: (e: number | string, c: number | string) =>
       `🪖 Enlist ${e}% · ⚔️ combat ${c}%`,
     schools: (n: number | string) => `${n} schools`,
-    bumpTitle: "Largest Cities: Who Stays High",
+    bumpTitle: "Largest Cities Ranked by Combat Service",
     bumpSubtitle:
-      "Each year, the largest cities are ranked by combat-service rate against all municipalities with enough data. A higher line means a better rank.",
-    moversTitle: "The Biggest Jumps",
+      "Each line shows one large city's rank over time by combat-service rate.",
+    moversTitle: "Largest Change in the Metric",
     moversSubtitle:
-      "The municipalities where the selected metric rose or fell the most between the first and latest year.",
+      "This chart shows the municipalities where the selected metric rose or fell the most.",
     moversNote:
       "Unweighted school average; only municipalities with 4+ schools are shown. Part of a change may also come from which schools reported in each year.",
     unweightedNote:
@@ -630,19 +614,14 @@ const en: Dictionary = {
     risers: "Biggest rise",
     fallers: "Biggest drop",
     points: "pts",
-    raceTitle: "Municipalities Moving Year by Year",
+    raceTitle: "Enlistment and Combat Over Time",
     raceSubtitle:
-      "Each bubble is a municipality with at least 3 schools; bubble size shows school count. Press play to see municipalities move through enlistment×combat space year by year.",
+      "Each bubble is a municipality. Press play to see how enlistment and combat-service rates change by year.",
     racePlay: "Play",
     racePause: "Pause",
-    ridgeTitle: "How the Center of the Distribution Moves",
-    ridgeSubtitle:
-      "Choose a metric. Each ridge is one year: height shows where many schools cluster, and the white marker is the median.",
-    ridgeAxis: "Metric rate",
-    ridgeCount: (nn: number | string) => `${nn} schools`,
-    sankeyTitle: "The Bottlenecks in the Service Path",
+    sankeyTitle: "From Cohort to Enlistment, Combat and Officers",
     sankeySubtitle:
-      "Out of the weighted cohort, this shows how many enlist; and out of enlistees, how many serve in combat and how many become officers. Combat and officers are parallel streams by sector.",
+      "This chart shows how many young people enlist, and how many enlistees reach combat service or become officers.",
     sankeyStages: {
       cohort: "Cohort",
       enlist: "🪖 Enlisted",
@@ -652,17 +631,17 @@ const en: Dictionary = {
     sankeyOfficerLegend: "🎖️ Officers (of 🪖 enlistees)",
     sankeyNote:
       "Combat and officers are both measured out of enlistees, so they're two parallel streams — not sequential stages. They can overlap slightly (combat officers count in both).",
-    outlierTitle: "Municipalities Beating the Forecast",
+    outlierTitle: "Municipalities Above and Below Expected",
     outlierSubtitle:
-      "The dashed line shows the expected link between enlistment rate and the selected metric. Municipalities above it land higher than their enlistment rate predicts; below it, lower.",
+      "The line shows the expected value based on enlistment rate. Points above the line are higher than expected.",
     outlierOver: "Far above expected",
     outlierUnder: "Far below expected",
-    parallelTitle: "Each School's Service Profile",
+    parallelTitle: "Enlistment, Combat and Officers in Each School",
     parallelSubtitle:
-      "Each line is one school in the latest year, colored by sector, crossing three axes: enlistment, combat and officers. Hover a line to highlight a school.",
-    trajTitle: "The Multi-Year Path of the Cities",
+      "Each line is a school. The line crosses the enlistment, combat-service and officer rates.",
+    trajTitle: "Enlistment and Combat in Cities Over Time",
     trajSubtitle:
-      "Each line follows a large city through enlistment×combat space over time. A small node marks the first year, and a filled node marks the latest year.",
+      "Each line shows one large city and how its enlistment and combat-service rates changed over time.",
   },
   common: {
     noData: "Not enough data for this combination.",
@@ -708,7 +687,7 @@ const en: Dictionary = {
     officer: "🎖️ Officers",
   },
   genderGap: {
-    title: "Gender Gaps: Where They Open Up",
+    title: "Gap Between Boys and Girls",
     subtitle:
       "The percentage-point difference between boys and girls in each sector for the selected metric.",
     gap: (g: number | string) => `${g} pt gap`,
@@ -716,25 +695,25 @@ const en: Dictionary = {
       "A positive value means the metric is higher for boys; a negative value means an advantage for girls.",
   },
   sectorDonuts: {
-    title: "Who Leads on the Selected Metric",
-    subtitle: "Each sector's value for the selected metric and gender.",
+    title: "Selected Metric by Sector",
+    subtitle: "This chart shows each sector's value for the selected metric and gender.",
   },
   leaderboards: {
     unclassified: "Unclassified",
-    title: "The Edges of the Table: Outlier Schools",
+    title: "Edges of the Table: Outlier Schools",
     subtitle:
-      "The ten schools with the highest and lowest values on the selected metric.",
+      "The top and bottom of the selected metric. The edges are good for spotting outliers, not for understanding the typical school — extreme values often rest on small or unusual schools.",
     topTitle: "Top 10",
     bottomTitle: "Bottom 10",
     legend: "The colored dot indicates the sector:",
   },
   regionView: {
-    title: "Where Region Starts to Matter",
-    subtitle: "Geographic regions ranked by the selected metric, gender and sector.",
+    title: "Selected Metric by Region",
+    subtitle: "This chart ranks geographic regions by the selected metric, gender and sector.",
     footnote: "Bar width is relative to the highest value in the current view.",
   },
   subgroups: {
-    title: "Sectors Are Not Always One Block",
+    title: "Subgroups Within Each Sector",
     subtitle:
       "Comparing subgroups within each sector on the main enlistment metrics.",
     noData: "Not enough subgroups to display for this combination.",
@@ -743,16 +722,16 @@ const en: Dictionary = {
       "Bar width is relative to the highest value among the subgroups shown.",
   },
   effectiveRate: {
-    title: "How Many Actually Reach Combat or Officer Rank",
+    title: "Combat and Officers — per 100 Youth",
     subtitle:
-      "For each sector, how many of every 100 youth actually reach combat service or officer rank.",
+      "For each sector, this chart shows how many of every 100 youth reach combat service or officer rank.",
     footnote:
       "How it's computed: enlistment rate of the cohort × the role's rate among enlistees.",
   },
   sectorFunnel: {
-    title: "What Remains After Each Step",
+    title: "From Cohort to Enlistment, Combat and Officers",
     subtitle:
-      "For each sector, how many of every 100 youth enlist, reach combat service and reach officer rank.",
+      "For each sector, this chart shows how many enlist, reach combat service and become officers.",
     footnote:
       "Each stage is shown relative to 100 youth in the cohort, not just relative to enlistees.",
   },
@@ -760,7 +739,7 @@ const en: Dictionary = {
     tipEnlist: "🪖 Enlistment rate",
     tipCombat: "⚔️ Combat rate",
     tipFighters: "Actual ⚔️ combat soldiers",
-    title: "High Rate, Small Contribution?",
+    title: "Enlistment, Combat and Number of Combat Soldiers by Sector",
     subtitle:
       "Each bubble is a sector: the horizontal axis shows enlistment rate, the vertical axis shows combat-service rate, and bubble size shows the actual number of combat soldiers.",
     axisEnlist: "🪖 Enlistment rate",
@@ -769,15 +748,15 @@ const en: Dictionary = {
       "A sector can show a high combat rate yet contribute few actual combat soldiers (a small bubble), and vice versa — a moderate rate with a large contribution (a big bubble).",
   },
   contribution: {
-    title: "Who Carries the National Numbers",
+    title: "Rate and Group Size — Two Different Axes",
     subtitle:
-      "Each sector's share of the selected national group. This counts people, so a high rate is not always a large contribution.",
+      "This chart shows each sector's share of the selected national group.",
     ofEnlistees: (rate: number | string) => `(${rate}% of 🪖 enlistees)`,
     footnote:
       "A large sector with a moderate rate may supply more combat soldiers than a small sector with a high rate. Absolute numbers are estimated from cohort size and the metric rate.",
   },
   heatmap: {
-    title: "All the Gaps in One Place",
+    title: "All Metrics by Sector and Gender",
     subtitle:
       "Each cell shows a percentage rate for one sector and gender. Darker color means a higher value within that metric.",
     sectorHeader: "Sector",
@@ -785,13 +764,13 @@ const en: Dictionary = {
       "Color is computed separately per metric, to highlight who is high or low within the same column.",
   },
   trend: {
-    title: "Is the Gap Closing or Opening?",
-    subtitle: "How the selected metric changed in each sector over time.",
+    title: "Selected Metric Over Time",
+    subtitle: "This chart shows how the selected metric changed in each sector over time.",
   },
   notes: {
-    title: "What to Know Before Comparing",
+    title: "Notes and Sources",
     subtitle:
-      "Metric definitions, the data source and the caveats worth knowing before comparing.",
+      "This section explains the data source, the calculation method and important notes.",
     items: [
       {
         label: "Cohort year",
@@ -820,9 +799,9 @@ const en: Dictionary = {
     ],
   },
   fullData: {
-    title: "Download the Data",
+    title: "Download the Data Files",
     subtitle:
-      "Excel files for further checking, cross-referencing or independent analysis of the data.",
+      "Download the data files in Excel format.",
     footnote:
       "The data was obtained from the IDF under the Freedom of Information Act, courtesy of the Movement for Freedom of Information.",
     items: [
@@ -840,9 +819,9 @@ const en: Dictionary = {
     colSchool: "School",
     colMeaning: "Meaningful service",
     colMeaningShort: "Meaningful",
-    title: "Find a School and Compare It",
+    title: "Search and Compare Schools",
     subtitle:
-      "Search and filter schools by year, gender, municipality and the main enlistment metrics.",
+      "Search schools and filter them by year, gender, municipality and enlistment metrics.",
     searchPlaceholder: "Search by school or municipality name…",
     genderAll: "All",
     genderBoys: "👨 Boys",
@@ -860,7 +839,7 @@ const en: Dictionary = {
     colCountShort: "Schools",
     colMeaning: "Meaningful service",
     colMeaningShort: "Meaningful",
-    title: "Municipalities by the Selected Metric",
+    title: "Selected Metric by Municipality",
     featuredHeading: "Israel's Largest Cities",
     restHeading: "All Other Municipalities",
     schoolsCount: (n: number | string) => `${n} schools`,

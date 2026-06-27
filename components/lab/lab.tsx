@@ -4,17 +4,15 @@ import * as React from "react";
 import { SectionSkeleton } from "@/components/ui/skeleton";
 import { ChartFootnote, ChartLegend } from "@/components/ui/panel";
 import { GenderPanel, LabGenderCtx } from "@/components/lab/gender-panel";
-import { MetricTabsS } from "@/components/sectors/controls";
 import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
-import { sectorColor, type SGender, type SMetric } from "@/lib/sectors";
+import { sectorColor, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import {
   waffles,
-  ridgeline,
   sankeyFlow,
   outliers,
   type Waffle,
@@ -71,108 +69,15 @@ function WaffleCard({
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-muted-foreground sm:text-xs">
         <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.enlisted }}>
-          <span className="font-bold text-foreground">{d.enlisted}</span> {t.lab.enlisted}
+          <span className="font-bold text-foreground">{d.enlisted}</span> {t.metrics.enlist.short}
         </span>
         <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.combat }}>
-          <span className="font-bold text-foreground">{d.combat}</span> {t.lab.combat}
+          <span className="font-bold text-foreground">{d.combat}</span> {t.metrics.combat.short}
         </span>
         <span className="text-center whitespace-nowrap" style={{ color: WAFFLE_STAGE.officer }}>
-          <span className="font-bold text-foreground">{d.officer}</span> {t.lab.officer}
+          <span className="font-bold text-foreground">{d.officer}</span> {t.metrics.officer.short}
         </span>
       </div>
-    </div>
-  );
-}
-
-/* ---------- 7) Army composition — who fills the army over time ---------- */
-function hex(n: number) {
-  return Math.round(n).toString(16).padStart(2, "0");
-}
-function lerpColor(a: string, b: string, t: number) {
-  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
-  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
-  return `#${pa.map((c, i) => hex(c + (pb[i] - c) * t)).join("")}`;
-}
-
-/* ---------- 8) Ridgeline — the distribution shifting year by year ---------- */
-const RG_W = 880;
-const RG_H = 540;
-const RG_PADX = 64;
-const RG_TOP = 18;
-const RG_BOT = 40;
-function Ridgeline({
-  data,
-  t,
-  axisLabel,
-}: {
-  data: ReturnType<typeof ridgeline>;
-  t: Dictionary;
-  axisLabel: string;
-}) {
-  const { years, ridges, maxDensity } = data;
-  const n = years.length;
-  const rowH = (RG_H - RG_TOP - RG_BOT) / n;
-  // keep each ridge inside its own band (amp < rowH) so the years don't tangle
-  const amp = rowH * 0.9;
-  const bins = ridges[0]?.density.length ?? 1;
-  const x = (i: number) => RG_PADX + (i / (bins - 1)) * (RG_W - 2 * RG_PADX);
-  const xPct = (v: number) => RG_PADX + (v / 100) * (RG_W - 2 * RG_PADX);
-  const baseline = (rowIdx: number) => RG_TOP + (rowIdx + 1) * rowH;
-  // path tracing each year's median, so the eye can follow the center drift
-  const medianTrack = ridges
-    .map((r, i) => `${xPct(r.median)},${baseline(i)}`)
-    .join(" L ");
-
-  return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${RG_W} ${RG_H}`} className="h-auto w-full min-w-[640px]">
-        {[0, 25, 50, 75, 100].map((p) => {
-          const xx = xPct(p);
-          return (
-            <g key={p}>
-              <line x1={xx} x2={xx} y1={RG_TOP} y2={RG_H - RG_BOT} stroke="rgba(255,255,255,0.06)" />
-              <text x={xx} y={RG_H - 22} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
-                {p}%
-              </text>
-            </g>
-          );
-        })}
-        {ridges.map((ridge, rowIdx) => {
-          const base = baseline(rowIdx);
-          const tCol = rowIdx / Math.max(1, n - 1);
-          const color = lerpColor("#475569", "#38bdf8", tCol);
-          const pts = ridge.density.map(
-            (d, i) => `${x(i)},${base - (d / maxDensity) * amp}`,
-          );
-          const area = `M ${x(0)},${base} L ${pts.join(" L ")} L ${x(bins - 1)},${base} Z`;
-          const line = `M ${pts.join(" L ")}`;
-          const mx = xPct(ridge.median);
-          return (
-            <g key={ridge.year}>
-              <line x1={x(0)} x2={x(bins - 1)} y1={base} y2={base} stroke="rgba(255,255,255,0.1)" />
-              <path d={area} fill={color} fillOpacity={0.5} />
-              <path d={line} fill="none" stroke={color} strokeWidth={1.5} />
-              {/* median marker: a tick rising from the baseline + its value */}
-              <line x1={mx} x2={mx} y1={base} y2={base - amp * 0.62} stroke="#fff" strokeOpacity={0.7} strokeWidth={1.25} />
-              <text x={mx} y={base - amp * 0.62 - 4} fill="rgba(255,255,255,0.92)" fontSize="10.5" fontWeight={700} textAnchor="middle" className="tabular-nums">
-                {ridge.median}%
-              </text>
-              {/* year + school count at the left margin */}
-              <text x={RG_PADX - 8} y={base - 3} fill="rgba(255,255,255,0.85)" fontSize="12" fontWeight={600} textAnchor="end" className="tabular-nums">
-                {ridge.year}
-              </text>
-              <text x={RG_PADX - 8} y={base + 9} fill="rgba(255,255,255,0.4)" fontSize="9.5" textAnchor="end" className="tabular-nums">
-                {t.lab.ridgeCount(ridge.n)}
-              </text>
-            </g>
-          );
-        })}
-        {/* connect the medians so the drift over years is unmistakable */}
-        <path d={`M ${medianTrack}`} fill="none" stroke="#fff" strokeOpacity={0.5} strokeWidth={1.25} strokeDasharray="3 3" />
-        <text x={RG_W / 2} y={RG_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
-          {axisLabel}
-        </text>
-      </svg>
     </div>
   );
 }
@@ -532,35 +437,6 @@ function SankeyPanel() {
   );
 }
 
-function RidgelinePanel() {
-  const t = useT();
-  const [metric, setMetric] = React.useState<SMetric>("combat");
-  return (
-    <GenderPanel
-      title={t.lab.ridgeTitle}
-      subtitle={t.lab.ridgeSubtitle}
-      surface="lab_ridge"
-    >
-      {(g) => (
-        <div>
-          <div className="mb-4 flex justify-end">
-            <MetricTabsS
-              value={metric}
-              onChange={setMetric}
-              surface="school_ridgeline"
-            />
-          </div>
-          <Ridgeline
-            data={ridgeline(g, metric)}
-            t={t}
-            axisLabel={t.metrics[metric].label}
-          />
-        </div>
-      )}
-    </GenderPanel>
-  );
-}
-
 function OutliersPanel() {
   const t = useT();
   const [metric, setMetric] = React.useState<OutlierMetric>("combat");
@@ -601,14 +477,6 @@ export function ServicePipelinePanels() {
     <GenderScopedPanels skeletonPanels={2}>
       <WafflePanel />
       <SankeyPanel />
-    </GenderScopedPanels>
-  );
-}
-
-export function SchoolRidgelinePanel() {
-  return (
-    <GenderScopedPanels skeletonPanels={1}>
-      <RidgelinePanel />
     </GenderScopedPanels>
   );
 }

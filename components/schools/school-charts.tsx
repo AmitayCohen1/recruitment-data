@@ -26,7 +26,10 @@ import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
-import type { Gender } from "@/lib/data";
+import type { Gender, MetricKey } from "@/lib/data";
+
+/** Metrics offered by the distribution toggle (excludes the derived "meaning"). */
+const DIST_METRICS: MetricKey[] = ["enlist", "combat", "officer"];
 import {
   schoolDots,
   schoolProfiles,
@@ -154,6 +157,8 @@ function Beeswarm({
 function SchoolFilterBar({
   gender,
   onGender,
+  metric,
+  onMetric,
   sector,
   onSector,
   schools,
@@ -166,6 +171,8 @@ function SchoolFilterBar({
 }: {
   gender: SGender;
   onGender: (g: SGender) => void;
+  metric: MetricKey;
+  onMetric: (m: MetricKey) => void;
   sector: string | null;
   onSector: (s: string | null) => void;
   schools: SchoolProfile[];
@@ -198,6 +205,20 @@ function SchoolFilterBar({
     <div className="w-full space-y-3 sm:min-w-[min(34rem,100%)]">
       <div className="flex flex-wrap items-center gap-3">
         <GenderToggle value={gender} onChange={onGender} surface="schools_filter" />
+
+        {/* metric toggle — which rate the distribution is drawn by */}
+        <ControlGroup>
+          {DIST_METRICS.map((m) => (
+            <SegmentButton
+              key={m}
+              type="button"
+              active={metric === m}
+              onClick={() => onMetric(m)}
+            >
+              {t.metrics[m].short}
+            </SegmentButton>
+          ))}
+        </ControlGroup>
 
         {/* sector chips — double as legend + filter */}
         <ControlGroup>
@@ -310,11 +331,12 @@ export function SchoolCharts() {
   React.useEffect(() => setMounted(true), []);
 
   const [gender, setGender] = React.useState<SGender>("בנים");
+  const [metric, setMetric] = React.useState<MetricKey>("combat");
   const [sector, setSector] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState<Map<number, string>>(new Map());
 
   const g: Gender = gender === "בנים" ? "m" : "f";
-  const dots = React.useMemo(() => schoolDots(g, "combat"), [g]);
+  const dots = React.useMemo(() => schoolDots(g, metric), [g, metric]);
   const profiles = React.useMemo(() => schoolProfiles(g), [g]);
   const selectedKeys = React.useMemo(() => new Set(selected.keys()), [selected]);
 
@@ -332,10 +354,12 @@ export function SchoolCharts() {
 
   return (
     <ChartPanel>
-      <ChartHeader title={t.lab.histTitle} subtitle={t.lab.histSubtitle}>
+      <ChartHeader title={t.lab.histTitle(t.metrics[metric].short)} subtitle={t.lab.histSubtitle}>
         <SchoolFilterBar
           gender={gender}
           onGender={setGender}
+          metric={metric}
+          onMetric={setMetric}
           sector={sector}
           onSector={setSector}
           schools={profiles}

@@ -3,13 +3,7 @@ import { notFound } from "next/navigation";
 import { Heebo } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import Image from "next/image";
-import {
-  PieChart,
-  Scale,
-  GraduationCap,
-  Building2,
-  Database,
-} from "lucide-react";
+import { PieChart, GraduationCap, Building2, Database } from "lucide-react";
 import "../globals.css";
 import cover from "@/public/cover.png";
 import {
@@ -90,7 +84,6 @@ export default async function RootLayout({
 
   const navItems: NavItem[] = [
     { id: "overview", label: t.tabs.overview, icon: <PieChart className="size-4" /> },
-    { id: "sectors", label: t.tabs.sectors, icon: <Scale className="size-4" /> },
     { id: "cities", label: t.tabs.cities, icon: <Building2 className="size-4" /> },
     { id: "schools", label: t.tabs.search, icon: <GraduationCap className="size-4" /> },
     { id: "sources", label: t.tabs.sources, icon: <Database className="size-4" /> },

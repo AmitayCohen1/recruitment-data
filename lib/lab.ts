@@ -271,50 +271,6 @@ export function bubbleRace(
 }
 
 /* ------------------------------------------------------------------ *
- *  7) Ridgeline — the full national distribution of a metric across
- *     all schools, one smoothed density ridge per year, so the whole
- *     cohort's shift over time reads as a single stacked image.
- * ------------------------------------------------------------------ */
-export type Ridge = { year: number; density: number[]; median: number; n: number };
-
-export function ridgeline(
-  gender: Gender,
-  metric: MetricKey = "combat",
-  bins = 50,
-): { years: number[]; ridges: Ridge[]; maxDensity: number } {
-  const f = FIELD[metric];
-  const ridges: Ridge[] = YEARS.map((year) => {
-    const hist = new Array(bins).fill(0);
-    const vals: number[] = [];
-    for (const r of ROWS) {
-      if (r.y !== year || r.g !== gender) continue;
-      const v = r[f] as number | null;
-      if (v == null) continue;
-      const bin = Math.min(bins - 1, Math.max(0, Math.floor((v / 100) * bins)));
-      hist[bin] += 1;
-      vals.push(v);
-    }
-    // light 3-tap smoothing, then normalize to a share-per-bin density
-    const sm = hist.map((_, i) => {
-      const a = hist[i - 1] ?? 0;
-      const b = hist[i];
-      const c = hist[i + 1] ?? 0;
-      return (a + 2 * b + c) / 4;
-    });
-    const total = vals.length;
-    const density = total ? sm.map((v) => v / total) : sm;
-    return {
-      year,
-      density,
-      median: Math.round(median(vals) * 10) / 10,
-      n: total,
-    };
-  });
-  const maxDensity = Math.max(0.0001, ...ridges.flatMap((r) => r.density));
-  return { years: [...YEARS], ridges, maxDensity };
-}
-
-/* ------------------------------------------------------------------ *
  *  8) Sankey flow — the enlist → combat → officer pipeline for the
  *     whole population (latest year, one gender), built from the
  *     enlistee/cohort-weighted absolute counts. Each stage is split
@@ -418,14 +374,13 @@ export type CloudPoint = {
   officer: number;
 };
 
-/** Schools as points in (enlist, combat, officer) space. By default just the
- *  latest year (one point per school); with `allYears`, every school-year that
- *  reports all three rates becomes its own point, so a school traces a path
- *  across the years. */
-export function schoolCloud(gender: Gender, allYears = false): CloudPoint[] {
+/** Schools as points in (enlist, combat, officer) space — one point per school
+ *  for a single year (defaults to the latest). Each school that reports all
+ *  three rates that year becomes one point. */
+export function schoolCloud(gender: Gender, year: number = LATEST): CloudPoint[] {
   return ROWS.flatMap((r) => {
     if (r.g !== gender) return [];
-    if (!allYears && r.y !== LATEST) return [];
+    if (r.y !== year) return [];
     const e = r.e as number | null;
     const cb = r.cb as number | null;
     const o = r.o as number | null;

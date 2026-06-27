@@ -11,15 +11,14 @@ import {
   ChartPanel,
 } from "@/components/ui/panel";
 import { ChartContainer } from "@/components/ui/chart";
-import { GenderToggle } from "@/components/sectors/controls";
-import { ControlGroup, SegmentButton } from "@/components/ui/control";
+import { GenderToggle, SegmentTabs, absMetricItems } from "@/components/sectors/controls";
 import { track } from "@/lib/analytics";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Gender } from "@/lib/data";
-import { ABS_METRICS, type AbsMetric, type SGender } from "@/lib/sectors";
+import { type AbsMetric, type SGender } from "@/lib/sectors";
 import { armyComposition } from "@/lib/lab";
 
 const W = 880;
@@ -419,40 +418,30 @@ export function ArmyStream() {
           }))}
         />
         <div className="flex flex-wrap items-center gap-2" data-export-ignore>
-          <ControlGroup>
-            {VIEWS.map((v) => (
-              <SegmentButton
-                key={v}
-                type="button"
-                active={view === v}
-                onClick={() => {
-                  if (view !== v) track("army_view", { view: v });
-                  setView(v);
-                }}
-              >
-                {v === "count"
+          <SegmentTabs
+            items={VIEWS.map((v) => ({
+              key: v,
+              label:
+                v === "count"
                   ? t.armyStream.viewCount
                   : v === "pie"
                     ? t.armyStream.viewPie
-                    : t.armyStream.viewShare}
-              </SegmentButton>
-            ))}
-          </ControlGroup>
-          <ControlGroup>
-            {ABS_METRICS.map((m) => (
-              <SegmentButton
-                key={m.key}
-                type="button"
-                active={metric === m.key}
-                onClick={() => {
-                  if (metric !== m.key) track("army_metric", { metric: m.key });
-                  setMetric(m.key);
-                }}
-              >
-                {t.absMetrics[m.key]}
-              </SegmentButton>
-            ))}
-          </ControlGroup>
+                    : t.armyStream.viewShare,
+            }))}
+            value={view}
+            onChange={(v) => {
+              if (view !== v) track("army_view", { view: v });
+              setView(v);
+            }}
+          />
+          <SegmentTabs
+            items={absMetricItems(t)}
+            value={metric}
+            onChange={(m) => {
+              if (metric !== m) track("army_metric", { metric: m });
+              setMetric(m);
+            }}
+          />
           <GenderToggle value={gender} onChange={setGender} />
         </div>
       </div>

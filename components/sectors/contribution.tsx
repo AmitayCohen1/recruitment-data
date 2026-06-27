@@ -6,15 +6,13 @@ import {
   ChartHeader,
   ChartPanel,
 } from "@/components/ui/panel";
-import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import {
   contribution,
-  ABS_METRICS,
   SECTOR_COLOR,
   type AbsMetric,
   type SGender,
 } from "@/lib/sectors";
-import { GenderToggle } from "./controls";
+import { GenderToggle, SegmentTabs, absMetricItems } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 
@@ -40,18 +38,7 @@ export function Contribution({
           {!controlled && (
             <GenderToggle value={gender} onChange={setGender} surface="contribution" />
           )}
-          <ControlGroup>
-            {ABS_METRICS.map((m) => (
-              <SegmentButton
-                key={m.key}
-                type="button"
-                active={metric === m.key}
-                onClick={() => setMetric(m.key)}
-              >
-                {t.absMetrics[m.key]}
-              </SegmentButton>
-            ))}
-          </ControlGroup>
+          <SegmentTabs items={absMetricItems(t)} value={metric} onChange={setMetric} />
         </div>
       </ChartHeader>
 

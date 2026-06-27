@@ -13,7 +13,7 @@ export function SectionTracker() {
     if (typeof window === "undefined") return;
     const seg = pathname.split("/").filter(Boolean);
     const locale = seg[0] ?? "he";
-    const section = seg[1] ?? "sectors";
+    const section = seg[1] ?? "overview";
     try {
       posthog.register({ locale, section });
     } catch {

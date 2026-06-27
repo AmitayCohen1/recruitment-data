@@ -9,7 +9,7 @@ import {
   ChartHeader,
   ChartPanel,
 } from "@/components/ui/panel";
-import { GenderToggle } from "@/components/sectors/controls";
+import { GenderToggle, SegmentTabs, rateMetricItems } from "@/components/sectors/controls";
 import {
   Button,
   ControlGroup,
@@ -260,23 +260,16 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
 
       {/* controls: metric drives the ranking + trend; sector scopes which schools count */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <ControlGroup>
-          {RANK_METRICS.map((m) => (
-            <SegmentButton
-              key={m}
-              type="button"
-              active={metric === m}
-              onClick={() => {
-                setMetric(m);
-                track("cities_metric", { metric: m });
-              }}
-              // Fixed height keeps emoji metric labels aligned in PNG export.
-              className="flex h-8 items-center justify-center leading-none"
-            >
-              {t.metrics[m].short}
-            </SegmentButton>
-          ))}
-        </ControlGroup>
+        {/* Fixed height keeps emoji metric labels aligned in PNG export. */}
+        <SegmentTabs
+          items={rateMetricItems(t, RANK_METRICS)}
+          value={metric}
+          onChange={(m) => {
+            setMetric(m as MetricKey);
+            track("cities_metric", { metric: m });
+          }}
+          itemClassName="h-8 items-center justify-center leading-none"
+        />
         <ControlGroup>
           {[ALL, ...SECTORS].map((s) => (
             <SegmentButton

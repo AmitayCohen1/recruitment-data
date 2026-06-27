@@ -6,7 +6,7 @@ import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Html, Line } from "@react-three/drei";
 import { Pause, Play, X } from "lucide-react";
 import { ChartHeader, ChartLegend, ChartPanel } from "@/components/ui/panel";
-import { GenderToggle } from "@/components/sectors/controls";
+import { GenderToggle, SegmentTabs } from "@/components/sectors/controls";
 import {
   ControlGroup,
   FilterChip,
@@ -18,7 +18,7 @@ import {
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import { SECTOR_COLOR, sectorColor, type SGender } from "@/lib/sectors";
-import type { Gender } from "@/lib/data";
+import { FIRST, LATEST, type Gender } from "@/lib/data";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import {
@@ -131,9 +131,9 @@ function BarMatrix({
 }) {
   const [hover, setHover] = React.useState<string | null>(null);
   const metrics: { key: MetricKey3; label: string }[] = [
-    { key: "enlist", label: t.three.enlistLabel },
-    { key: "combat", label: t.three.combatLabel },
-    { key: "officer", label: t.three.officerLabel },
+    { key: "enlist", label: t.metrics.enlist.short },
+    { key: "combat", label: t.metrics.combat.short },
+    { key: "officer", label: t.metrics.officer.short },
   ];
   const x = (mi: number) => (mi - 1) * BAR_MX;
   const z = (si: number) => (si - (bars.length - 1) / 2) * BAR_SZ;
@@ -433,8 +433,8 @@ function PointCloud({
               {t.three.cloudYearTip(hp.year)}
             </div>
             <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
-              {t.three.enlistLabel} {hp.enlist}% · {t.three.combatLabel}{" "}
-              {hp.combat}% · {t.three.officerLabel} {hp.officer}%
+              {t.metrics.enlist.short} {hp.enlist}% · {t.metrics.combat.short}{" "}
+              {hp.combat}% · {t.metrics.officer.short} {hp.officer}%
             </div>
           </Tip>
         </>
@@ -757,12 +757,12 @@ function DensityTerrain({ points, t }: { points: CloudPoint[]; t: Dictionary }) 
       {/* axis titles */}
       <Html position={[half + 0.9, 0.1, 0]} center className="pointer-events-none">
         <span className="whitespace-nowrap text-[15px] font-semibold text-white">
-          {t.three.enlistLabel} →
+          {t.metrics.enlist.short} →
         </span>
       </Html>
       <Html position={[0, 0.1, half + 0.9]} center className="pointer-events-none">
         <span className="whitespace-nowrap text-[15px] font-semibold text-white">
-          {t.three.combatLabel} →
+          {t.metrics.combat.short} →
         </span>
       </Html>
 
@@ -805,7 +805,7 @@ function DensityTerrain({ points, t }: { points: CloudPoint[]; t: Dictionary }) 
         <div className="-translate-y-6 whitespace-nowrap rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl">
           <div className="font-bold text-foreground">{t.three.terrainPeakLabel}</div>
           <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
-            {t.three.enlistLabel} ~{peak.enlist}% · {t.three.combatLabel} ~{peak.combat}%
+            {t.metrics.enlist.short} ~{peak.enlist}% · {t.metrics.combat.short} ~{peak.combat}%
           </div>
         </div>
       </Html>
@@ -835,12 +835,12 @@ function PlaneAxes({ size, t, small = false }: { size: number; t: Dictionary; sm
       ))}
       <Html position={[h + 0.6, 0.05, -h - 0.4]} center className="pointer-events-none">
         <span className={`whitespace-nowrap font-semibold text-white/80 ${axisCls}`}>
-          {t.three.enlistLabel} →
+          {t.metrics.enlist.short} →
         </span>
       </Html>
       <Html position={[-h - 0.4, 0.05, h + 0.6]} center className="pointer-events-none">
         <span className={`whitespace-nowrap font-semibold text-white/80 ${axisCls}`}>
-          {t.three.combatLabel} →
+          {t.metrics.combat.short} →
         </span>
       </Html>
     </>
@@ -1041,17 +1041,37 @@ function SectorLegend({ locale }: { locale: Locale }) {
 /** Standalone 3D school point cloud (enlist × combat × officer), for the
  *  Schools tab. Self-contained: owns its gender toggle, WebGL gate and the
  *  cloud's built-in search/pin. Loaded client-only via the wrapper. */
+/** Year filter — the two comparison endpoints (2018 · 2024), so the cloud
+ *  shows one point per school instead of one per school-year. */
+const CLOUD_YEARS = [FIRST, LATEST] as const;
+function YearToggle({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (y: number) => void;
+}) {
+  return (
+    <SegmentTabs
+      items={CLOUD_YEARS.map((y) => ({ key: String(y), label: String(y) }))}
+      value={String(value)}
+      onChange={(k) => onChange(Number(k))}
+    />
+  );
+}
+
 export function SchoolCloudScene() {
   const t = useT();
   const locale: Locale = useLocale();
   const [gender, setGender] = React.useState<SGender>("בנים");
   const g: Gender = gender === "בנים" ? "m" : "f";
+  const [year, setYear] = React.useState<number>(LATEST);
 
   const [webgl, setWebgl] = React.useState<boolean | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setWebgl(hasWebGL()), []);
 
-  const cloud = React.useMemo(() => schoolCloud(g, true), [g]);
+  const cloud = React.useMemo(() => schoolCloud(g, year), [g, year]);
 
   return (
     <ChartPanel>
@@ -1059,7 +1079,10 @@ export function SchoolCloudScene() {
         title={t.three.cloudTitle}
         subtitle={t.three.cloudSubtitle}
       >
-        <GenderToggle value={gender} onChange={setGender} />
+        <div className="flex flex-wrap items-center gap-2">
+          <YearToggle value={year} onChange={setYear} />
+          <GenderToggle value={gender} onChange={setGender} />
+        </div>
       </ChartHeader>
       <SectorLegend locale={locale} />
       {webgl === false ? (
@@ -1067,7 +1090,7 @@ export function SchoolCloudScene() {
           {t.three.webglError}
         </p>
       ) : (
-        webgl && <CloudScene points={cloud} />
+        webgl && <CloudScene key={`${g}-${year}`} points={cloud} />
       )}
     </ChartPanel>
   );

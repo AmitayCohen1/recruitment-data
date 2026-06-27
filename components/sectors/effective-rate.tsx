@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { ChartFootnote, ChartHeader, ChartPanel } from "@/components/ui/panel";
-import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { effective, SECTOR_COLOR, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
-import { GenderToggle } from "./controls";
+import { GenderToggle, SegmentTabs, rateMetricItems } from "./controls";
 
 type EffMetric = "combat" | "officer";
 export function EffectiveRate({
@@ -31,20 +30,13 @@ export function EffectiveRate({
           {!controlled && (
             <GenderToggle value={gender} onChange={setGender} surface="effective-rate" />
           )}
-          <ControlGroup>
-            {(["combat", "officer"] as EffMetric[]).map((k) => (
-              <SegmentButton
-                key={k}
-                type="button"
-                active={metric === k}
-                onClick={() => setMetric(k)}
-                // Fixed height keeps the active highlight aligned in PNG export.
-                className="flex h-8 items-center justify-center leading-none"
-              >
-                {k === "combat" ? t.metrics.combat.short : t.metrics.officer.short}
-              </SegmentButton>
-            ))}
-          </ControlGroup>
+          {/* Fixed height keeps the active highlight aligned in PNG export. */}
+          <SegmentTabs
+            items={rateMetricItems(t, ["combat", "officer"])}
+            value={metric}
+            onChange={(m) => setMetric(m as EffMetric)}
+            itemClassName="h-8 items-center justify-center leading-none"
+          />
         </div>
       </ChartHeader>
 
