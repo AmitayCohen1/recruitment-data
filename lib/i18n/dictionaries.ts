@@ -80,6 +80,35 @@ const he = {
     risers: "העלייה הגדולה ביותר",
     fallers: "הירידה הגדולה ביותר",
     points: "נק׳",
+    raceTitle: "מרוץ הרשויות לאורך השנים",
+    raceSubtitle:
+      "כל בועה היא רשות עם 3+ בתי ספר; הגודל לפי מספר בתי הספר. לחצו על נגן וצפו איך כל רשות נעה במרחב גיוס×קרבי משנה לשנה. הערים הגדולות מודגשות בכחול.",
+    racePlay: "נגן",
+    racePause: "השהה",
+    compTitle: "מי באמת ממלא את הצבא?",
+    compSubtitle:
+      "חלקו של כל מגזר מתוך כלל הלוחמים בכל שנה (לפי המספרים המוחלטים המשוקללים). השיעורים מספרים סיפור אחד — ראשי הנפשות מספרים אחר.",
+    compNote:
+      "ערימה ל־100%: גובה הרצועה = אחוז הלוחמים מאותו מגזר באותה שנה, לא המספר המוחלט.",
+    ridgeTitle: "התפלגות השירות הקרבי, שנה אחר שנה",
+    ridgeSubtitle:
+      "כל רכס הוא שנה אחת: ההתפלגות של שיעור השירות הקרבי על פני כל בתי הספר. הפסגה = השיעור הנפוץ ביותר; הסימן הלבן והמספר = החציון של אותה שנה. הקו המקווקו מחבר את החציונים, כך רואים לאן מרכז ההתפלגות נע (אצל בנות הוא מטפס בבירור).",
+    ridgeAxis: "שיעור קרבי מתוך המתגייסים",
+    ridgeCount: (nn: number | string) => `${nn} בי״ס`,
+    sankeyTitle: "הצינור: מהמחזור לקצונה",
+    sankeySubtitle:
+      "מתוך כלל המחזור (משוקלל), כמה מתגייסים, מתוכם כמה משרתים בקרבי, ומתוכם כמה מגיעים לקצונה — בפילוח לפי מגזר. רוחב כל זרם מצטמצם בכל שלב.",
+    sankeyStages: {
+      cohort: "מחזור",
+      enlist: "מתגייסים",
+      combat: "קרביים",
+      officer: "קצינים",
+    },
+    outlierTitle: "מי חורג מהמגמה?",
+    outlierSubtitle:
+      "הקו המקווקו הוא הקשר הצפוי בין שיעור הגיוס לשיעור הקרבי בכל הרשויות. רשויות הרחק מעל הקו מפיקות הרבה יותר קרביים ממה שהגיוס שלהן מנבא; הרחק מתחת — הרבה פחות.",
+    outlierOver: "הרבה מעל הצפוי",
+    outlierUnder: "הרבה מתחת לצפוי",
   },
   common: {
     noData: "אין נתונים מספיקים עבור צירוף זה.",
@@ -375,6 +404,35 @@ const en: Dictionary = {
     risers: "Biggest rise",
     fallers: "Biggest drop",
     points: "pts",
+    raceTitle: "The municipality race over the years",
+    raceSubtitle:
+      "Each bubble is a municipality with 3+ schools; size = number of schools. Hit play and watch each one move through enlist×combat space year by year. The largest cities are highlighted in blue.",
+    racePlay: "Play",
+    racePause: "Pause",
+    compTitle: "Who actually fills the army?",
+    compSubtitle:
+      "Each sector's share of all combat soldiers, year by year (from the weighted absolute counts). The rates tell one story — the head-counts tell another.",
+    compNote:
+      "100%-stacked: a band's height is that sector's share of combat soldiers that year, not the absolute number.",
+    ridgeTitle: "The combat-service distribution, year by year",
+    ridgeSubtitle:
+      "Each ridge is one year: the distribution of combat-service rate across all schools. The peak = the most common rate; the white marker and number = that year's median. The dashed line connects the medians, so you can see where the center moves (for girls it climbs clearly).",
+    ridgeAxis: "Combat rate (of enlistees)",
+    ridgeCount: (nn: number | string) => `${nn} schools`,
+    sankeyTitle: "The pipeline: from cohort to officers",
+    sankeySubtitle:
+      "Out of the whole (weighted) cohort, how many enlist, of those how many serve in combat, and of those how many become officers — split by sector. Each stream narrows at every stage.",
+    sankeyStages: {
+      cohort: "Cohort",
+      enlist: "Enlisted",
+      combat: "Combat",
+      officer: "Officers",
+    },
+    outlierTitle: "Who bucks the trend?",
+    outlierSubtitle:
+      "The dashed line is the expected link between enlistment and combat rate across all municipalities. Municipalities far above it produce far more combat soldiers than their enlistment predicts; far below, far fewer.",
+    outlierOver: "Far above expected",
+    outlierUnder: "Far below expected",
   },
   common: {
     noData: "Not enough data for this combination.",

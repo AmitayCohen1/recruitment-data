@@ -5,7 +5,17 @@ import {
   type Gender,
   type MetricKey,
 } from "@/lib/data";
-import { SECTORS, profile, SCHOOL_SECTOR, type SGender } from "@/lib/sectors";
+import {
+  SECTORS,
+  SYEARS,
+  profile,
+  SCHOOL_SECTOR,
+  ROWS_S,
+  SLATEST,
+  SECTOR_COLOR,
+  type SGender,
+  type SectorRow,
+} from "@/lib/sectors";
 import { cityRows, BIG_CITIES } from "@/lib/cities";
 
 const ROWS = compactRows();
@@ -203,4 +213,267 @@ export function bump(
     }),
   }));
   return { years: [...YEARS], maxRank, series };
+}
+
+/* ------------------------------------------------------------------ *
+ *  6) Bubble race — every municipality placed in (xMetric, yMetric)
+ *     space, one frame per year, for a Gapminder-style animation.
+ *     Bubble size = number of schools. Axis bounds are global across
+ *     all years so the field doesn't jump between frames.
+ * ------------------------------------------------------------------ */
+export type BubblePoint = {
+  council: string;
+  x: number;
+  y: number;
+  n: number;
+  big: boolean;
+};
+export type BubbleFrame = { year: number; points: BubblePoint[] };
+
+export function bubbleRace(
+  gender: Gender,
+  xMetric: MetricKey = "enlist",
+  yMetric: MetricKey = "combat",
+  minSchools = 3,
+): {
+  years: number[];
+  frames: BubbleFrame[];
+  xBounds: [number, number];
+  yBounds: [number, number];
+} {
+  const big = new Set<string>(BIG_CITIES);
+  const frames: BubbleFrame[] = YEARS.map((year) => ({
+    year,
+    points: cityRows(ROWS, gender, year)
+      .filter(
+        (c) => c.n >= minSchools && c[xMetric] != null && c[yMetric] != null,
+      )
+      .map((c) => ({
+        council: c.council,
+        x: c[xMetric] as number,
+        y: c[yMetric] as number,
+        n: c.n,
+        big: big.has(c.council),
+      })),
+  }));
+  const xs = frames.flatMap((f) => f.points.map((p) => p.x));
+  const ys = frames.flatMap((f) => f.points.map((p) => p.y));
+  const pad = (lo: number, hi: number): [number, number] => [
+    Math.max(0, Math.floor((lo - 3) / 5) * 5),
+    Math.min(100, Math.ceil((hi + 3) / 5) * 5),
+  ];
+  return {
+    years: [...YEARS],
+    frames,
+    xBounds: xs.length ? pad(Math.min(...xs), Math.max(...xs)) : [0, 100],
+    yBounds: ys.length ? pad(Math.min(...ys), Math.max(...ys)) : [0, 100],
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ *  7) Ridgeline — the full national distribution of a metric across
+ *     all schools, one smoothed density ridge per year, so the whole
+ *     cohort's shift over time reads as a single stacked image.
+ * ------------------------------------------------------------------ */
+export type Ridge = { year: number; density: number[]; median: number; n: number };
+
+export function ridgeline(
+  gender: Gender,
+  metric: MetricKey = "combat",
+  bins = 50,
+): { years: number[]; ridges: Ridge[]; maxDensity: number } {
+  const f = FIELD[metric];
+  const ridges: Ridge[] = YEARS.map((year) => {
+    const hist = new Array(bins).fill(0);
+    const vals: number[] = [];
+    for (const r of ROWS) {
+      if (r.y !== year || r.g !== gender) continue;
+      const v = r[f] as number | null;
+      if (v == null) continue;
+      const bin = Math.min(bins - 1, Math.max(0, Math.floor((v / 100) * bins)));
+      hist[bin] += 1;
+      vals.push(v);
+    }
+    // light 3-tap smoothing, then normalize to a share-per-bin density
+    const sm = hist.map((_, i) => {
+      const a = hist[i - 1] ?? 0;
+      const b = hist[i];
+      const c = hist[i + 1] ?? 0;
+      return (a + 2 * b + c) / 4;
+    });
+    const total = vals.length;
+    const density = total ? sm.map((v) => v / total) : sm;
+    return {
+      year,
+      density,
+      median: Math.round(median(vals) * 10) / 10,
+      n: total,
+    };
+  });
+  const maxDensity = Math.max(0.0001, ...ridges.flatMap((r) => r.density));
+  return { years: [...YEARS], ridges, maxDensity };
+}
+
+/* ------------------------------------------------------------------ *
+ *  8) Sankey flow — the enlist → combat → officer pipeline for the
+ *     whole population (latest year, one gender), built from the
+ *     enlistee/cohort-weighted absolute counts. Each stage is split
+ *     by sector so the ribbons keep their color as they narrow.
+ * ------------------------------------------------------------------ */
+export type SankeyStageKey = "cohort" | "enlist" | "combat" | "officer";
+export type SankeySlice = { sector: string; color: string; value: number };
+export type SankeyStage = { key: SankeyStageKey; total: number; slices: SankeySlice[] };
+
+const COUNT_FIELD: Record<SankeyStageKey, keyof SectorRow> = {
+  cohort: "nCohort",
+  enlist: "nEnlistees",
+  combat: "nFighters",
+  officer: "nOfficers",
+};
+const SANKEY_STAGES: SankeyStageKey[] = ["cohort", "enlist", "combat", "officer"];
+
+export function sankeyFlow(
+  gender: Gender,
+  year = SLATEST,
+): { stages: SankeyStage[]; sectors: string[] } {
+  const g = toS(gender);
+  const rows = ROWS_S.filter((r) => r.year === year && r.gender === g);
+  const sectors = SECTORS.filter((s) =>
+    rows.some((r) => r.sector === s && (r.nCohort ?? 0) > 0),
+  );
+  const stages = SANKEY_STAGES.map((key) => {
+    const field = COUNT_FIELD[key];
+    const slices = sectors.map((sector) => {
+      const r = rows.find((x) => x.sector === sector);
+      return {
+        sector,
+        color: SECTOR_COLOR[sector] ?? "#94a3b8",
+        value: (r?.[field] as number | undefined) ?? 0,
+      };
+    });
+    return { key, total: slices.reduce((a, b) => a + b.value, 0), slices };
+  });
+  return { stages, sectors };
+}
+
+/* ------------------------------------------------------------------ *
+ *  7b) Army composition — who actually fills the army over time. For
+ *      each year, each sector's SHARE of all combat soldiers (or any
+ *      absolute count), from the enlistee/cohort-weighted counts. A
+ *      100%-stacked story: rates say one thing, head-counts another.
+ * ------------------------------------------------------------------ */
+export type CompField = "nFighters" | "nEnlistees" | "nOfficers" | "nCohort";
+export type CompSeries = {
+  sector: string;
+  color: string;
+  shares: number[]; // 0..100, one per year
+  counts: number[]; // absolute, one per year
+};
+
+export function armyComposition(
+  gender: Gender,
+  field: CompField = "nFighters",
+): { years: number[]; series: CompSeries[]; totals: number[] } {
+  const g = toS(gender);
+  const totals = SYEARS.map((year) =>
+    SECTORS.reduce((sum, sector) => {
+      const r = ROWS_S.find(
+        (x) => x.year === year && x.sector === sector && x.gender === g,
+      );
+      return sum + ((r?.[field] as number | undefined) ?? 0);
+    }, 0),
+  );
+  const series = SECTORS.map((sector) => {
+    const counts = SYEARS.map((year) => {
+      const r = ROWS_S.find(
+        (x) => x.year === year && x.sector === sector && x.gender === g,
+      );
+      return (r?.[field] as number | undefined) ?? 0;
+    });
+    return {
+      sector,
+      color: SECTOR_COLOR[sector] ?? "#94a3b8",
+      counts,
+      shares: counts.map((c, i) =>
+        totals[i] ? Math.round((1000 * c) / totals[i]) / 10 : 0,
+      ),
+    };
+  });
+  return { years: [...SYEARS], series, totals };
+}
+
+/* ------------------------------------------------------------------ *
+ *  9) Outliers — fit combat ≈ a·enlist + b across municipalities, then
+ *     rank by residual: who serves combat far above/below what their
+ *     enlistment rate predicts. The buck-the-trend story.
+ * ------------------------------------------------------------------ */
+export type OutlierPoint = {
+  council: string;
+  enlist: number;
+  combat: number;
+  n: number;
+  fitted: number;
+  resid: number;
+};
+
+export function outliers(
+  gender: Gender,
+  minSchools = 4,
+  year = LATEST,
+): {
+  points: OutlierPoint[];
+  slope: number;
+  intercept: number;
+  xBounds: [number, number];
+  over: OutlierPoint[];
+  under: OutlierPoint[];
+} {
+  const base = cityRows(ROWS, gender, year)
+    .filter((c) => c.n >= minSchools && c.enlist != null && c.combat != null)
+    .map((c) => ({
+      council: c.council,
+      enlist: c.enlist as number,
+      combat: c.combat as number,
+      n: c.n,
+    }));
+
+  const N = base.length;
+  const mx = base.reduce((a, b) => a + b.enlist, 0) / Math.max(1, N);
+  const my = base.reduce((a, b) => a + b.combat, 0) / Math.max(1, N);
+  let sxy = 0;
+  let sxx = 0;
+  for (const p of base) {
+    sxy += (p.enlist - mx) * (p.combat - my);
+    sxx += (p.enlist - mx) ** 2;
+  }
+  const slope = sxx ? sxy / sxx : 0;
+  const intercept = my - slope * mx;
+
+  const points: OutlierPoint[] = base
+    .map((p) => {
+      const fitted = slope * p.enlist + intercept;
+      return {
+        ...p,
+        fitted: Math.round(fitted * 10) / 10,
+        resid: Math.round((p.combat - fitted) * 10) / 10,
+      };
+    })
+    .sort((a, b) => b.resid - a.resid);
+
+  const xs = base.map((p) => p.enlist);
+  const xBounds: [number, number] = xs.length
+    ? [
+        Math.max(0, Math.floor((Math.min(...xs) - 3) / 5) * 5),
+        Math.min(100, Math.ceil((Math.max(...xs) + 3) / 5) * 5),
+      ]
+    : [0, 100];
+
+  return {
+    points,
+    slope,
+    intercept,
+    xBounds,
+    over: points.slice(0, 6),
+    under: points.slice(-6).reverse(),
+  };
 }

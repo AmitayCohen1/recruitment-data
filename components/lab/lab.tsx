@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, Pause, Play } from "lucide-react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { GenderToggle } from "@/components/sectors/controls";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,11 @@ import {
   movers,
   cityScatter,
   bump,
+  bubbleRace,
+  armyComposition,
+  ridgeline,
+  sankeyFlow,
+  outliers,
   LAB_FIRST,
   LAB_LAST,
   type Waffle,
@@ -174,28 +179,30 @@ function Movers({
 }) {
   const Row = ({ m, up }: { m: (typeof risers)[number]; up: boolean }) => (
     <div className="flex items-center gap-2 py-2 sm:gap-3">
-      <span
-        className={cn(
-          "inline-flex size-7 shrink-0 items-center justify-center rounded-full",
-          up ? "bg-emerald-400/15 text-emerald-400" : "bg-rose-400/15 text-rose-400",
-        )}
-      >
-        {up ? <ArrowUp className="size-4" /> : <ArrowDown className="size-4" />}
-      </span>
       <span className="min-w-0 flex-1 truncate text-sm text-foreground">
         {m.council}
       </span>
-      <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground tabular-nums sm:text-sm">
+      <span
+        dir="ltr"
+        className="shrink-0 whitespace-nowrap text-xs text-muted-foreground tabular-nums sm:text-sm"
+      >
         {m.from}% <span className="opacity-50">→</span> {m.to}%
       </span>
       <span
         className={cn(
-          "shrink-0 whitespace-nowrap text-sm font-bold tabular-nums",
+          "inline-flex size-6 shrink-0 items-center justify-center rounded-full",
+          up ? "bg-emerald-400/15 text-emerald-400" : "bg-rose-400/15 text-rose-400",
+        )}
+      >
+        {up ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />}
+      </span>
+      <span
+        className={cn(
+          "w-16 shrink-0 whitespace-nowrap text-end text-sm font-bold tabular-nums",
           up ? "text-emerald-400" : "text-rose-400",
         )}
       >
-        {m.delta > 0 ? "+" : ""}
-        {m.delta} {t.lab.points}
+        {Math.abs(m.delta)} {t.lab.points}
       </span>
     </div>
   );
@@ -474,11 +481,609 @@ function BumpChart({
   );
 }
 
+/* ---------- 6) Bubble race — Gapminder over the years ---------- */
+const BR_W = 880;
+const BR_H = 470;
+const BR_PAD = 48;
+
+/** Advance an index 0..length-1 on a timer while `playing`, looping. */
+function useTicker(length: number, playing: boolean, ms = 1150) {
+  const [i, setI] = React.useState(0);
+  React.useEffect(() => {
+    if (!playing || length < 2) return;
+    const id = setInterval(() => setI((p) => (p + 1) % length), ms);
+    return () => clearInterval(id);
+  }, [playing, length, ms]);
+  return [i, setI] as const;
+}
+
+function BubbleRace({
+  data,
+  t,
+}: {
+  data: ReturnType<typeof bubbleRace>;
+  t: Dictionary;
+}) {
+  const { years, frames, xBounds, yBounds } = data;
+  const [playing, setPlaying] = React.useState(true);
+  const [idx, setIdx] = useTicker(years.length, playing);
+  const frame = frames[idx];
+  const [xMin, xMax] = xBounds;
+  const [yMin, yMax] = yBounds;
+  const px = (v: number) =>
+    BR_PAD + ((v - xMin) / (xMax - xMin)) * (BR_W - 2 * BR_PAD);
+  const py = (v: number) =>
+    BR_H - BR_PAD - ((v - yMin) / (yMax - yMin)) * (BR_H - 2 * BR_PAD);
+  const rad = (n: number) => 4 + Math.min(20, Math.sqrt(n) * 2.3);
+  const xticks = [xMin, Math.round((xMin + xMax) / 2), xMax];
+  const yticks = [yMin, Math.round((yMin + yMax) / 2), yMax];
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setPlaying((p) => !p)}
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-foreground transition hover:bg-white/10"
+          aria-label={playing ? t.lab.racePause : t.lab.racePlay}
+        >
+          {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
+        </button>
+        <input
+          type="range"
+          min={0}
+          max={years.length - 1}
+          value={idx}
+          onChange={(e) => {
+            setPlaying(false);
+            setIdx(Number(e.target.value));
+          }}
+          className="h-1 flex-1 cursor-pointer accent-sky-400"
+        />
+        <span className="w-12 shrink-0 text-end text-lg font-bold tabular-nums text-foreground">
+          {frame.year}
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${BR_W} ${BR_H}`} className="h-auto w-full min-w-[640px]">
+          {/* watermark year */}
+          <text
+            x={BR_W / 2}
+            y={BR_H / 2}
+            fill="rgba(255,255,255,0.05)"
+            fontSize="180"
+            fontWeight={800}
+            textAnchor="middle"
+            dominantBaseline="middle"
+          >
+            {frame.year}
+          </text>
+          {/* gridlines */}
+          {xticks.map((v) => (
+            <g key={`x${v}`}>
+              <line x1={px(v)} x2={px(v)} y1={BR_PAD - 10} y2={BR_H - BR_PAD} stroke="rgba(255,255,255,0.07)" />
+              <text x={px(v)} y={BR_H - BR_PAD + 18} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
+                {v}%
+              </text>
+            </g>
+          ))}
+          {yticks.map((v) => (
+            <g key={`y${v}`}>
+              <line x1={BR_PAD} x2={BR_W - BR_PAD} y1={py(v)} y2={py(v)} stroke="rgba(255,255,255,0.07)" />
+              <text x={BR_PAD - 8} y={py(v) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end">
+                {v}%
+              </text>
+            </g>
+          ))}
+          {frame.points.map((p) => (
+            <circle
+              key={p.council}
+              cx={px(p.x)}
+              cy={py(p.y)}
+              r={rad(p.n)}
+              fill={p.big ? "#38bdf8" : "#64748b"}
+              fillOpacity={p.big ? 0.9 : 0.4}
+              stroke={p.big ? "#bae6fd" : "none"}
+              strokeWidth={p.big ? 1 : 0}
+              style={{ transition: "cx 800ms ease, cy 800ms ease, r 400ms ease" }}
+            >
+              <title>
+                {p.council} · {frame.year} — {t.lab.scatterTip(p.x, p.y)}
+              </title>
+            </circle>
+          ))}
+          {frame.points
+            .filter((p) => p.big)
+            .map((p) => (
+              <text
+                key={`l${p.council}`}
+                x={px(p.x)}
+                y={py(p.y) - rad(p.n) - 4}
+                fill="rgba(255,255,255,0.85)"
+                fontSize="11"
+                textAnchor="middle"
+                style={{ transition: "x 800ms ease, y 800ms ease" }}
+              >
+                {p.council}
+              </text>
+            ))}
+          <text x={BR_W / 2} y={BR_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
+            {t.lab.axisEnlist}
+          </text>
+          <text x={14} y={BR_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${BR_H / 2})`}>
+            {t.lab.axisCombat}
+          </text>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 7) Army composition — who fills the army over time ---------- */
+const AC_W = 880;
+const AC_H = 420;
+const AC_PADX = 44;
+const AC_TOP = 16;
+const AC_BOT = 34;
+function hex(n: number) {
+  return Math.round(n).toString(16).padStart(2, "0");
+}
+function lerpColor(a: string, b: string, t: number) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return `#${pa.map((c, i) => hex(c + (pb[i] - c) * t)).join("")}`;
+}
+
+function ArmyComposition({
+  data,
+  t,
+  locale,
+}: {
+  data: ReturnType<typeof armyComposition>;
+  t: Dictionary;
+  locale: Locale;
+}) {
+  const { years, series } = data;
+  const n = years.length;
+  const x = (i: number) => AC_PADX + (i / (n - 1)) * (AC_W - 2 * AC_PADX);
+  const y = (share: number) =>
+    AC_TOP + (1 - share / 100) * (AC_H - AC_TOP - AC_BOT);
+
+  // cumulative stack: walk sectors bottom→top, each band sits on the running base
+  const bands = React.useMemo(() => {
+    const base = new Array(n).fill(0);
+    return series.map((s) => {
+      const lower = [...base];
+      const upper = s.shares.map((sh, i) => lower[i] + sh);
+      for (let i = 0; i < n; i++) base[i] = upper[i];
+      const top = upper.map((v, i) => `${x(i)},${y(v)}`);
+      const bottom = lower.map((v, i) => `${x(i)},${y(v)}`).reverse();
+      return {
+        sector: s.sector,
+        color: s.color,
+        shares: s.shares,
+        counts: s.counts,
+        lower,
+        upper,
+        d: `M ${top.join(" L ")} L ${bottom.join(" L ")} Z`,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [series, n]);
+
+  return (
+    <div>
+      <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+        {series.map((s) => (
+          <span key={s.sector} className="flex items-center gap-2">
+            <span className="size-3 rounded-full" style={{ background: s.color }} />
+            {sectorLabel(s.sector, locale)}
+          </span>
+        ))}
+      </div>
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${AC_W} ${AC_H}`} className="h-auto w-full min-w-[640px]">
+          {[0, 25, 50, 75, 100].map((p) => (
+            <g key={p}>
+              <line x1={AC_PADX} x2={AC_W - AC_PADX} y1={y(p)} y2={y(p)} stroke="rgba(255,255,255,0.07)" />
+              <text x={AC_PADX - 8} y={y(p) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end" className="tabular-nums">
+                {p}%
+              </text>
+            </g>
+          ))}
+          {bands.map((b) => (
+            <path key={b.sector} d={b.d} fill={b.color} fillOpacity={0.82}>
+              <title>
+                {sectorLabel(b.sector, locale)} · {years[n - 1]} — {b.shares[n - 1]}% (
+                {Math.round(b.counts[n - 1]).toLocaleString()})
+              </title>
+            </path>
+          ))}
+          {/* end-of-band share labels for the latest year */}
+          {bands.map((b) => {
+            const mid = (b.lower[n - 1] + b.upper[n - 1]) / 2;
+            if (b.upper[n - 1] - b.lower[n - 1] < 6) return null;
+            const light =
+              b.color === "#fbbf24" || b.color === "#34d399" || b.color === "#c084fc";
+            return (
+              <text
+                key={`v${b.sector}`}
+                x={x(n - 1) - 6}
+                y={y(mid) + 4}
+                fill={light ? "#0b1220" : "rgba(255,255,255,0.95)"}
+                fontSize="12"
+                fontWeight={700}
+                textAnchor="end"
+                className="tabular-nums"
+              >
+                {b.shares[n - 1]}%
+              </text>
+            );
+          })}
+          {years.map((yr, i) => (
+            <text key={yr} x={x(i)} y={AC_H - 12} fill="rgba(255,255,255,0.45)" fontSize="12" textAnchor="middle" className="tabular-nums">
+              {yr}
+            </text>
+          ))}
+        </svg>
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.compNote}</p>
+    </div>
+  );
+}
+
+/* ---------- 8) Ridgeline — the distribution shifting year by year ---------- */
+const RG_W = 880;
+const RG_H = 420;
+const RG_PADX = 64;
+const RG_TOP = 18;
+const RG_BOT = 40;
+function Ridgeline({ data, t }: { data: ReturnType<typeof ridgeline>; t: Dictionary }) {
+  const { years, ridges, maxDensity } = data;
+  const n = years.length;
+  const rowH = (RG_H - RG_TOP - RG_BOT) / n;
+  const amp = rowH * 2.3;
+  const bins = ridges[0]?.density.length ?? 1;
+  const x = (i: number) => RG_PADX + (i / (bins - 1)) * (RG_W - 2 * RG_PADX);
+  const xPct = (v: number) => RG_PADX + (v / 100) * (RG_W - 2 * RG_PADX);
+  const baseline = (rowIdx: number) => RG_TOP + (rowIdx + 1) * rowH;
+  // path tracing each year's median, so the eye can follow the center drift
+  const medianTrack = ridges
+    .map((r, i) => `${xPct(r.median)},${baseline(i)}`)
+    .join(" L ");
+
+  return (
+    <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${RG_W} ${RG_H}`} className="h-auto w-full min-w-[640px]">
+        {[0, 25, 50, 75, 100].map((p) => {
+          const xx = xPct(p);
+          return (
+            <g key={p}>
+              <line x1={xx} x2={xx} y1={RG_TOP} y2={RG_H - RG_BOT} stroke="rgba(255,255,255,0.06)" />
+              <text x={xx} y={RG_H - 22} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
+                {p}%
+              </text>
+            </g>
+          );
+        })}
+        {ridges.map((ridge, rowIdx) => {
+          const base = baseline(rowIdx);
+          const tCol = rowIdx / Math.max(1, n - 1);
+          const color = lerpColor("#475569", "#38bdf8", tCol);
+          const pts = ridge.density.map(
+            (d, i) => `${x(i)},${base - (d / maxDensity) * amp}`,
+          );
+          const area = `M ${x(0)},${base} L ${pts.join(" L ")} L ${x(bins - 1)},${base} Z`;
+          const line = `M ${pts.join(" L ")}`;
+          const mx = xPct(ridge.median);
+          return (
+            <g key={ridge.year}>
+              <path d={area} fill={color} fillOpacity={0.42} />
+              <path d={line} fill="none" stroke={color} strokeWidth={1.5} />
+              {/* median marker: a tick rising from the baseline + its value */}
+              <line x1={mx} x2={mx} y1={base} y2={base - amp * 0.62} stroke="#fff" strokeOpacity={0.7} strokeWidth={1.25} />
+              <text x={mx} y={base - amp * 0.62 - 4} fill="rgba(255,255,255,0.92)" fontSize="10.5" fontWeight={700} textAnchor="middle" className="tabular-nums">
+                {ridge.median}%
+              </text>
+              {/* year + school count at the left margin */}
+              <text x={RG_PADX - 8} y={base - 3} fill="rgba(255,255,255,0.85)" fontSize="12" fontWeight={600} textAnchor="end" className="tabular-nums">
+                {ridge.year}
+              </text>
+              <text x={RG_PADX - 8} y={base + 9} fill="rgba(255,255,255,0.4)" fontSize="9.5" textAnchor="end" className="tabular-nums">
+                {t.lab.ridgeCount(ridge.n)}
+              </text>
+            </g>
+          );
+        })}
+        {/* connect the medians so the drift over years is unmistakable */}
+        <path d={`M ${medianTrack}`} fill="none" stroke="#fff" strokeOpacity={0.5} strokeWidth={1.25} strokeDasharray="3 3" />
+        <text x={RG_W / 2} y={RG_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
+          {t.lab.ridgeAxis}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+/* ---------- 9) Sankey — enlist → combat → officer pipeline ---------- */
+const SK_W = 880;
+const SK_H = 470;
+const SK_PADX = 64;
+const SK_TOP = 18;
+const SK_BOT = 42;
+const SK_COL = 18;
+const SK_LANE_GAP = 16;
+const SANKEY_KEYS = ["cohort", "enlist", "combat", "officer"] as const;
+function Sankey({
+  data,
+  t,
+  locale,
+}: {
+  data: ReturnType<typeof sankeyFlow>;
+  t: Dictionary;
+  locale: Locale;
+}) {
+  const { stages, sectors } = data;
+  const totalCohort = stages[0]?.total || 1;
+  const usableH =
+    SK_H - SK_TOP - SK_BOT - SK_LANE_GAP * Math.max(0, sectors.length - 1);
+  const scale = usableH / totalCohort;
+  const nStages = stages.length;
+  const xOf = (i: number) =>
+    SK_PADX + (i / (nStages - 1)) * (SK_W - 2 * SK_PADX - SK_COL);
+
+  // vertical lane per sector, sized by its cohort. Lane top = cumulative
+  // height of the lanes above it (computed without mutation so the new
+  // react-hooks immutability rule stays happy).
+  const cohortOf = (sector: string) =>
+    stages[0].slices.find((s) => s.sector === sector)?.value ?? 0;
+  const lanes = sectors.map((sector, i) => ({
+    sector,
+    laneTop:
+      SK_TOP +
+      sectors
+        .slice(0, i)
+        .reduce((acc, s) => acc + cohortOf(s) * scale + SK_LANE_GAP, 0),
+    color: SECTOR_COLOR[sector] ?? "#94a3b8",
+    heights: stages.map(
+      (st) => (st.slices.find((s) => s.sector === sector)?.value ?? 0) * scale,
+    ),
+  }));
+
+  const fmt = (n: number) =>
+    n >= 1000 ? `${Math.round(n / 100) / 10}k` : `${Math.round(n)}`;
+
+  return (
+    <div>
+      <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+        {sectors.map((s) => (
+          <span key={s} className="flex items-center gap-2">
+            <span className="size-3 rounded-full" style={{ background: SECTOR_COLOR[s] ?? "#94a3b8" }} />
+            {sectorLabel(s, locale)}
+          </span>
+        ))}
+      </div>
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${SK_W} ${SK_H}`} className="h-auto w-full min-w-[640px]">
+          {lanes.map((lane) => (
+            <g key={lane.sector}>
+              {/* ribbons between consecutive stages */}
+              {lane.heights.slice(0, -1).map((h0, i) => {
+                const h1 = lane.heights[i + 1];
+                const x0 = xOf(i) + SK_COL;
+                const x1 = xOf(i + 1);
+                const mid = (x0 + x1) / 2;
+                const top = lane.laneTop;
+                const d = `M ${x0},${top} L ${x1},${top} L ${x1},${top + h1} C ${mid},${top + h1} ${mid},${top + h0} ${x0},${top + h0} Z`;
+                return <path key={i} d={d} fill={lane.color} fillOpacity={0.22} />;
+              })}
+              {/* stage nodes */}
+              {lane.heights.map((h, i) => (
+                <rect
+                  key={i}
+                  x={xOf(i)}
+                  y={lane.laneTop}
+                  width={SK_COL}
+                  height={Math.max(0.5, h)}
+                  rx={2}
+                  fill={lane.color}
+                  fillOpacity={0.95}
+                />
+              ))}
+            </g>
+          ))}
+          {/* stage labels + totals */}
+          {stages.map((st, i) => (
+            <g key={st.key}>
+              <text x={xOf(i) + SK_COL / 2} y={SK_H - 22} fill="rgba(255,255,255,0.7)" fontSize="12" fontWeight={600} textAnchor="middle">
+                {t.lab.sankeyStages[SANKEY_KEYS[i]]}
+              </text>
+              <text x={xOf(i) + SK_COL / 2} y={SK_H - 8} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle" className="tabular-nums">
+                {fmt(st.total)}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- 10) Outliers — who bucks the enlist→combat trend ---------- */
+const OL_W = 880;
+const OL_H = 440;
+const OL_PAD = 46;
+function OutlierList({
+  rows,
+  kind,
+  t,
+}: {
+  rows: ReturnType<typeof outliers>["over"];
+  kind: "over" | "under";
+  t: Dictionary;
+}) {
+  return (
+    <div>
+      <div
+        className={cn(
+          "mb-1 text-sm font-medium",
+          kind === "over" ? "text-emerald-400" : "text-rose-400",
+        )}
+      >
+        {kind === "over" ? t.lab.outlierOver : t.lab.outlierUnder}
+      </div>
+      <div className="divide-y divide-white/5">
+        {rows.map((m) => (
+          <div key={m.council} className="flex items-center gap-2 py-2">
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground">{m.council}</span>
+            <span dir="ltr" className="shrink-0 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+              {m.enlist}% → {m.combat}%
+            </span>
+            <span
+              className={cn(
+                "w-14 shrink-0 text-end text-sm font-bold tabular-nums",
+                kind === "over" ? "text-emerald-400" : "text-rose-400",
+              )}
+            >
+              {m.resid > 0 ? "+" : ""}
+              {m.resid}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function Outliers({
+  data,
+  t,
+}: {
+  data: ReturnType<typeof outliers>;
+  t: Dictionary;
+}) {
+  const { points, slope, intercept, xBounds, over, under } = data;
+  if (!points.length) return null;
+  const [xMin, xMax] = xBounds;
+  const ys = points.map((p) => p.combat);
+  const yMin = Math.max(0, Math.floor((Math.min(...ys) - 3) / 5) * 5);
+  const yMax = Math.min(100, Math.ceil((Math.max(...ys) + 3) / 5) * 5);
+  const px = (v: number) =>
+    OL_PAD + ((v - xMin) / (xMax - xMin)) * (OL_W - 2 * OL_PAD);
+  const py = (v: number) =>
+    OL_H - OL_PAD - ((v - yMin) / (yMax - yMin)) * (OL_H - 2 * OL_PAD);
+  const hi = new Map<string, "over" | "under">();
+  over.forEach((p) => hi.set(p.council, "over"));
+  under.forEach((p) => hi.set(p.council, "under"));
+  const lineY = (x: number) => slope * x + intercept;
+
+  return (
+    <div className="space-y-5">
+      <div className="overflow-x-auto">
+        <svg viewBox={`0 0 ${OL_W} ${OL_H}`} className="h-auto w-full min-w-[640px]">
+          {[xMin, Math.round((xMin + xMax) / 2), xMax].map((v) => (
+            <g key={`x${v}`}>
+              <text x={px(v)} y={OL_H - OL_PAD + 18} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
+                {v}%
+              </text>
+            </g>
+          ))}
+          {[yMin, Math.round((yMin + yMax) / 2), yMax].map((v) => (
+            <g key={`y${v}`}>
+              <line x1={OL_PAD} x2={OL_W - OL_PAD} y1={py(v)} y2={py(v)} stroke="rgba(255,255,255,0.06)" />
+              <text x={OL_PAD - 8} y={py(v) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end">
+                {v}%
+              </text>
+            </g>
+          ))}
+          {/* regression line */}
+          <line
+            x1={px(xMin)}
+            y1={py(lineY(xMin))}
+            x2={px(xMax)}
+            y2={py(lineY(xMax))}
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth={1.5}
+            strokeDasharray="6 5"
+          />
+          {points.map((p) => {
+            const k = hi.get(p.council);
+            const color = k === "over" ? "#34d399" : k === "under" ? "#fb7185" : "#475569";
+            return (
+              <circle
+                key={p.council}
+                cx={px(p.enlist)}
+                cy={py(p.combat)}
+                r={k ? 5 : 3}
+                fill={color}
+                fillOpacity={k ? 0.95 : 0.4}
+                stroke={k ? "#0b1220" : "none"}
+                strokeWidth={k ? 1 : 0}
+              >
+                <title>
+                  {p.council} — {t.lab.scatterTip(p.enlist, p.combat)} ({p.resid > 0 ? "+" : ""}
+                  {p.resid})
+                </title>
+              </circle>
+            );
+          })}
+          {[...over, ...under].map((p) => (
+            <text
+              key={`l${p.council}`}
+              x={px(p.enlist)}
+              y={py(p.combat) - 8}
+              fill="rgba(255,255,255,0.85)"
+              fontSize="10.5"
+              textAnchor="middle"
+            >
+              {p.council}
+            </text>
+          ))}
+          <text x={OL_W / 2} y={OL_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
+            {t.lab.axisEnlist}
+          </text>
+          <text x={14} y={OL_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${OL_H / 2})`}>
+            {t.lab.axisCombat}
+          </text>
+        </svg>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <OutlierList rows={over} kind="over" t={t} />
+        <OutlierList rows={under} kind="under" t={t} />
+      </div>
+    </div>
+  );
+}
+
+/** A lab panel that owns its OWN gender filter — each chart is independent,
+ *  so toggling boys/girls on one view doesn't change the others. The data for
+ *  the view is computed in the render callback from the panel's current gender;
+ *  it only recomputes when this panel's own toggle flips. */
+function GenderPanel({
+  title,
+  subtitle,
+  surface,
+  children,
+}: {
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  surface?: string;
+  children: (g: Gender, gender: SGender) => React.ReactNode;
+}) {
+  const [gender, setGender] = React.useState<SGender>("בנים");
+  const g: Gender = gender === "בנים" ? "m" : "f";
+  return (
+    <Panel>
+      <PanelHeader title={title} subtitle={subtitle}>
+        <GenderToggle value={gender} onChange={setGender} surface={surface} />
+      </PanelHeader>
+      {children(g, gender)}
+    </Panel>
+  );
+}
+
 export function Lab() {
   const t = useT();
   const locale = useLocale();
-  const [gender, setGender] = React.useState<SGender>("בנים");
-  const g: Gender = gender === "בנים" ? "m" : "f";
 
   // These views are pure client-side SVG (no chart lib); render after mount so
   // the SSR HTML and first client paint can't disagree (same gate as ChartContainer).
@@ -486,72 +1091,80 @@ export function Lab() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
-  const w = React.useMemo(() => waffles(g), [g]);
-  const dots = React.useMemo(() => schoolDots(g, "combat"), [g]);
-  const scatter = React.useMemo(() => cityScatter(g), [g]);
-  const bumpData = React.useMemo(() => bump(g, "combat"), [g]);
-  const allMovers = React.useMemo(() => movers(g, "combat"), [g]);
-  const risers = allMovers.slice(0, 6);
-  const fallers = allMovers.slice(-6).reverse();
-
   if (!mounted) return <div className="min-h-[480px]" />;
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <GenderToggle value={gender} onChange={setGender} />
-      </div>
-
       {/* 1 — waffle */}
-      <Panel>
-        <PanelHeader title={t.lab.waffleTitle} subtitle={t.lab.waffleSubtitle} />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {w.map((d) => (
-            <WaffleCard key={d.sector} d={d} t={t} locale={locale} />
-          ))}
-        </div>
-      </Panel>
+      <GenderPanel title={t.lab.waffleTitle} subtitle={t.lab.waffleSubtitle} surface="lab_waffle">
+        {(g) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {waffles(g).map((d) => (
+              <WaffleCard key={d.sector} d={d} t={t} locale={locale} />
+            ))}
+          </div>
+        )}
+      </GenderPanel>
 
-      {/* 2 — beeswarm */}
-      <Panel>
-        <PanelHeader title={t.lab.histTitle} subtitle={t.lab.histSubtitle} />
-        <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-          {Object.entries(SECTOR_COLOR).map(([s, c]) => (
-            <span key={s} className="flex items-center gap-2">
-              <span className="size-3 rounded-full" style={{ background: c }} />
-              {sectorLabel(s, locale)}
-            </span>
-          ))}
-        </div>
-        <Beeswarm dots={dots} />
-      </Panel>
+      {/* 2 — sankey (the pipeline) */}
+      <GenderPanel title={t.lab.sankeyTitle} subtitle={t.lab.sankeySubtitle} surface="lab_sankey">
+        {(g) => <Sankey data={sankeyFlow(g)} t={t} locale={locale} />}
+      </GenderPanel>
 
-      {/* 3 — two-armies scatter */}
-      <Panel>
-        <PanelHeader
-          title={t.lab.scatterTitle}
-          subtitle={t.lab.scatterSubtitle}
-        />
-        <QuadrantScatter data={scatter} t={t} />
-      </Panel>
+      {/* 3 — beeswarm */}
+      <GenderPanel title={t.lab.histTitle} subtitle={t.lab.histSubtitle} surface="lab_beeswarm">
+        {(g) => (
+          <>
+            <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+              {Object.entries(SECTOR_COLOR).map(([s, c]) => (
+                <span key={s} className="flex items-center gap-2">
+                  <span className="size-3 rounded-full" style={{ background: c }} />
+                  {sectorLabel(s, locale)}
+                </span>
+              ))}
+            </div>
+            <Beeswarm dots={schoolDots(g, "combat")} />
+          </>
+        )}
+      </GenderPanel>
 
-      {/* 4 — bump chart */}
-      <Panel>
-        <PanelHeader
-          title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)}
-          subtitle={t.lab.bumpSubtitle}
-        />
-        <BumpChart data={bumpData} t={t} />
-      </Panel>
+      {/* 4 — two-armies scatter */}
+      <GenderPanel title={t.lab.scatterTitle} subtitle={t.lab.scatterSubtitle} surface="lab_scatter">
+        {(g) => <QuadrantScatter data={cityScatter(g)} t={t} />}
+      </GenderPanel>
 
-      {/* 5 — movers */}
-      <Panel>
-        <PanelHeader
-          title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)}
-          subtitle={t.lab.moversSubtitle}
-        />
-        <Movers risers={risers} fallers={fallers} t={t} />
-      </Panel>
+      {/* 5 — bump chart */}
+      <GenderPanel title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.bumpSubtitle} surface="lab_bump">
+        {(g) => <BumpChart data={bump(g, "combat")} t={t} />}
+      </GenderPanel>
+
+      {/* 6 — movers */}
+      <GenderPanel title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.moversSubtitle} surface="lab_movers">
+        {(g) => {
+          const all = movers(g, "combat");
+          return <Movers risers={all.slice(0, 6)} fallers={all.slice(-6).reverse()} t={t} />;
+        }}
+      </GenderPanel>
+
+      {/* 7 — bubble race */}
+      <GenderPanel title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle} surface="lab_race">
+        {(g) => <BubbleRace data={bubbleRace(g, "enlist", "combat")} t={t} />}
+      </GenderPanel>
+
+      {/* 8 — army composition over time */}
+      <GenderPanel title={t.lab.compTitle} subtitle={t.lab.compSubtitle} surface="lab_composition">
+        {(g) => <ArmyComposition data={armyComposition(g, "nFighters")} t={t} locale={locale} />}
+      </GenderPanel>
+
+      {/* 9 — ridgeline */}
+      <GenderPanel title={t.lab.ridgeTitle} subtitle={t.lab.ridgeSubtitle} surface="lab_ridge">
+        {(g) => <Ridgeline data={ridgeline(g, "combat")} t={t} />}
+      </GenderPanel>
+
+      {/* 10 — outliers */}
+      <GenderPanel title={t.lab.outlierTitle} subtitle={t.lab.outlierSubtitle} surface="lab_outliers">
+        {(g) => <Outliers data={outliers(g)} t={t} />}
+      </GenderPanel>
     </div>
   );
 }
