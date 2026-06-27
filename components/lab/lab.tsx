@@ -6,7 +6,7 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { GenderToggle } from "@/components/sectors/controls";
 import { cn } from "@/lib/utils";
 import type { Gender } from "@/lib/data";
-import { SECTOR_COLOR, type SGender } from "@/lib/sectors";
+import { SECTOR_COLOR, NEUTRAL, sectorColor, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -28,21 +28,9 @@ import {
   type SchoolDot,
   type CityPoint,
 } from "@/lib/lab";
-import { BIG_CITIES } from "@/lib/cities";
+import { BIG_CITIES, cityColor } from "@/lib/cities";
 
 const BIG: readonly string[] = BIG_CITIES;
-
-/** distinct color per featured city, matching their order */
-const CITY_COLORS = [
-  "#f472b6",
-  "#38bdf8",
-  "#34d399",
-  "#fbbf24",
-  "#c084fc",
-  "#fb923c",
-];
-const cityColor = (name: string) =>
-  CITY_COLORS[Math.max(0, BIG.indexOf(name)) % CITY_COLORS.length];
 
 const WAFFLE_STAGE = {
   enlisted: "#38bdf888",
@@ -157,7 +145,7 @@ function Beeswarm({ dots }: { dots: SchoolDot[] }) {
             cx={d.x}
             cy={Math.max(8, d.y)}
             r={R}
-            fill={d.sector ? (SECTOR_COLOR[d.sector] ?? "#94a3b8") : "#64748b"}
+            fill={sectorColor(d.sector)}
             fillOpacity={0.85}
           >
             <title>
@@ -585,7 +573,7 @@ function BubbleRace({
               cx={px(p.x)}
               cy={py(p.y)}
               r={rad(p.n)}
-              fill={p.big ? "#38bdf8" : "#64748b"}
+              fill={p.big ? "#38bdf8" : NEUTRAL}
               fillOpacity={p.big ? 0.9 : 0.4}
               stroke={p.big ? "#bae6fd" : "none"}
               strokeWidth={p.big ? 1 : 0}
@@ -859,7 +847,7 @@ function Sankey({
     return {
       sector,
       laneTop,
-      color: SECTOR_COLOR[sector] ?? "#94a3b8",
+      color: sectorColor(sector),
       cohortH: val(0, sector) * scale,
       enlH: val(1, sector) * scale,
       combH: val(2, sector) * scale,
@@ -887,7 +875,7 @@ function Sankey({
       <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
         {sectors.map((s) => (
           <span key={s} className="flex items-center gap-2">
-            <span className="size-3 rounded-full" style={{ background: SECTOR_COLOR[s] ?? "#94a3b8" }} />
+            <span className="size-3 rounded-full" style={{ background: sectorColor(s) }} />
             {sectorLabel(s, locale)}
           </span>
         ))}

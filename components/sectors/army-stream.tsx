@@ -15,10 +15,9 @@ import { GenderToggle } from "@/components/sectors/controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import type { Gender } from "@/lib/data";
-import type { SGender } from "@/lib/sectors";
+import { NEUTRAL, type SGender } from "@/lib/sectors";
 import { armyComposition } from "@/lib/lab";
 
-const SLATE = "#64748b";
 const W = 880;
 const H = 380;
 const PADX = 44;
@@ -95,7 +94,7 @@ export function ArmyStream() {
             <path
               key={layer.key}
               d={areaGen(layer) ?? undefined}
-              fill={colorOf.get(layer.key) ?? SLATE}
+              fill={colorOf.get(layer.key) ?? NEUTRAL}
               fillOpacity={0.85}
             >
               <title>{sectorLabel(layer.key, locale)}</title>

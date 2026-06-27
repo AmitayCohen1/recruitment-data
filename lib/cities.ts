@@ -31,6 +31,27 @@ export const BIG_CITIES = [
   "אשדוד",
 ] as const;
 
+/** Shared per-city palette — the single source of truth so a given city keeps
+ *  the same color across every chart that distinguishes cities. */
+export const CITY_COLORS = [
+  "#f472b6", // pink
+  "#38bdf8", // sky
+  "#34d399", // emerald
+  "#fbbf24", // amber
+  "#c084fc", // purple
+  "#fb923c", // orange
+  "#f87171", // red
+  "#22d3ee", // cyan
+] as const;
+
+/** Color for a city given its position in an ordered list of cities (defaults
+ *  to BIG_CITIES). Same `(name, order)` → same color in every chart. */
+export const cityColor = (
+  name: string,
+  order: readonly string[] = BIG_CITIES,
+): string =>
+  CITY_COLORS[Math.max(0, order.indexOf(name)) % CITY_COLORS.length];
+
 const METRICS: MetricKey[] = ["enlist", "combat", "officer", "meaning"];
 
 /** Aggregate the already-loaded compact rows into one row per city.

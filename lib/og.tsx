@@ -57,8 +57,22 @@ export async function renderOg(
   const t = getDictionary(locale);
   const { title, sub } = copy(section, t);
 
-  // read the bundled Hebrew font from disk (file:// fetch isn't supported here)
-  const font = await readFile(join(process.cwd(), "lib", "Heebo.ttf"));
+  // Static Heebo woff subsets (Satori can't parse variable TTFs). Hebrew + Latin
+  // so both locales render; Satori falls back across the list for any glyph.
+  const fontFile = (name: string) =>
+    readFile(join(process.cwd(), "lib", "fonts", name));
+  const [heb400, heb700, lat400, lat700] = await Promise.all([
+    fontFile("heebo-hebrew-400-normal.woff"),
+    fontFile("heebo-hebrew-700-normal.woff"),
+    fontFile("heebo-latin-400-normal.woff"),
+    fontFile("heebo-latin-700-normal.woff"),
+  ]);
+  const fonts = [
+    { name: "Heebo", data: lat400, style: "normal" as const, weight: 400 as const },
+    { name: "Heebo", data: lat700, style: "normal" as const, weight: 700 as const },
+    { name: "Heebo", data: heb400, style: "normal" as const, weight: 400 as const },
+    { name: "Heebo", data: heb700, style: "normal" as const, weight: 700 as const },
+  ];
 
   const align = rtl ? "flex-end" : "flex-start";
   const textAlign = rtl ? ("right" as const) : ("left" as const);
@@ -78,8 +92,8 @@ export async function renderOg(
           justifyContent: "space-between",
           alignItems: align,
           padding: 80,
-          background:
-            "radial-gradient(1200px 600px at 80% -10%, #0e3a52 0%, #0a0a0a 55%), #0a0a0a",
+          backgroundColor: "#0a0a0a",
+          backgroundImage: "linear-gradient(135deg, #0e3a52 0%, #0a0a0a 60%)",
           color: "#fff",
           fontFamily: "Heebo",
           direction: rtl ? "rtl" : "ltr",
@@ -128,7 +142,7 @@ export async function renderOg(
             fontSize: 26,
             fontWeight: 700,
             color: "#bae6fd",
-            background: "rgba(56,189,248,0.12)",
+            backgroundColor: "rgba(56,189,248,0.12)",
             border: "1px solid rgba(56,189,248,0.3)",
             borderRadius: 999,
             padding: "10px 22px",
@@ -138,12 +152,6 @@ export async function renderOg(
         </div>
       </div>
     ),
-    {
-      ...OG_SIZE,
-      fonts: [
-        { name: "Heebo", data: font, style: "normal", weight: 400 },
-        { name: "Heebo", data: font, style: "normal", weight: 700 },
-      ],
-    },
+    { ...OG_SIZE, fonts },
   );
 }

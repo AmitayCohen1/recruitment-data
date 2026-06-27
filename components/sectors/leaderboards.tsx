@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { topSchools, type Gender, type MetricKey } from "@/lib/data";
-import { SCHOOL_SECTOR, SECTOR_COLOR, type SGender, type SMetric } from "@/lib/sectors";
+import { SCHOOL_SECTOR, SECTOR_COLOR, sectorColor, type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
@@ -30,7 +30,7 @@ function List({
       <ul className="divide-y divide-white/5">
         {rows.map((r, i) => {
           const sec = SCHOOL_SECTOR[String(r.key)];
-          const color = sec ? SECTOR_COLOR[sec] : "#64748b";
+          const color = sectorColor(sec);
           return (
             <li key={`${r.key}-${r.school}`} className="flex items-center gap-2.5 py-2 sm:gap-3">
               <span className="w-4 shrink-0 text-center text-xs tabular-nums text-muted-foreground">

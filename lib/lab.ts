@@ -12,7 +12,7 @@ import {
   SCHOOL_SECTOR,
   ROWS_S,
   SLATEST,
-  SECTOR_COLOR,
+  sectorColor,
   type SGender,
   type SectorRow,
 } from "@/lib/sectors";
@@ -347,7 +347,7 @@ export function sankeyFlow(
       const r = rows.find((x) => x.sector === sector);
       return {
         sector,
-        color: SECTOR_COLOR[sector] ?? "#94a3b8",
+        color: sectorColor(sector),
         value: (r?.[field] as number | undefined) ?? 0,
       };
     });
@@ -392,7 +392,7 @@ export function armyComposition(
     });
     return {
       sector,
-      color: SECTOR_COLOR[sector] ?? "#94a3b8",
+      color: sectorColor(sector),
       counts,
       shares: counts.map((c, i) =>
         totals[i] ? Math.round((1000 * c) / totals[i]) / 10 : 0,
@@ -412,14 +412,20 @@ export type CloudPoint = {
   school: string;
   council: string | null;
   sector: string | null;
+  year: number;
   enlist: number;
   combat: number;
   officer: number;
 };
 
-export function schoolCloud(gender: Gender): CloudPoint[] {
+/** Schools as points in (enlist, combat, officer) space. By default just the
+ *  latest year (one point per school); with `allYears`, every school-year that
+ *  reports all three rates becomes its own point, so a school traces a path
+ *  across the years. */
+export function schoolCloud(gender: Gender, allYears = false): CloudPoint[] {
   return ROWS.flatMap((r) => {
-    if (r.y !== LATEST || r.g !== gender) return [];
+    if (r.g !== gender) return [];
+    if (!allYears && r.y !== LATEST) return [];
     const e = r.e as number | null;
     const cb = r.cb as number | null;
     const o = r.o as number | null;
@@ -430,6 +436,7 @@ export function schoolCloud(gender: Gender): CloudPoint[] {
         school: r.s,
         council: r.c,
         sector: SCHOOL_SECTOR[String(r.k)] ?? null,
+        year: r.y,
         enlist: e,
         combat: cb,
         officer: o,
@@ -491,7 +498,7 @@ export function sectorBars(gender: Gender): SectorBar[] {
     const p = profile(s, toS(gender));
     return {
       sector: s,
-      color: SECTOR_COLOR[s] ?? "#94a3b8",
+      color: sectorColor(s),
       enlist: Math.round(p.enlist ?? 0),
       combat: Math.round(p.combat ?? 0),
       officer: Math.round(p.officer ?? 0),
@@ -557,7 +564,7 @@ export function sectorCityTree(
     return [
       {
         sector,
-        color: SECTOR_COLOR[sector] ?? "#94a3b8",
+        color: sectorColor(sector),
         n: leaves.reduce((a, b) => a + b.n, 0),
         cities: leaves,
       },

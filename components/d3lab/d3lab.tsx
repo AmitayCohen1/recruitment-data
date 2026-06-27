@@ -20,7 +20,7 @@ import { GenderToggle } from "@/components/sectors/controls";
 import { cn } from "@/lib/utils";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
-import { SECTOR_COLOR, type SGender } from "@/lib/sectors";
+import { SECTOR_COLOR, NEUTRAL, sectorColor, type SGender } from "@/lib/sectors";
 import type { Gender, MetricKey } from "@/lib/data";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
@@ -33,8 +33,6 @@ import {
   type CloudPoint,
 } from "@/lib/lab";
 
-const SLATE = "#64748b";
-const sectorColor = (s: string | null) => (s ? SECTOR_COLOR[s] ?? SLATE : SLATE);
 
 /* hex color interpolation, matching the lab's helper */
 function hex(n: number) {
@@ -407,7 +405,7 @@ function VoronoiScatter({
                 cx={px(p.enlist)}
                 cy={py(p.combat)}
                 r={h ? r + 2 : r}
-                fill={p.big ? "#38bdf8" : "#64748b"}
+                fill={p.big ? "#38bdf8" : NEUTRAL}
                 fillOpacity={p.big ? 0.9 : h ? 0.85 : 0.5}
                 stroke={h ? "#bae6fd" : p.big ? "#bae6fd" : "none"}
                 strokeWidth={h || p.big ? 1 : 0}
@@ -551,7 +549,7 @@ function TreemapView({
                 }
                 if (node.depth !== 2) return null;
                 const { fill, opacity } = leafFill(
-                  node.data.color ?? SLATE,
+                  node.data.color ?? NEUTRAL,
                   node.data.combat ?? 0,
                 );
                 return (
@@ -638,7 +636,7 @@ function PackView({
                   }
                   if (node.depth !== 2) return null;
                   const { fill, opacity } = leafFill(
-                    node.data.color ?? SLATE,
+                    node.data.color ?? NEUTRAL,
                     node.data.combat ?? 0,
                   );
                   return (

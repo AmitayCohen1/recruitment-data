@@ -9,20 +9,16 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { GenderToggle } from "@/components/sectors/controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
-import { SECTOR_COLOR, type SGender } from "@/lib/sectors";
+import { SECTOR_COLOR, sectorColor, type SGender } from "@/lib/sectors";
 import type { Gender } from "@/lib/data";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
-import type { Locale } from "@/lib/i18n/config";
+import { dirOf, type Locale } from "@/lib/i18n/config";
 import {
   schoolCloud,
   sectorBars,
   type CloudPoint,
   type SectorBar,
 } from "@/lib/lab";
-
-const SLATE = "#64748b";
-const sectorColor = (s: string | null) =>
-  s ? SECTOR_COLOR[s] ?? SLATE : SLATE;
 
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -225,89 +221,137 @@ function BarMatrix({
 
 
 /* ================================================================== *
- * 3) school point cloud — the one view that only works in 3D
+ * 2) school scatter — enlist × combat, one dot per school, by sector.
+ *    A plain 2D plot: the officer axis carried no real spread, so the
+ *    3D cube was hiding the signal rather than showing it.
  * ================================================================== */
-const AX = 5;
-const ax = (v: number) => (v / 100) * 2 * AX - AX;
+const SC = { w: 760, h: 560, l: 56, r: 24, t: 20, b: 48 };
+const TICKS = [0, 25, 50, 75, 100];
+const scx = (v: number) => SC.l + (v / 100) * (SC.w - SC.l - SC.r);
+const scy = (v: number) => SC.h - SC.b - (v / 100) * (SC.h - SC.t - SC.b);
 
-function PointCloud({ points }: { points: CloudPoint[] }) {
-  const ref = React.useRef<THREE.InstancedMesh>(null);
-  const [hover, setHover] = React.useState<number | null>(null);
+function SchoolScatter({ points }: { points: CloudPoint[] }) {
   const t = useT();
-
-  React.useLayoutEffect(() => {
-    const mesh = ref.current;
-    if (!mesh) return;
-    const dummy = new THREE.Object3D();
-    const col = new THREE.Color();
-    points.forEach((p, i) => {
-      dummy.position.set(ax(p.enlist), ax(p.combat), ax(p.officer));
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-      mesh.setColorAt(i, col.set(sectorColor(p.sector)));
-    });
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-    setHover(null);
-  }, [points]);
-
+  const locale: Locale = useLocale();
+  const [hover, setHover] = React.useState<number | null>(null);
   const hp = hover != null ? points[hover] : null;
+  const midY = (SC.t + SC.h - SC.b) / 2;
 
   return (
-    <>
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(2 * AX, 2 * AX, 2 * AX)]} />
-        <lineBasicMaterial color="#ffffff" transparent opacity={0.12} />
-      </lineSegments>
-
-      <instancedMesh
-        ref={ref}
-        args={[undefined, undefined, points.length]}
-        onPointerMove={(e: ThreeEvent<PointerEvent>) => {
-          e.stopPropagation();
-          if (e.instanceId != null) setHover(e.instanceId);
-        }}
-        onPointerOut={() => setHover(null)}
+    <div className="relative h-[440px] w-full overflow-hidden rounded-xl border border-white/10 bg-black/20 sm:h-[520px]">
+      <svg
+        viewBox={`0 0 ${SC.w} ${SC.h}`}
+        preserveAspectRatio="xMidYMid meet"
+        className="h-full w-full"
       >
-        <sphereGeometry args={[0.085, 14, 14]} />
-        <meshStandardMaterial roughness={0.45} metalness={0.1} />
-      </instancedMesh>
+        {/* gridlines + tick labels */}
+        {TICKS.map((tk) => (
+          <g key={`x${tk}`}>
+            <line
+              x1={scx(tk)}
+              y1={SC.t}
+              x2={scx(tk)}
+              y2={SC.h - SC.b}
+              stroke="#ffffff"
+              strokeOpacity={0.06}
+            />
+            <text
+              x={scx(tk)}
+              y={SC.h - SC.b + 18}
+              textAnchor="middle"
+              className="fill-white/40 text-[11px] tabular-nums"
+            >
+              {tk}
+            </text>
+          </g>
+        ))}
+        {TICKS.map((tk) => (
+          <g key={`y${tk}`}>
+            <line
+              x1={SC.l}
+              y1={scy(tk)}
+              x2={SC.w - SC.r}
+              y2={scy(tk)}
+              stroke="#ffffff"
+              strokeOpacity={0.06}
+            />
+            <text
+              x={SC.l - 10}
+              y={scy(tk) + 4}
+              textAnchor="end"
+              className="fill-white/40 text-[11px] tabular-nums"
+            >
+              {tk}
+            </text>
+          </g>
+        ))}
 
-      <Html position={[AX + 0.4, -AX, -AX]} center className="pointer-events-none">
-        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
+        {/* axis titles */}
+        <text
+          x={(SC.l + SC.w - SC.r) / 2}
+          y={SC.h - 6}
+          textAnchor="middle"
+          className="fill-white text-[15px] font-semibold"
+        >
           {t.three.axisEnlist}
-        </span>
-      </Html>
-      <Html position={[-AX, AX + 0.4, -AX]} center className="pointer-events-none">
-        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
+        </text>
+        <text
+          x={16}
+          y={midY}
+          textAnchor="middle"
+          transform={`rotate(-90 16 ${midY})`}
+          className="fill-white text-[15px] font-semibold"
+        >
           {t.three.axisCombat}
-        </span>
-      </Html>
-      <Html position={[-AX, -AX, AX + 0.4]} center className="pointer-events-none">
-        <span className="whitespace-nowrap text-[15px] font-semibold text-white">
-          {t.three.axisOfficer}
-        </span>
-      </Html>
+        </text>
 
-      {hp && (
-        <>
-          <mesh position={[ax(hp.enlist), ax(hp.combat), ax(hp.officer)]}>
-            <sphereGeometry args={[0.16, 16, 16]} />
-            <meshBasicMaterial color="#ffffff" />
-          </mesh>
-          <Tip position={[ax(hp.enlist), ax(hp.combat), ax(hp.officer)]}>
-            <div className="font-bold text-foreground">{hp.school}</div>
-            {hp.council && (
-              <div className="text-muted-foreground/70">{hp.council}</div>
-            )}
-            <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
-              {t.three.enlistLabel} {hp.enlist}% · {t.three.combatLabel}{" "}
-              {hp.combat}% · {t.three.officerLabel} {hp.officer}%
+        {/* dots */}
+        {points.map((p, i) => (
+          <circle
+            key={p.key}
+            cx={scx(p.enlist)}
+            cy={scy(p.combat)}
+            r={hover === i ? 6 : 4}
+            fill={sectorColor(p.sector)}
+            fillOpacity={hover == null || hover === i ? 0.85 : 0.3}
+            stroke={hover === i ? "#ffffff" : "none"}
+            strokeWidth={1.5}
+            className="cursor-pointer"
+            onMouseEnter={() => setHover(i)}
+            onMouseLeave={() => setHover((c) => (c === i ? null : c))}
+          />
+        ))}
+
+        {/* tooltip */}
+        {hp && (
+          <foreignObject
+            x={Math.min(Math.max(scx(hp.enlist) - 110, 4), SC.w - 224)}
+            y={Math.max(scy(hp.combat) - 80, 4)}
+            width={220}
+            height={74}
+            className="pointer-events-none overflow-visible"
+          >
+            <div
+              dir={dirOf(locale)}
+              className="inline-block whitespace-nowrap rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl"
+            >
+              <div className="font-bold text-foreground">{hp.school}</div>
+              {hp.council && (
+                <div className="text-muted-foreground/70">{hp.council}</div>
+              )}
+              <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
+                {t.three.enlistLabel} {hp.enlist}% · {t.three.combatLabel}{" "}
+                {hp.combat}%
+              </div>
             </div>
-          </Tip>
-        </>
-      )}
-    </>
+          </foreignObject>
+        )}
+      </svg>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/40 to-transparent px-3 py-2 text-center text-[11px] text-muted-foreground/80">
+        {t.three.cloudHint}
+      </div>
+    </div>
   );
 }
 
@@ -402,16 +446,6 @@ export function ThreeScenes() {
   const bars = React.useMemo(() => sectorBars(g), [g]);
   const cloud = React.useMemo(() => schoolCloud(g), [g]);
 
-  if (webgl === false) {
-    return (
-      <Panel>
-        <p className="py-12 text-center text-sm text-muted-foreground">
-          {t.three.webglError}
-        </p>
-      </Panel>
-    );
-  }
-
   return (
     <div className="space-y-8">
       <div className="flex justify-end">
@@ -422,25 +456,27 @@ export function ThreeScenes() {
       <Panel>
         <PanelHeader title={t.three.barTitle} subtitle={t.three.barSubtitle} />
         <SectorLegend locale={locale} />
-        {webgl && (
-          <Stage camera={[8, 7, 9]} hint={t.three.barHint} t={t}>
-            <BarMatrix key={g} bars={bars} t={t} locale={locale} />
-          </Stage>
+        {webgl === false ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">
+            {t.three.webglError}
+          </p>
+        ) : (
+          webgl && (
+            <Stage camera={[8, 7, 9]} hint={t.three.barHint} t={t}>
+              <BarMatrix key={g} bars={bars} t={t} locale={locale} />
+            </Stage>
+          )
         )}
       </Panel>
 
-      {/* 2 — school point cloud (3D-only bonus) */}
+      {/* 2 — school scatter: enlist × combat, colored by sector */}
       <Panel>
         <PanelHeader
           title={t.three.cloudTitle}
           subtitle={t.three.cloudSubtitle(cloud.length)}
         />
         <SectorLegend locale={locale} />
-        {webgl && (
-          <Stage camera={[9, 7, 11]} hint={t.three.cloudHint} t={t}>
-            <PointCloud points={cloud} />
-          </Stage>
-        )}
+        <SchoolScatter points={cloud} />
       </Panel>
     </div>
   );

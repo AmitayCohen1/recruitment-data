@@ -5,7 +5,7 @@ import { Panel, PanelHeader } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
 import { track } from "@/lib/analytics";
 import { R_SECTORS, REGION_COLOR, regionView } from "@/lib/regions";
-import { type SGender, type SMetric } from "@/lib/sectors";
+import { NEUTRAL, type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { regionLabel, sectorFilterLabel } from "@/lib/i18n/labels";
@@ -70,7 +70,7 @@ export function RegionView({
       ) : (
         <ul className="space-y-3">
           {rows.map((r, i) => {
-            const color = REGION_COLOR[r.region] ?? "#94a3b8";
+            const color = REGION_COLOR[r.region] ?? NEUTRAL;
             return (
               <li key={r.region} className="flex items-center gap-3">
                 <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">

@@ -12,7 +12,7 @@ import {
   type Gender,
   type MetricKey,
 } from "@/lib/data";
-import { cityRows, splitFeatured, BIG_CITIES } from "@/lib/cities";
+import { cityRows, splitFeatured, BIG_CITIES, cityColor } from "@/lib/cities";
 import { SECTORS, type SGender } from "@/lib/sectors";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { sectorFilterLabel } from "@/lib/i18n/labels";
@@ -24,18 +24,6 @@ const ALL = "הכל";
 /** Quiet floor for the "all" ranking, so single-school towns don't top it. */
 const MIN_SCHOOLS = 2;
 const LIMIT = 50;
-
-/** One distinct color per featured city (by BIG_CITIES order), for the trend lines. */
-const CITY_COLORS = [
-  "#f472b6", // pink
-  "#38bdf8", // sky
-  "#34d399", // emerald
-  "#fbbf24", // amber
-  "#c084fc", // purple
-  "#fb923c", // orange
-  "#f87171", // red
-  "#22d3ee", // cyan
-];
 
 function pct(v: number | null) {
   return v === null ? "—" : `${v.toFixed(1)}%`;
@@ -183,8 +171,9 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
   );
   const addable = allCouncils.filter((c) => !featuredNames.includes(c));
 
-  const colorFor = (name: string) =>
-    CITY_COLORS[featuredNames.indexOf(name) % CITY_COLORS.length];
+  // shared palette + indexing so a city keeps the same color in every chart;
+  // here the order is the user's featured list (BIG_CITIES by default).
+  const colorFor = (name: string) => cityColor(name, featuredNames);
 
   const { featured, rest } = React.useMemo(
     () => splitFeatured(cityRows(rows, g, LATEST, sectorFilter), featuredNames),

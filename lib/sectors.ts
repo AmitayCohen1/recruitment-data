@@ -45,6 +45,14 @@ export const SECTOR_COLOR: Record<string, string> = {
   דרוזי: "#c084fc", // purple
 };
 
+/** The single neutral color for "other / unknown sector" — used as the fallback
+ *  everywhere a school has no sector, so it looks identical across all charts. */
+export const NEUTRAL = "#64748b"; // slate-500
+
+/** Canonical sector → color, with the shared neutral fallback for null/unknown. */
+export const sectorColor = (s: string | null | undefined): string =>
+  s ? SECTOR_COLOR[s] ?? NEUTRAL : NEUTRAL;
+
 export const SECTOR_EN: Record<string, string> = {
   חילוני: "Secular",
   "דתי לאומי": "Religious-Zionist",
