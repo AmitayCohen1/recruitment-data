@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartFootnote, ChartHeader, ChartPanel } from "@/components/ui/panel";
 import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { effective, SECTOR_COLOR, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
@@ -22,8 +22,8 @@ export function EffectiveRate({
   const max = Math.max(...rows.map((r) => r.value), 1);
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.effectiveRate.title}
         subtitle={t.effectiveRate.subtitle}
       >
@@ -46,7 +46,7 @@ export function EffectiveRate({
             ))}
           </ControlGroup>
         </div>
-      </PanelHeader>
+      </ChartHeader>
 
       <ul className="space-y-3">
         {rows.map((r, i) => {
@@ -84,9 +84,7 @@ export function EffectiveRate({
           );
         })}
       </ul>
-      <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        {t.effectiveRate.footnote}
-      </p>
-    </Panel>
+      <ChartFootnote>{t.effectiveRate.footnote}</ChartFootnote>
+    </ChartPanel>
   );
 }

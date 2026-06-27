@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import { SectionSkeleton } from "@/components/ui/skeleton";
-import { ChipLegend } from "@/components/ui/panel";
+import { ChartFootnote, ChartLegend } from "@/components/ui/panel";
 import { GenderPanel, LabGenderCtx } from "@/components/lab/gender-panel";
-import { GenderToggle } from "@/components/sectors/controls";
-import { FilterBar, FilterField } from "@/components/sectors/filter-bar";
+import { MetricTabsS } from "@/components/sectors/controls";
+import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
-import { sectorColor, type SGender } from "@/lib/sectors";
+import { sectorColor, type SGender, type SMetric } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -18,6 +18,7 @@ import {
   sankeyFlow,
   outliers,
   type Waffle,
+  type OutlierMetric,
 } from "@/lib/lab";
 
 const WAFFLE_STAGE = {
@@ -99,7 +100,15 @@ const RG_H = 540;
 const RG_PADX = 64;
 const RG_TOP = 18;
 const RG_BOT = 40;
-function Ridgeline({ data, t }: { data: ReturnType<typeof ridgeline>; t: Dictionary }) {
+function Ridgeline({
+  data,
+  t,
+  axisLabel,
+}: {
+  data: ReturnType<typeof ridgeline>;
+  t: Dictionary;
+  axisLabel: string;
+}) {
   const { years, ridges, maxDensity } = data;
   const n = years.length;
   const rowH = (RG_H - RG_TOP - RG_BOT) / n;
@@ -161,7 +170,7 @@ function Ridgeline({ data, t }: { data: ReturnType<typeof ridgeline>; t: Diction
         {/* connect the medians so the drift over years is unmistakable */}
         <path d={`M ${medianTrack}`} fill="none" stroke="#fff" strokeOpacity={0.5} strokeWidth={1.25} strokeDasharray="3 3" />
         <text x={RG_W / 2} y={RG_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
-          {t.lab.ridgeAxis}
+          {axisLabel}
         </text>
       </svg>
     </div>
@@ -240,14 +249,14 @@ function Sankey({
   return (
     <div>
       <div className="-mt-1 mb-4 flex flex-wrap items-center gap-2">
-        <ChipLegend
+        <ChartLegend
           className="m-0"
           items={sectors.map((s) => ({
             label: sectorLabel(s, locale),
             color: sectorColor(s),
           }))}
         />
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/3 px-2.5 py-1 text-sm text-muted-foreground">
+        <span className="inline-flex cursor-default items-center gap-2 text-sm text-muted-foreground">
           <span className="h-3 w-4 rounded-[2px] border border-dashed border-white/50 bg-white/10" />
           {t.lab.sankeyOfficerLegend}
         </span>
@@ -313,7 +322,7 @@ function Sankey({
           </text>
         </svg>
       </div>
-      <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.sankeyNote}</p>
+      <ChartFootnote>{t.lab.sankeyNote}</ChartFootnote>
     </div>
   );
 }
@@ -346,7 +355,7 @@ function OutlierList({
           <div key={m.council} className="flex items-center gap-2 py-2">
             <span className="min-w-0 flex-1 truncate text-sm text-foreground">{m.council}</span>
             <span dir="ltr" className="shrink-0 whitespace-nowrap text-xs text-muted-foreground tabular-nums">
-              {m.enlist}% → {m.combat}%
+              {m.enlist}% → {m.value}%
             </span>
             <span
               className={cn(
@@ -365,15 +374,17 @@ function OutlierList({
 }
 function Outliers({
   data,
+  metric,
   t,
 }: {
   data: ReturnType<typeof outliers>;
+  metric: OutlierMetric;
   t: Dictionary;
 }) {
   const { points, slope, intercept, xBounds, over, under } = data;
   if (!points.length) return null;
   const [xMin, xMax] = xBounds;
-  const ys = points.map((p) => p.combat);
+  const ys = points.map((p) => p.value);
   const yMin = Math.max(0, Math.floor((Math.min(...ys) - 3) / 5) * 5);
   const yMax = Math.min(100, Math.ceil((Math.max(...ys) + 3) / 5) * 5);
   const px = (v: number) =>
@@ -421,14 +432,14 @@ function Outliers({
               <circle
                 key={p.council}
                 cx={px(p.enlist)}
-                cy={py(p.combat)}
+                cy={py(p.value)}
                 r={k ? 5 : 3}
                 fill={color}
                 fillOpacity={k ? 0.95 : 0.4}
                 stroke={k ? "#0b1220" : "none"}
                 strokeWidth={k ? 1 : 0}
               >
-                <title>{`${p.council} — ${t.lab.scatterTip(p.enlist, p.combat)} (${p.resid > 0 ? "+" : ""}${p.resid})`}</title>
+                <title>{`${p.council} — ${t.metrics.enlist.short} ${p.enlist}% · ${t.metrics[metric].short} ${p.value}% (${p.resid > 0 ? "+" : ""}${p.resid})`}</title>
               </circle>
             );
           })}
@@ -436,7 +447,7 @@ function Outliers({
             <text
               key={`l${p.council}`}
               x={px(p.enlist)}
-              y={py(p.combat) - 8}
+              y={py(p.value) - 8}
               fill="rgba(255,255,255,0.85)"
               fontSize="10.5"
               textAnchor="middle"
@@ -448,7 +459,7 @@ function Outliers({
             {t.lab.axisEnlist}
           </text>
           <text x={14} y={OL_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${OL_H / 2})`}>
-            {t.lab.axisCombat}
+            {t.metrics[metric].label}
           </text>
         </svg>
       </div>
@@ -460,12 +471,15 @@ function Outliers({
   );
 }
 
-export function Lab() {
-  const t = useT();
-  const locale = useLocale();
-
-  // One gender filter for the whole tab — set in the top bar, read by every
-  // panel via LabGenderCtx (no per-panel toggles).
+function GenderScopedPanels({
+  children,
+  skeletonPanels,
+}: {
+  children: React.ReactNode;
+  skeletonPanels: number;
+}) {
+  // One gender value for the scoped panels, surfaced through each card header
+  // so filter placement stays consistent.
   const [gender, setGender] = React.useState<SGender>("בנים");
   const g = gender === "בנים" ? "m" : "f";
 
@@ -475,61 +489,134 @@ export function Lab() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
-  if (!mounted) return <SectionSkeleton panels={3} />;
+  if (!mounted) return <SectionSkeleton panels={skeletonPanels} />;
 
   return (
-    <LabGenderCtx.Provider value={{ g, gender }}>
-      <FilterBar>
-        <FilterField label={t.common.fieldGender}>
-          <GenderToggle value={gender} onChange={setGender} surface="lab" />
-        </FilterField>
-      </FilterBar>
-      <div className="space-y-8 pt-6">
-        {/* 1 — waffle */}
-        <GenderPanel
-          title={t.lab.waffleTitle}
-          subtitle={t.lab.waffleSubtitle}
-          surface="lab_waffle"
-        >
-          {(g) => (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {waffles(g).map((d) => (
-                <WaffleCard key={d.sector} d={d} t={t} locale={locale} />
-              ))}
-            </div>
-          )}
-        </GenderPanel>
-
-        {/* 2 — sankey (the pipeline) */}
-        <GenderPanel
-          title={t.lab.sankeyTitle}
-          subtitle={t.lab.sankeySubtitle}
-          insight={t.analysis.sankey}
-          surface="lab_sankey"
-        >
-          {(g) => <Sankey data={sankeyFlow(g)} t={t} locale={locale} />}
-        </GenderPanel>
-
-        {/* 9 — ridgeline */}
-        <GenderPanel
-          title={t.lab.ridgeTitle}
-          subtitle={t.lab.ridgeSubtitle}
-          surface="lab_ridge"
-        >
-          {(g) => <Ridgeline data={ridgeline(g, "combat")} t={t} />}
-        </GenderPanel>
-
-        {/* 10 — outliers */}
-        <GenderPanel
-          title={t.lab.outlierTitle}
-          subtitle={t.lab.outlierSubtitle}
-          insight={t.analysis.outliers}
-          surface="lab_outliers"
-          note={t.lab.unweightedNote}
-        >
-          {(g) => <Outliers data={outliers(g)} t={t} />}
-        </GenderPanel>
-      </div>
+    <LabGenderCtx.Provider value={{ g, gender, setGender }}>
+      <div className="space-y-8">{children}</div>
     </LabGenderCtx.Provider>
+  );
+}
+
+function WafflePanel() {
+  const t = useT();
+  const locale = useLocale();
+  return (
+    <GenderPanel
+      title={t.lab.waffleTitle}
+      subtitle={t.lab.waffleSubtitle}
+      surface="lab_waffle"
+    >
+      {(g) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {waffles(g).map((d) => (
+            <WaffleCard key={d.sector} d={d} t={t} locale={locale} />
+          ))}
+        </div>
+      )}
+    </GenderPanel>
+  );
+}
+
+function SankeyPanel() {
+  const t = useT();
+  const locale = useLocale();
+  return (
+    <GenderPanel
+      title={t.lab.sankeyTitle}
+      subtitle={t.lab.sankeySubtitle}
+      surface="lab_sankey"
+    >
+      {(g) => <Sankey data={sankeyFlow(g)} t={t} locale={locale} />}
+    </GenderPanel>
+  );
+}
+
+function RidgelinePanel() {
+  const t = useT();
+  const [metric, setMetric] = React.useState<SMetric>("combat");
+  return (
+    <GenderPanel
+      title={t.lab.ridgeTitle}
+      subtitle={t.lab.ridgeSubtitle}
+      surface="lab_ridge"
+    >
+      {(g) => (
+        <div>
+          <div className="mb-4 flex justify-end">
+            <MetricTabsS
+              value={metric}
+              onChange={setMetric}
+              surface="school_ridgeline"
+            />
+          </div>
+          <Ridgeline
+            data={ridgeline(g, metric)}
+            t={t}
+            axisLabel={t.metrics[metric].label}
+          />
+        </div>
+      )}
+    </GenderPanel>
+  );
+}
+
+function OutliersPanel() {
+  const t = useT();
+  const [metric, setMetric] = React.useState<OutlierMetric>("combat");
+  const metrics: OutlierMetric[] = ["combat", "officer"];
+  return (
+    <GenderPanel
+      title={t.lab.outlierTitle}
+      subtitle={t.lab.outlierSubtitle}
+      surface="lab_outliers"
+      note={t.lab.unweightedNote}
+    >
+      {(g) => (
+        <div>
+          <div className="mb-4 flex justify-end">
+            <ControlGroup className="flex w-full sm:inline-flex sm:w-auto">
+              {metrics.map((m) => (
+                <SegmentButton
+                  key={m}
+                  type="button"
+                  active={metric === m}
+                  className="flex-1 px-2.5 sm:flex-none sm:px-3"
+                  onClick={() => setMetric(m)}
+                >
+                  {t.metrics[m].short}
+                </SegmentButton>
+              ))}
+            </ControlGroup>
+          </div>
+          <Outliers data={outliers(g, metric)} metric={metric} t={t} />
+        </div>
+      )}
+    </GenderPanel>
+  );
+}
+
+export function ServicePipelinePanels() {
+  return (
+    <GenderScopedPanels skeletonPanels={2}>
+      <WafflePanel />
+      <SankeyPanel />
+    </GenderScopedPanels>
+  );
+}
+
+export function SchoolRidgelinePanel() {
+  return (
+    <GenderScopedPanels skeletonPanels={1}>
+      <RidgelinePanel />
+    </GenderScopedPanels>
+  );
+}
+
+export function CityOutliersPanel() {
+  return (
+    <GenderScopedPanels skeletonPanels={1}>
+      <OutliersPanel />
+    </GenderScopedPanels>
   );
 }

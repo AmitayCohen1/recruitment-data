@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartFootnote, ChartHeader, ChartPanel } from "@/components/ui/panel";
 import {
   funnel,
   SECTORS,
@@ -22,13 +22,13 @@ export function SectorFunnel({
   const gender = genderProp ?? genderState;
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.sectorFunnel.title}
         subtitle={t.sectorFunnel.subtitle}
       >
         {!controlled && <GenderToggle value={gender} onChange={setGender} surface="funnel" />}
-      </PanelHeader>
+      </ChartHeader>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {SECTORS.map((s) => {
@@ -68,9 +68,7 @@ export function SectorFunnel({
           );
         })}
       </div>
-      <p className="pt-4 text-xs text-muted-foreground">
-        {t.sectorFunnel.footnote}
-      </p>
-    </Panel>
+      <ChartFootnote>{t.sectorFunnel.footnote}</ChartFootnote>
+    </ChartPanel>
   );
 }

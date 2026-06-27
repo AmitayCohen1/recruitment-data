@@ -3,7 +3,12 @@
 import * as React from "react";
 import { ArrowDown, ArrowUp, Plus, Search, X } from "lucide-react";
 import { track } from "@/lib/analytics";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import {
+  ChartBody,
+  ChartFootnote,
+  ChartHeader,
+  ChartPanel,
+} from "@/components/ui/panel";
 import { GenderToggle } from "@/components/sectors/controls";
 import {
   Button,
@@ -21,7 +26,7 @@ import {
   type Gender,
   type MetricKey,
 } from "@/lib/data";
-import { cityRows, splitFeatured, BIG_CITIES, cityColor, type CityRow } from "@/lib/cities";
+import { cityRows, splitFeatured, BIG_CITIES, type CityRow } from "@/lib/cities";
 import { Delta } from "@/components/ui/delta";
 import { SECTORS, type SGender } from "@/lib/sectors";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
@@ -188,10 +193,6 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
   );
   const addable = allCouncils.filter((c) => !featuredNames.includes(c));
 
-  // shared palette + indexing so a city keeps the same color in every chart;
-  // here the order is the user's featured list (BIG_CITIES by default).
-  const colorFor = (name: string) => cityColor(name, featuredNames);
-
   const { featured, rest } = React.useMemo(
     () => splitFeatured(cityRows(rows, g, LATEST, sectorFilter), featuredNames),
     [rows, g, sectorFilter, featuredNames],
@@ -252,10 +253,10 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
   }, [q]);
 
   return (
-    <Panel>
-      <PanelHeader title={t.cities.title}>
+    <ChartPanel>
+      <ChartHeader title={t.cities.title}>
         <GenderToggle value={gender} onChange={setGender} />
-      </PanelHeader>
+      </ChartHeader>
 
       {/* controls: metric drives the ranking + trend; sector scopes which schools count */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -305,10 +306,6 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
             aria-label={t.cities.removeCity}
             title={t.cities.removeCity}
           >
-            <span
-              className="size-2 rounded-full"
-              style={{ background: colorFor(c) }}
-            />
             {c}
             <X className="size-3 text-muted-foreground" />
           </FilterChip>
@@ -357,7 +354,6 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
               label={c.council}
               value={c[metric]}
               max={max}
-              swatch={colorFor(c.council)}
               note={c.n > 0 ? t.cities.schoolsCount(c.n) : t.cities.noData}
             />
           </div>
@@ -380,7 +376,7 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
         </div>
       </div>
       <p className="mb-2 text-xs text-muted-foreground">{t.delta.legend(FIRST)}</p>
-      <div className="overflow-x-auto rounded-xl border border-white/10">
+      <ChartBody scroll className="rounded-xl border border-white/10">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 bg-white/3 text-muted-foreground">
@@ -453,10 +449,8 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
             ))}
           </tbody>
         </table>
-      </div>
-      <p className="pt-3 text-center text-xs text-muted-foreground">
-        {t.cities.countNote(ranked.length)}
-      </p>
-    </Panel>
+      </ChartBody>
+      <ChartFootnote className="text-center">{t.cities.countNote(ranked.length)}</ChartFootnote>
+    </ChartPanel>
   );
 }

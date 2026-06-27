@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Brain } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChartExport } from "./chart-export";
 import { useT } from "@/components/i18n/locale-provider";
@@ -31,6 +30,12 @@ export function Panel({
       </section>
     </PanelNodeCtx.Provider>
   );
+}
+
+/** Standard shell for chart cards. All dashboard charts should live in this
+ *  card; filters belong in the header, legends in the body, notes at the end. */
+export function ChartPanel(props: React.ComponentProps<typeof Panel>) {
+  return <Panel {...props} />;
 }
 
 export function PanelHeader({
@@ -90,33 +95,39 @@ export function PanelHeader({
   );
 }
 
-export function PanelInsight({
+/** Standard chart heading. Pass interactive filters/toggles as children so they
+ *  stay visually and semantically separate from passive legends. */
+export function ChartHeader(props: React.ComponentProps<typeof PanelHeader>) {
+  return <PanelHeader {...props} />;
+}
+
+export function ChartBody({
   children,
-  title,
+  className,
+  scroll = false,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  scroll?: boolean;
+}) {
+  return (
+    <div className={cn(scroll && "overflow-x-auto", className)}>
+      {children}
+    </div>
+  );
+}
+
+export function ChartFootnote({
+  children,
   className,
 }: {
   children: React.ReactNode;
-  title?: React.ReactNode;
   className?: string;
 }) {
-  const t = useT();
   return (
-    <aside
-      className={cn(
-        "mt-4 flex gap-3 rounded-2xl border border-sky-400/20 bg-sky-400/6 p-4 text-sm leading-6 text-muted-foreground",
-        className,
-      )}
-    >
-      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-sky-300/20 bg-sky-300/10 text-sky-200">
-        <Brain className="size-4" aria-hidden="true" />
-      </span>
-      <div className="min-w-0">
-        <p className="mb-1 font-semibold text-foreground">
-          {title ?? t.panel.analysisTitle}
-        </p>
-        <p>{children}</p>
-      </div>
-    </aside>
+    <p className={cn("mt-3 text-xs leading-5 text-muted-foreground/75", className)}>
+      {children}
+    </p>
   );
 }
 
@@ -149,3 +160,7 @@ export function ChipLegend({
     </div>
   );
 }
+
+/** Passive legend: no border, no pill background, no hover state. If it is
+ *  clickable/filtering, use ControlGroup + SegmentButton instead. */
+export const ChartLegend = ChipLegend;

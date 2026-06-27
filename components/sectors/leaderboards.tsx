@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { ChipLegend, Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartHeader, ChartLegend, ChartPanel } from "@/components/ui/panel";
 import { topSchools, type Gender, type MetricKey } from "@/lib/data";
 import { SCHOOL_SECTOR, SECTOR_COLOR, sectorColor, type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
-import { sectorLabel } from "@/lib/i18n/labels";
+import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 
 const toG = (g: SGender): Gender => (g === "בנים" ? "m" : "f");
 
@@ -72,10 +72,11 @@ export function Leaderboards({
   const locale = useLocale();
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.leaderboards.title}
         subtitle={t.leaderboards.subtitle}
+        exportCaption={`${t.metrics[metric].short} · ${genderLabel(gender, locale)}`}
       >
         {!controlled && (
           <div className="flex flex-wrap gap-2">
@@ -83,14 +84,14 @@ export function Leaderboards({
             <MetricTabsS value={metric} onChange={setMetric} surface="leaderboards" />
           </div>
         )}
-      </PanelHeader>
+      </ChartHeader>
       <div className="grid gap-x-8 gap-y-6 divide-y divide-white/10 md:grid-cols-2 md:divide-y-0 [&>*+*]:pt-6 md:[&>*+*]:pt-0">
         <List metric={metric} gender={g} dir="top" title={t.leaderboards.topTitle} />
         <List metric={metric} gender={g} dir="bottom" title={t.leaderboards.bottomTitle} />
       </div>
       <div className="mt-5">
         <p className="mb-2 text-xs text-muted-foreground">{t.leaderboards.legend}</p>
-        <ChipLegend
+        <ChartLegend
           className="m-0 text-xs"
           items={Object.entries(SECTOR_COLOR).map(([s, c]) => ({
             label: sectorLabel(s, locale),
@@ -98,6 +99,6 @@ export function Leaderboards({
           }))}
         />
       </div>
-    </Panel>
+    </ChartPanel>
   );
 }

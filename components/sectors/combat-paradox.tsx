@@ -12,7 +12,11 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import { Panel, PanelHeader, PanelInsight } from "@/components/ui/panel";
+import {
+  ChartFootnote,
+  ChartHeader,
+  ChartPanel,
+} from "@/components/ui/panel";
 import { ChartContainer } from "@/components/ui/chart";
 import { sectorScatter, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
@@ -74,13 +78,13 @@ export function CombatParadox({
   const data = sectorScatter(gender);
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.combatParadox.title}
         subtitle={t.combatParadox.subtitle}
       >
         {!controlled && <GenderToggle value={gender} onChange={setGender} surface="combat-paradox" />}
-      </PanelHeader>
+      </ChartHeader>
 
       <ChartContainer config={{}} className="h-[360px] w-full">
         <ScatterChart margin={{ top: 16, right: 16, bottom: 24, left: 8 }}>
@@ -139,10 +143,7 @@ export function CombatParadox({
         </ScatterChart>
       </ChartContainer>
 
-      <p className="pt-2 text-xs leading-5 text-muted-foreground">
-        {t.combatParadox.footnote}
-      </p>
-      <PanelInsight>{t.analysis.combatParadox}</PanelInsight>
-    </Panel>
+      <ChartFootnote>{t.combatParadox.footnote}</ChartFootnote>
+    </ChartPanel>
   );
 }

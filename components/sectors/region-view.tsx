@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartFootnote, ChartHeader, ChartPanel } from "@/components/ui/panel";
 import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { track } from "@/lib/analytics";
 import { R_SECTORS, regionView } from "@/lib/regions";
@@ -29,13 +29,13 @@ export function RegionView({
 
   const rows = regionView(sector, gender, metric);
   const max = Math.max(...rows.map((r) => r.value), 1);
-  const label = t.metrics[metric].label;
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.regionView.title}
-        subtitle={t.regionView.subtitle(label)}
+        subtitle={t.regionView.subtitle}
+        exportCaption={`${t.metrics[metric].short} · ${genderLabel(gender, locale)}`}
       >
         {!controlled && (
           <div className="flex flex-wrap gap-2">
@@ -43,7 +43,7 @@ export function RegionView({
             <MetricTabsS value={metric} onChange={setMetric} surface="region" />
           </div>
         )}
-      </PanelHeader>
+      </ChartHeader>
 
       {/* which sector's regions — this chart's own axis selector */}
       <ControlGroup className="mb-4">
@@ -94,9 +94,7 @@ export function RegionView({
           })}
         </ul>
       )}
-      <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        {t.regionView.footnote}
-      </p>
-    </Panel>
+      <ChartFootnote>{t.regionView.footnote}</ChartFootnote>
+    </ChartPanel>
   );
 }

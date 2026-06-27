@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { scaleLinear } from "d3-scale";
-import { ChipLegend, Panel, PanelHeader } from "@/components/ui/panel";
+import { Cell, Pie, PieChart } from "recharts";
+import {
+  ChartBody,
+  ChartFootnote,
+  ChartHeader,
+  ChartLegend,
+  ChartPanel,
+} from "@/components/ui/panel";
+import { ChartContainer } from "@/components/ui/chart";
 import { GenderToggle } from "@/components/sectors/controls";
 import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { track } from "@/lib/analytics";
@@ -11,7 +19,7 @@ import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Gender } from "@/lib/data";
-import type { SGender } from "@/lib/sectors";
+import { ABS_METRICS, type AbsMetric, type SGender } from "@/lib/sectors";
 import { armyComposition } from "@/lib/lab";
 
 const W = 880;
@@ -27,22 +35,26 @@ const fmt = (n: number) =>
 const LIGHT_FILLS = new Set(["#fbbf24", "#34d399", "#c084fc"]);
 
 type Composition = ReturnType<typeof armyComposition>;
-type View = "count" | "share";
+type View = "count" | "share" | "pie";
 
-/** Two stacked bars (first year vs latest): the weighted head-count of combat
- *  soldiers per sector. Bar height carries the absolute total. */
+const VIEWS: View[] = ["count", "share", "pie"];
+
+/** Two stacked bars (first year vs latest): the weighted head-count for the
+ *  selected absolute metric. Bar height carries the absolute total. */
 function CountView({
   data,
   t,
   locale,
+  noun,
 }: {
   data: Composition;
   t: Dictionary;
   locale: Locale;
+  noun: string;
 }) {
   const { years, series } = data;
   const numberLocale = locale === "he" ? "he-IL" : "en-US";
-  const yAxisLabel = locale === "he" ? "מספר לוחמים" : "Fighters";
+  const yAxisLabel = t.armyStream.axisLabel(noun);
 
   const { bars, ticks, y } = React.useMemo(() => {
     const totals = years.map((_, i) =>
@@ -78,11 +90,11 @@ function CountView({
   }, [series, years]);
 
   return (
-    <div className="overflow-x-auto">
+    <ChartBody scroll>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={t.armyStream.title(years[0], years[years.length - 1])}
+        aria-label={t.armyStream.title}
         className="h-auto w-full min-w-[640px]"
       >
         {/* y gridlines + count labels */}
@@ -178,7 +190,7 @@ function CountView({
           </g>
         ))}
       </svg>
-    </div>
+    </ChartBody>
   );
 }
 
@@ -189,15 +201,17 @@ const AC_TOP = 16;
 const AC_BOT = 34;
 
 /** Same numbers normalized to 100% and stacked across every year — each band's
- *  height is that sector's share of all combat soldiers in that year. */
+ *  height is that sector's share of the selected count metric in that year. */
 function ShareView({
   data,
   t,
   locale,
+  noun,
 }: {
   data: Composition;
   t: Dictionary;
   locale: Locale;
+  noun: string;
 }) {
   const { years, series } = data;
   const n = years.length;
@@ -229,7 +243,7 @@ function ShareView({
 
   return (
     <div>
-      <div className="overflow-x-auto">
+      <ChartBody scroll>
         <svg viewBox={`0 0 ${AC_W} ${AC_H}`} className="h-auto w-full min-w-[640px]">
           {[0, 25, 50, 75, 100].map((p) => (
             <g key={p}>
@@ -273,42 +287,131 @@ function ShareView({
             </text>
           ))}
         </svg>
-      </div>
-      <p className="mt-3 text-xs text-muted-foreground/70">{t.armyStream.shareNote}</p>
+      </ChartBody>
+      <ChartFootnote>{t.armyStream.shareNote(noun)}</ChartFootnote>
     </div>
   );
 }
 
-/** Combat-soldier composition by sector, with a toggle between absolute counts
- *  (two bars, first vs latest year) and each sector's share over time. */
+/** Latest-year composition as a pie chart for the same national share story. */
+function PieShareView({
+  data,
+  t,
+  locale,
+  noun,
+}: {
+  data: Composition;
+  t: Dictionary;
+  locale: Locale;
+  noun: string;
+}) {
+  const { years, series } = data;
+  const lastIndex = years.length - 1;
+  const year = years[lastIndex];
+  const numberLocale = locale === "he" ? "he-IL" : "en-US";
+  const slices = series
+    .map((s) => ({
+      sector: s.sector,
+      color: s.color,
+      count: s.counts[lastIndex],
+      share: s.shares[lastIndex],
+    }))
+    .filter((s) => s.count > 0);
+
+  return (
+    <div>
+      <div className="grid items-center gap-5 lg:grid-cols-[minmax(260px,360px)_1fr]">
+        <div className="relative mx-auto h-64 w-full max-w-[340px]">
+          <ChartContainer config={{}} className="aspect-square h-full w-full">
+            <PieChart>
+              <Pie
+                data={slices}
+                dataKey="count"
+                nameKey="sector"
+                cx="50%"
+                cy="50%"
+                innerRadius="48%"
+                outerRadius="88%"
+                paddingAngle={1}
+                stroke="rgba(2,6,23,0.7)"
+                strokeWidth={2}
+                isAnimationActive={false}
+              >
+                {slices.map((s) => (
+                  <Cell key={s.sector} fill={s.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="text-2xl font-bold tabular-nums">100%</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {year} · {noun}
+            </span>
+          </div>
+        </div>
+
+        <ul className="space-y-2">
+          {slices.map((s) => (
+            <li
+              key={s.sector}
+              className="flex items-baseline justify-between gap-3 text-sm"
+            >
+              <span className="flex min-w-0 flex-1 items-center gap-2 font-medium">
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ background: s.color }}
+                />
+                <span className="min-w-0 truncate" style={{ color: s.color }}>
+                  {sectorLabel(s.sector, locale)}
+                </span>
+              </span>
+              <span className="flex shrink-0 items-baseline gap-2 tabular-nums">
+                <span className="font-bold">
+                  {Math.round(s.count).toLocaleString(numberLocale)}
+                </span>
+                <span className="w-12 font-semibold text-muted-foreground">
+                  {s.share}%
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <ChartFootnote>{t.armyStream.pieNote(noun, year)}</ChartFootnote>
+    </div>
+  );
+}
+
+/** Absolute composition by sector, with toggles for metric, gender, and
+ *  count-vs-share view. */
 export function ArmyStream() {
   const t = useT();
   const locale = useLocale();
   const [gender, setGender] = React.useState<SGender>("בנים");
-  const [view, setView] = React.useState<View>("count");
+  const [view, setView] = React.useState<View>("pie");
+  const [metric, setMetric] = React.useState<AbsMetric>("nFighters");
   const g: Gender = gender === "בנים" ? "m" : "f";
 
-  const data = React.useMemo(() => armyComposition(g, "nFighters"), [g]);
-  const { years, series } = data;
-  const lastYear = years[years.length - 1];
+  const data = React.useMemo(() => armyComposition(g, metric), [g, metric]);
+  const { series } = data;
+  const noun = t.absNoun[metric];
 
   return (
-    <Panel>
-      <PanelHeader
-        title={
-          view === "count"
-            ? t.armyStream.title(years[0], lastYear)
-            : t.armyStream.shareTitle
-        }
-        subtitle={
-          view === "count" ? t.armyStream.subtitle : t.armyStream.shareSubtitle
-        }
+    <ChartPanel>
+      <ChartHeader
+        title={t.armyStream.title}
+        subtitle={t.armyStream.subtitle}
         exportCaption={`${
-          view === "count" ? t.armyStream.viewCount : t.armyStream.viewShare
-        } · ${genderLabel(gender, locale)}`}
+          view === "count"
+            ? t.armyStream.viewCount
+            : view === "pie"
+              ? t.armyStream.viewPie
+              : t.armyStream.viewShare
+        } · ${t.absMetrics[metric]} · ${genderLabel(gender, locale)}`}
       />
       <div className="-mt-2 mb-4 flex flex-wrap items-center justify-between gap-3">
-        <ChipLegend
+        <ChartLegend
           className="m-0"
           items={series.map((s) => ({
             label: sectorLabel(s.sector, locale),
@@ -317,7 +420,7 @@ export function ArmyStream() {
         />
         <div className="flex flex-wrap items-center gap-2" data-export-ignore>
           <ControlGroup>
-            {(["count", "share"] as View[]).map((v) => (
+            {VIEWS.map((v) => (
               <SegmentButton
                 key={v}
                 type="button"
@@ -327,7 +430,26 @@ export function ArmyStream() {
                   setView(v);
                 }}
               >
-                {v === "count" ? t.armyStream.viewCount : t.armyStream.viewShare}
+                {v === "count"
+                  ? t.armyStream.viewCount
+                  : v === "pie"
+                    ? t.armyStream.viewPie
+                    : t.armyStream.viewShare}
+              </SegmentButton>
+            ))}
+          </ControlGroup>
+          <ControlGroup>
+            {ABS_METRICS.map((m) => (
+              <SegmentButton
+                key={m.key}
+                type="button"
+                active={metric === m.key}
+                onClick={() => {
+                  if (metric !== m.key) track("army_metric", { metric: m.key });
+                  setMetric(m.key);
+                }}
+              >
+                {t.absMetrics[m.key]}
               </SegmentButton>
             ))}
           </ControlGroup>
@@ -335,10 +457,12 @@ export function ArmyStream() {
         </div>
       </div>
       {view === "count" ? (
-        <CountView data={data} t={t} locale={locale} />
+        <CountView data={data} t={t} locale={locale} noun={noun} />
+      ) : view === "pie" ? (
+        <PieShareView data={data} t={t} locale={locale} noun={noun} />
       ) : (
-        <ShareView data={data} t={t} locale={locale} />
+        <ShareView data={data} t={t} locale={locale} noun={noun} />
       )}
-    </Panel>
+    </ChartPanel>
   );
 }

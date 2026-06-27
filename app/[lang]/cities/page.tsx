@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CityOutliersPanel } from "@/components/lab/lab";
 import { RegionView } from "@/components/sectors/region-view";
 import { Cities } from "@/components/dashboard/cities";
 import { CityCharts } from "@/components/cities/city-charts";
@@ -24,6 +25,7 @@ export default async function Page({ params }: Props) {
       <div className="space-y-6">
         <RegionView />
         <CityCharts />
+        <CityOutliersPanel />
         <Cities rows={rows} />
       </div>
     </div>

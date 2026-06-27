@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader, PanelInsight } from "@/components/ui/panel";
+import {
+  ChartFootnote,
+  ChartHeader,
+  ChartPanel,
+} from "@/components/ui/panel";
 import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import {
   contribution,
@@ -24,13 +28,12 @@ export function Contribution({
   const [genderState, setGender] = React.useState<SGender>("בנים");
   const gender = genderProp ?? genderState;
   const rows = contribution(metric, gender);
-  const noun = t.absNoun[metric];
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.contribution.title}
-        subtitle={t.contribution.subtitle(noun)}
+        subtitle={t.contribution.subtitle}
         exportCaption={`${t.absMetrics[metric]} · ${genderLabel(gender, locale)}`}
       >
         <div className="flex flex-wrap gap-2">
@@ -50,7 +53,7 @@ export function Contribution({
             ))}
           </ControlGroup>
         </div>
-      </PanelHeader>
+      </ChartHeader>
 
       {/* 100% stacked composition bar — each sector's share of the national total */}
       <div className="flex h-10 w-full overflow-hidden rounded-xl border border-white/10">
@@ -104,10 +107,7 @@ export function Contribution({
         ))}
       </ul>
 
-      <p className="pt-4 text-xs leading-5 text-muted-foreground">
-        {t.contribution.footnote}
-      </p>
-      <PanelInsight>{t.analysis.contribution}</PanelInsight>
-    </Panel>
+      <ChartFootnote>{t.contribution.footnote}</ChartFootnote>
+    </ChartPanel>
   );
 }

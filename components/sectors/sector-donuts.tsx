@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Cell, Pie, PieChart } from "recharts";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartHeader, ChartPanel } from "@/components/ui/panel";
 import { ChartContainer } from "@/components/ui/chart";
 import {
   profile,
@@ -78,8 +78,8 @@ export function SectorDonuts({
   const gender = genderProp ?? genderState;
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.sectorDonuts.title}
         subtitle={t.sectorDonuts.subtitle}
         exportCaption={`${t.metrics[metric].short} · ${genderLabel(gender, locale)}`}
@@ -90,7 +90,7 @@ export function SectorDonuts({
             <MetricTabsS value={metric} onChange={setMetric} surface="donuts" />
           </div>
         )}
-      </PanelHeader>
+      </ChartHeader>
       <div className="mx-auto grid max-w-3xl grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
         {SECTORS.map((s) => (
           <Donut
@@ -101,6 +101,6 @@ export function SectorDonuts({
           />
         ))}
       </div>
-    </Panel>
+    </ChartPanel>
   );
 }

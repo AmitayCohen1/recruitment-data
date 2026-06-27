@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartFootnote, ChartHeader, ChartPanel } from "@/components/ui/panel";
 import {
   genderGap,
   SECTOR_COLOR,
@@ -19,13 +19,14 @@ export function GenderGap() {
   const max = Math.max(...rows.map((r) => Math.abs(r.gap)), 1);
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.genderGap.title}
         subtitle={t.genderGap.subtitle}
+        exportCaption={t.metrics[metric].short}
       >
         <MetricTabsS value={metric} onChange={setMetric} surface="gender-gap" />
-      </PanelHeader>
+      </ChartHeader>
 
       <ul className="space-y-4">
         {rows.map((r) => {
@@ -73,9 +74,7 @@ export function GenderGap() {
           );
         })}
       </ul>
-      <p className="pt-4 text-xs text-muted-foreground">
-        {t.genderGap.footnote}
-      </p>
-    </Panel>
+      <ChartFootnote>{t.genderGap.footnote}</ChartFootnote>
+    </ChartPanel>
   );
 }

@@ -17,12 +17,20 @@ export type NavItem = {
 /** Route-based section nav. Each section is its own URL (/[lang]/<id>), so the
  *  browser handles history, deep-links and per-route code-splitting; this only
  *  renders the bar and highlights the active segment from the pathname. */
-export function TabNav({ lang, items }: { lang: string; items: NavItem[] }) {
+export function TabNav({
+  lang,
+  items,
+  hiddenItems = [],
+}: {
+  lang: string;
+  items: NavItem[];
+  hiddenItems?: NavItem[];
+}) {
   const pathname = usePathname();
   const current = pathname.split("/").filter(Boolean)[1] ?? items[0]?.id;
   const [open, setOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
-  const activeItem = items.find((t) => t.id === current) ?? items[0];
+  const activeItem = [...items, ...hiddenItems].find((t) => t.id === current) ?? items[0];
 
   const href = (id: string) => `/${lang}/${id}`;
   const onSelect = (item: NavItem) => {

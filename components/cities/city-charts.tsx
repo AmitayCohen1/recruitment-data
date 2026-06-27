@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { scaleLinear } from "d3-scale";
 import { ArrowDown, ArrowUp, Pause, Play, X } from "lucide-react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
-import { GenderToggle } from "@/components/sectors/controls";
+import { ChartFootnote, ChartHeader, ChartPanel } from "@/components/ui/panel";
+import { GenderToggle, MetricTabsS } from "@/components/sectors/controls";
 import { SectionSkeleton } from "@/components/ui/skeleton";
 import {
   Button,
@@ -14,7 +13,7 @@ import {
   MenuItem,
 } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
-import { NEUTRAL, type SGender } from "@/lib/sectors";
+import { NEUTRAL, type SGender, type SMetric } from "@/lib/sectors";
 import { useT } from "@/components/i18n/locale-provider";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Gender } from "@/lib/data";
@@ -24,11 +23,6 @@ import {
   bump,
   movers,
   bubbleRace,
-  cityTrajectories,
-  LAB_FIRST,
-  LAB_LAST,
-  type CityPoint,
-  type Trajectory,
 } from "@/lib/lab";
 
 const BIG: readonly string[] = BIG_CITIES;
@@ -98,164 +92,6 @@ function Movers({
   );
 }
 
-/* ---------- Two-armies quadrant scatter ---------- */
-const SC_W = 880;
-const SC_H = 440;
-const SC_PAD = 44;
-function QuadrantScatter({
-  data,
-  t,
-  featured,
-  onToggle,
-}: {
-  data: ReturnType<typeof cityScatter>;
-  t: Dictionary;
-  /** cities to spotlight (blue + labeled) — shared with the filter bar */
-  featured: Set<string>;
-  onToggle: (c: string) => void;
-}) {
-  const { points, medEnlist, medCombat } = data;
-  const [hover, setHover] = React.useState<string | null>(null);
-  if (!points.length) return null;
-
-  const isF = (c: string) => featured.has(c);
-  const toggle = onToggle;
-
-  const xs = points.map((p) => p.enlist);
-  const ys = points.map((p) => p.combat);
-  const xMin = Math.max(0, Math.floor((Math.min(...xs) - 3) / 5) * 5);
-  const xMax = Math.min(100, Math.ceil((Math.max(...xs) + 3) / 5) * 5);
-  const yMin = Math.max(0, Math.floor((Math.min(...ys) - 3) / 5) * 5);
-  const yMax = Math.min(100, Math.ceil((Math.max(...ys) + 3) / 5) * 5);
-  const px = (v: number) =>
-    SC_PAD + ((v - xMin) / (xMax - xMin)) * (SC_W - 2 * SC_PAD);
-  const py = (v: number) =>
-    SC_H - SC_PAD - ((v - yMin) / (yMax - yMin)) * (SC_H - 2 * SC_PAD);
-  const rad = (n: number) => 3 + Math.min(8, Math.sqrt(n) * 1.4);
-  const mx = px(medEnlist);
-  const my = py(medCombat);
-  // Draw order: rest, then featured, then the hovered dot on top.
-  const depth = (p: CityPoint) =>
-    hover === p.council ? 2 : isF(p.council) ? 1 : 0;
-  const sorted = [...points].sort((a, b) => depth(a) - depth(b));
-
-  // De-collide the featured labels: stack clustered ones upward, above the dots.
-  const bigLabels = points
-    .filter((p) => isF(p.council))
-    .map((p) => ({
-      council: p.council,
-      x: px(p.enlist),
-      dotY: py(p.combat),
-      r: rad(p.n),
-      y: py(p.combat) - rad(p.n) - 7,
-    }))
-    .sort((a, b) => a.x - b.x || a.y - b.y);
-  const LGAP = 14;
-  const XCLOSE = 90;
-  for (let i = 1; i < bigLabels.length; i++) {
-    for (let j = 0; j < i; j++) {
-      if (
-        Math.abs(bigLabels[i].x - bigLabels[j].x) < XCLOSE &&
-        Math.abs(bigLabels[i].y - bigLabels[j].y) < LGAP
-      ) {
-        bigLabels[i].y = bigLabels[j].y - LGAP;
-      }
-    }
-  }
-
-  const hp = hover ? points.find((p) => p.council === hover) ?? null : null;
-  // Flip the tooltip below the dot when it's too close to the top edge.
-  const tipBelow = hp ? py(hp.combat) < 70 : false;
-
-  return (
-    <div className="overflow-x-auto">
-      <div className="relative min-w-[640px] pb-6 pl-6">
-        <div className="relative">
-          <svg viewBox={`0 0 ${SC_W} ${SC_H}`} className="h-auto w-full">
-            {/* median split */}
-            <line x1={mx} x2={mx} y1={SC_PAD - 8} y2={SC_H - SC_PAD} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-            <line x1={SC_PAD} x2={SC_W - SC_PAD} y1={my} y2={my} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-            {sorted.map((p) => {
-              const f = isF(p.council);
-              const h = hover === p.council;
-              const r = rad(p.n);
-              return (
-                <circle
-                  key={p.council}
-                  cx={px(p.enlist)}
-                  cy={py(p.combat)}
-                  r={h ? r + 2 : r}
-                  fill={f ? "#38bdf8" : "#475569"}
-                  fillOpacity={f ? 0.95 : h ? 0.85 : 0.55}
-                  stroke={f ? "#bae6fd" : h ? "#94a3b8" : "none"}
-                  strokeWidth={f || h ? 1 : 0}
-                  className="cursor-pointer"
-                  onMouseEnter={() => setHover(p.council)}
-                  onMouseLeave={() =>
-                    setHover((cur) => (cur === p.council ? null : cur))
-                  }
-                  onClick={() => toggle(p.council)}
-                />
-              );
-            })}
-            {bigLabels.map((l) => (
-              <g
-                key={l.council}
-                className="cursor-pointer"
-                onClick={() => toggle(l.council)}
-              >
-                {l.y < l.dotY - l.r - 9 && (
-                  <line x1={l.x} y1={l.dotY - l.r} x2={l.x} y2={l.y + 3} stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
-                )}
-                <text x={l.x} y={l.y} fill="rgba(255,255,255,0.88)" fontSize="11" textAnchor="middle">
-                  {l.council}
-                </text>
-              </g>
-            ))}
-          </svg>
-
-          {/* hover tooltip — positioned over the dot in viewBox-percent space */}
-          {hp && (
-            <div
-              className="pointer-events-none absolute z-20 w-max rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl"
-              style={{
-                left: `${(px(hp.enlist) / SC_W) * 100}%`,
-                top: `${(py(hp.combat) / SC_H) * 100}%`,
-                transform: `translate(-50%, ${
-                  tipBelow
-                    ? `${rad(hp.n) + 8}px`
-                    : `calc(-100% - ${rad(hp.n) + 8}px)`
-                })`,
-              }}
-            >
-              <div className="font-bold text-foreground">{hp.council}</div>
-              <div className="text-muted-foreground">
-                {t.lab.scatterTip(hp.enlist, hp.combat)}
-              </div>
-              <div className="text-muted-foreground/70">{t.lab.schools(hp.n)}</div>
-            </div>
-          )}
-        </div>
-
-        {/* quadrant captions — HTML overlay (RTL-safe, never clipped) */}
-        <div className="pointer-events-none absolute inset-0 text-[11px] leading-tight text-muted-foreground/55">
-          <span className="absolute right-2 top-1 text-right">{t.lab.qTopRight}</span>
-          <span className="absolute left-2 top-1 text-left">{t.lab.qTopLeft}</span>
-          <span className="absolute bottom-8 right-2 text-right">{t.lab.qBottomRight}</span>
-          <span className="absolute bottom-8 left-2 text-left">{t.lab.qBottomLeft}</span>
-        </div>
-
-        {/* axis labels */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-xs text-muted-foreground">
-          {t.lab.axisEnlist}
-        </div>
-        <div className="pointer-events-none absolute bottom-1/2 left-0 -rotate-90 text-xs text-muted-foreground">
-          {t.lab.axisCombat}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ---------- Bump chart — rank over the years ---------- */
 const BP_W = 880;
@@ -484,97 +320,8 @@ function BubbleRace({
   );
 }
 
-/* ---------- City trajectories — each city's path over the years ---------- */
-const TR_W = 880;
-const TR_H = 470;
-const TR_PAD = 52;
-function CityTrajectories({
-  data,
-  t,
-}: {
-  data: ReturnType<typeof cityTrajectories>;
-  t: Dictionary;
-}) {
-  const { trajectories, xBounds, yBounds } = data;
-  const [hover, setHover] = React.useState<string | null>(null);
-  if (!trajectories.length) return null;
 
-  const [xMin, xMax] = xBounds;
-  const [yMin, yMax] = yBounds;
-  const px = scaleLinear().domain([xMin, xMax]).range([TR_PAD, TR_W - TR_PAD]);
-  const py = scaleLinear().domain([yMin, yMax]).range([TR_H - TR_PAD, TR_PAD]);
-  const xticks = [xMin, Math.round((xMin + xMax) / 2), xMax];
-  const yticks = [yMin, Math.round((yMin + yMax) / 2), yMax];
-
-  const ordered = hover
-    ? [
-        ...trajectories.filter((tr) => tr.council !== hover),
-        ...trajectories.filter((tr) => tr.council === hover),
-      ]
-    : trajectories;
-  const dim = (tr: Trajectory) => (hover && hover !== tr.council ? 0.18 : 1);
-
-  return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${TR_W} ${TR_H}`} className="h-auto w-full min-w-[640px]">
-        {xticks.map((v) => (
-          <g key={`x${v}`}>
-            <line x1={px(v)} x2={px(v)} y1={TR_PAD - 10} y2={TR_H - TR_PAD} stroke="rgba(255,255,255,0.07)" />
-            <text x={px(v)} y={TR_H - TR_PAD + 18} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle" className="tabular-nums">
-              {v}%
-            </text>
-          </g>
-        ))}
-        {yticks.map((v) => (
-          <g key={`y${v}`}>
-            <line x1={TR_PAD} x2={TR_W - TR_PAD} y1={py(v)} y2={py(v)} stroke="rgba(255,255,255,0.07)" />
-            <text x={TR_PAD - 8} y={py(v) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end" className="tabular-nums">
-              {v}%
-            </text>
-          </g>
-        ))}
-
-        {ordered.map((tr) => {
-          const color = cityColor(tr.council);
-          const pts = tr.points;
-          const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${px(p.enlist)} ${py(p.combat)}`).join(" ");
-          const first = pts[0];
-          const last = pts[pts.length - 1];
-          return (
-            <g
-              key={tr.council}
-              style={{ opacity: dim(tr) }}
-              className="cursor-pointer"
-              onMouseEnter={() => setHover(tr.council)}
-              onMouseLeave={() => setHover((c) => (c === tr.council ? null : c))}
-            >
-              <path d={d} fill="none" stroke={color} strokeWidth={hover === tr.council ? 3 : 2} strokeLinejoin="round" strokeOpacity={0.9} />
-              {pts.map((p) => (
-                <circle key={p.year} cx={px(p.enlist)} cy={py(p.combat)} r={2.5} fill={color} fillOpacity={0.85}>
-                  <title>{`${tr.council} · ${p.year} — ${t.lab.scatterTip(p.enlist, p.combat)}`}</title>
-                </circle>
-              ))}
-              <circle cx={px(first.enlist)} cy={py(first.combat)} r={4} fill="none" stroke={color} strokeWidth={1.5} />
-              <circle cx={px(last.enlist)} cy={py(last.combat)} r={5} fill={color} />
-              <text x={px(last.enlist) + 8} y={py(last.combat) + 4} fill={color} fontSize="11" fontWeight={600}>
-                {tr.council}
-              </text>
-            </g>
-          );
-        })}
-
-        <text x={TR_W / 2} y={TR_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
-          {t.lab.axisEnlist}
-        </text>
-        <text x={14} y={TR_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${TR_H / 2})`}>
-          {t.lab.axisCombat}
-        </text>
-      </svg>
-    </div>
-  );
-}
-
-/* ---------- Shared filter bar: gender · city search ---------- */
+/* ---------- Card header filters: gender · city search ---------- */
 function CityFilterBar({
   gender,
   onGender,
@@ -606,7 +353,7 @@ function CityFilterBar({
   const chips = [...featured].sort((a, b) => a.localeCompare(b, "he"));
 
   return (
-    <div className="space-y-3">
+    <div className="w-full space-y-3 sm:min-w-[min(34rem,100%)]">
       <div className="flex flex-wrap items-center gap-3">
         <GenderToggle value={gender} onChange={onGender} surface="city_filter" />
 
@@ -678,19 +425,13 @@ function CityFilterBar({
   );
 }
 
-/* The city-level charts, gathered onto the Cities tab (moved out of the lab),
- * sharing one filter bar (gender + a city spotlight that lights up the scatter
- * and the bubble race). Pure client-side SVG — render after mount so SSR and
- * first client paint agree. */
-export function CityCharts() {
+export function CityBubbleRace() {
   const t = useT();
   const [mounted, setMounted] = React.useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
   const [gender, setGender] = React.useState<SGender>("בנים");
-  // Cities to spotlight across the scatter + race. Seeded with the big cities
-  // (preserves the charts' default look); editable via search, chips and clicks.
   const [featured, setFeatured] = React.useState<Set<string>>(() => new Set(BIG));
 
   const g: Gender = gender === "בנים" ? "m" : "f";
@@ -710,58 +451,65 @@ export function CityCharts() {
     });
   const clearCities = () => setFeatured(new Set());
 
-  if (!mounted) return <SectionSkeleton panels={3} />;
+  if (!mounted) return <SectionSkeleton panels={1} />;
+
+  return (
+    <ChartPanel>
+      <ChartHeader title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle}>
+        <CityFilterBar
+          gender={gender}
+          onGender={setGender}
+          cities={cityNames}
+          featured={featured}
+          onToggle={toggleCity}
+          onClear={clearCities}
+          t={t}
+        />
+      </ChartHeader>
+      <BubbleRace data={race} t={t} featured={featured} />
+      <ChartFootnote>{t.lab.unweightedNote}</ChartFootnote>
+    </ChartPanel>
+  );
+}
+
+/* The city-level charts, gathered onto the Cities tab (moved out of the lab),
+ * sharing one header filter cluster (gender + city spotlight) that lights up
+ * the city story below. Pure client-side SVG — render after mount so SSR and
+ * first client paint agree. */
+export function CityCharts() {
+  const t = useT();
+  const [mounted, setMounted] = React.useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => setMounted(true), []);
+
+  const [gender, setGender] = React.useState<SGender>("בנים");
+  const [metric, setMetric] = React.useState<SMetric>("combat");
+  const g: Gender = gender === "בנים" ? "m" : "f";
+
+  if (!mounted) return <SectionSkeleton panels={2} />;
 
   return (
     <div className="space-y-8">
-      {/* one filter bar drives the city spotlight below */}
-      <CityFilterBar
-        gender={gender}
-        onGender={setGender}
-        cities={cityNames}
-        featured={featured}
-        onToggle={toggleCity}
-        onClear={clearCities}
-        t={t}
-      />
-
-      {/* cities scatter — enlist vs combat */}
-      <Panel>
-        <PanelHeader title={t.lab.scatterTitle} subtitle={t.lab.scatterSubtitle} />
-        <QuadrantScatter data={scatter} t={t} featured={featured} onToggle={toggleCity} />
-        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
-      </Panel>
-
-      {/* big cities' rank over time */}
-      <Panel>
-        <PanelHeader title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.bumpSubtitle} />
+      {/* big cities' rank over time — owns the shared gender toggle */}
+      <ChartPanel>
+        <ChartHeader title={t.lab.bumpTitle} subtitle={t.lab.bumpSubtitle}>
+          <GenderToggle value={gender} onChange={setGender} surface="cities" />
+        </ChartHeader>
         <BumpChart data={bump(g, "combat")} t={t} />
-        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
-      </Panel>
+        <ChartFootnote>{t.lab.unweightedNote}</ChartFootnote>
+      </ChartPanel>
 
       {/* biggest movers */}
-      <Panel>
-        <PanelHeader title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.moversSubtitle} />
+      <ChartPanel>
+        <ChartHeader title={t.lab.moversTitle} subtitle={t.lab.moversSubtitle}>
+          <MetricTabsS value={metric} onChange={setMetric} surface="city_movers" />
+        </ChartHeader>
         {(() => {
-          const all = movers(g, "combat");
+          const all = movers(g, metric);
           return <Movers risers={all.slice(0, 6)} fallers={all.slice(-6).reverse()} t={t} />;
         })()}
-        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.moversNote}</p>
-      </Panel>
-
-      {/* bubble race over the years */}
-      <Panel>
-        <PanelHeader title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle} />
-        <BubbleRace data={race} t={t} featured={featured} />
-        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
-      </Panel>
-
-      {/* each city's path through the years */}
-      <Panel>
-        <PanelHeader title={t.lab.trajTitle} subtitle={t.lab.trajSubtitle} />
-        <CityTrajectories data={cityTrajectories(g)} t={t} />
-        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
-      </Panel>
+        <ChartFootnote>{t.lab.moversNote}</ChartFootnote>
+      </ChartPanel>
     </div>
   );
 }

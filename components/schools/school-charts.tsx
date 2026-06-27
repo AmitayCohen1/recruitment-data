@@ -10,7 +10,7 @@ import {
 } from "d3-force";
 import { scaleLinear } from "d3-scale";
 import { X } from "lucide-react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartHeader, ChartPanel } from "@/components/ui/panel";
 import { SectionSkeleton } from "@/components/ui/skeleton";
 import { GenderToggle } from "@/components/sectors/controls";
 import {
@@ -30,7 +30,6 @@ import type { Gender } from "@/lib/data";
 import {
   schoolDots,
   schoolProfiles,
-  PARALLEL_AXES,
   type SchoolDot,
   type SchoolProfile,
 } from "@/lib/lab";
@@ -151,150 +150,7 @@ function Beeswarm({
   );
 }
 
-/* ---------- Parallel coordinates: each school's profile across four metrics ---------- */
-const PC_W = 880;
-const PC_H = 440;
-const PC_PADX = 64;
-const PC_TOP = 30;
-const PC_BOT = 46;
-
-function ParallelCoords({
-  schools,
-  selected,
-  sector,
-  t,
-}: {
-  schools: SchoolProfile[];
-  selected: Set<number>;
-  sector: string | null;
-  t: Dictionary;
-}) {
-  const [hoverKey, setHoverKey] = React.useState<number | null>(null);
-  const [tip, setTip] = React.useState<{ x: number; y: number } | null>(null);
-  const boxRef = React.useRef<HTMLDivElement>(null);
-
-  const n = PARALLEL_AXES.length;
-  const axisX = (i: number) => PC_PADX + (i / (n - 1)) * (PC_W - 2 * PC_PADX);
-  const y = scaleLinear().domain([0, 100]).range([PC_H - PC_BOT, PC_TOP]);
-  const lineFor = (s: SchoolProfile) =>
-    PARALLEL_AXES.map((a, i) => `${axisX(i)},${y(s[a.key])}`).join(" L ");
-
-  const hovered = hoverKey != null ? schools.find((s) => s.key === hoverKey) : null;
-
-  // draw emphasized lines (then the hovered line) last so they sit on top
-  const ordered = React.useMemo(() => {
-    const rank = (s: SchoolProfile) => {
-      if (s.key === hoverKey) return 2;
-      return emphasisOf(s, selected, sector) === "on" ? 1 : 0;
-    };
-    return [...schools].sort((a, b) => rank(a) - rank(b));
-  }, [schools, hoverKey, selected, sector]);
-
-  const opacityOf = (s: SchoolProfile) => {
-    if (hoverKey != null) return s.key === hoverKey ? 0.95 : 0.05;
-    const e = emphasisOf(s, selected, sector);
-    if (e === "normal") return 0.22;
-    return e === "on" ? 0.9 : 0.04;
-  };
-
-  return (
-    <div className="relative overflow-x-auto" ref={boxRef}>
-      <svg
-        viewBox={`0 0 ${PC_W} ${PC_H}`}
-        className="h-auto w-full min-w-[640px]"
-        onMouseLeave={() => {
-          setHoverKey(null);
-          setTip(null);
-        }}
-      >
-        {PARALLEL_AXES.map((a, i) => {
-          const ax = axisX(i);
-          return (
-            <g key={a.key}>
-              <line x1={ax} x2={ax} y1={y(0)} y2={y(100)} stroke="rgba(255,255,255,0.18)" />
-              {[0, 25, 50, 75, 100].map((tk) => (
-                <g key={tk}>
-                  <line x1={ax - 3} x2={ax + 3} y1={y(tk)} y2={y(tk)} stroke="rgba(255,255,255,0.25)" />
-                  <text
-                    x={i === 0 ? ax - 8 : ax + 8}
-                    y={y(tk) + 4}
-                    fill="rgba(255,255,255,0.4)"
-                    fontSize="10"
-                    textAnchor={i === 0 ? "end" : "start"}
-                    className="tabular-nums"
-                  >
-                    {tk}
-                  </text>
-                </g>
-              ))}
-              <text x={ax} y={PC_H - 14} fill="rgba(255,255,255,0.85)" fontSize="13" fontWeight={600} textAnchor="middle">
-                {t.metrics[a.key].label}
-              </text>
-            </g>
-          );
-        })}
-
-        {ordered.map((s) => {
-          const e = emphasisOf(s, selected, sector);
-          return (
-            <path
-              key={s.key}
-              d={`M ${lineFor(s)}`}
-              fill="none"
-              stroke={sectorColor(s.sector)}
-              strokeWidth={hoverKey === s.key || (e === "on" && selected.has(s.key)) ? 2.5 : 1}
-              strokeOpacity={opacityOf(s)}
-              className="cursor-pointer"
-              onMouseEnter={(ev) => {
-                setHoverKey(s.key);
-                const box = boxRef.current?.getBoundingClientRect();
-                if (box) setTip({ x: ev.clientX - box.left, y: ev.clientY - box.top });
-              }}
-              onMouseMove={(ev) => {
-                const box = boxRef.current?.getBoundingClientRect();
-                if (box) setTip({ x: ev.clientX - box.left, y: ev.clientY - box.top });
-              }}
-            />
-          );
-        })}
-
-        {/* name labels at the right end of pinned lines */}
-        {ordered
-          .filter((s) => selected.has(s.key))
-          .map((s) => (
-            <text
-              key={`lbl-${s.key}`}
-              x={axisX(n - 1) + 6}
-              y={y(s[PARALLEL_AXES[n - 1].key]) + 4}
-              fill="rgba(255,255,255,0.92)"
-              fontSize="11"
-              fontWeight={600}
-              textAnchor="start"
-            >
-              {s.school}
-            </text>
-          ))}
-      </svg>
-
-      {hovered && tip && (
-        <div
-          className="pointer-events-none absolute z-20 w-max max-w-[240px] -translate-x-1/2 -translate-y-full rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl"
-          style={{ left: tip.x, top: tip.y - 10 }}
-        >
-          <div className="font-bold text-foreground">{hovered.school}</div>
-          {hovered.council && (
-            <div className="text-muted-foreground/70">{hovered.council}</div>
-          )}
-          <div dir="ltr" className="mt-0.5 text-muted-foreground tabular-nums">
-            {PARALLEL_AXES.map((a) => `${hovered[a.key]}%`).join(" · ")}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------- Shared filter bar: gender · sector · school search ---------- */
+/* ---------- Card header filters: gender · sector · school search ---------- */
 function SchoolFilterBar({
   gender,
   onGender,
@@ -339,7 +195,7 @@ function SchoolFilterBar({
   const sectors = Object.keys(SECTOR_COLOR);
 
   return (
-    <div className="space-y-3">
+    <div className="w-full space-y-3 sm:min-w-[min(34rem,100%)]">
       <div className="flex flex-wrap items-center gap-3">
         <GenderToggle value={gender} onChange={onGender} surface="schools_filter" />
 
@@ -443,9 +299,8 @@ function SchoolFilterBar({
   );
 }
 
-/* The two school-level distribution charts, sharing one filter bar.
- * Pure client-side SVG — render after mount so SSR and first client paint
- * agree (same gate the lab uses). */
+/* The school distribution beeswarm with its header filters. Pure client-side
+ * SVG — render after mount so SSR and first client paint agree. */
 export function SchoolCharts() {
   const t = useT();
   const locale = useLocale();
@@ -473,34 +328,26 @@ export function SchoolCharts() {
     });
   const clearSchools = () => setSelected(new Map());
 
-  if (!mounted) return <SectionSkeleton panels={2} />;
+  if (!mounted) return <SectionSkeleton panels={1} />;
 
   return (
-    <div className="space-y-6">
-      {/* one filter bar drives both charts below */}
-      <SchoolFilterBar
-        gender={gender}
-        onGender={setGender}
-        sector={sector}
-        onSector={setSector}
-        schools={profiles}
-        selected={selected}
-        onAdd={addSchool}
-        onRemove={removeSchool}
-        onClear={clearSchools}
-        t={t}
-        locale={locale}
-      />
-
-      <Panel>
-        <PanelHeader title={t.lab.histTitle} subtitle={t.lab.histSubtitle} />
-        <Beeswarm dots={dots} selected={selectedKeys} sector={sector} />
-      </Panel>
-
-      <Panel>
-        <PanelHeader title={t.lab.parallelTitle} subtitle={t.lab.parallelSubtitle} />
-        <ParallelCoords schools={profiles} selected={selectedKeys} sector={sector} t={t} />
-      </Panel>
-    </div>
+    <ChartPanel>
+      <ChartHeader title={t.lab.histTitle} subtitle={t.lab.histSubtitle}>
+        <SchoolFilterBar
+          gender={gender}
+          onGender={setGender}
+          sector={sector}
+          onSector={setSector}
+          schools={profiles}
+          selected={selected}
+          onAdd={addSchool}
+          onRemove={removeSchool}
+          onClear={clearSchools}
+          t={t}
+          locale={locale}
+        />
+      </ChartHeader>
+      <Beeswarm dots={dots} selected={selectedKeys} sector={sector} />
+    </ChartPanel>
   );
 }

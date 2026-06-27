@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Explorer } from "@/components/dashboard/explorer";
+import { SchoolRidgelinePanel } from "@/components/lab/lab";
 import { Leaderboards } from "@/components/sectors/leaderboards";
 import { SchoolCharts } from "@/components/schools/school-charts";
 import { SchoolCloud } from "@/components/schools/school-cloud";
@@ -25,12 +26,12 @@ export default async function Page({ params }: Props) {
     <div>
       <SectionHeading title={t.searchTab.title} subtitle={t.searchTab.subtitle} />
       <div className="space-y-8">
-        {/* charts on top — the visual story */}
+        <Leaderboards />
         <SchoolCharts />
+        <SchoolRidgelinePanel />
         <SchoolCloud />
         <SchoolTerrain />
-        <Leaderboards />
-        {/* the lookup table at the bottom — drill into any school */}
+        {/* lookup table stays last so charts tell the story before drill-down */}
         <Explorer rows={rows} zeroRows={zeros} />
       </div>
     </div>

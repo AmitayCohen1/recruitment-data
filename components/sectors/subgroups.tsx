@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartFootnote, ChartHeader, ChartPanel } from "@/components/ui/panel";
 import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { track } from "@/lib/analytics";
 import {
@@ -13,7 +13,7 @@ import {
 } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
-import { sectorLabel } from "@/lib/i18n/labels";
+import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 
 export function Subgroups({
   metric: metricProp,
@@ -32,10 +32,11 @@ export function Subgroups({
   const max = Math.max(...rows.map((r) => (r[metric] as number) ?? 0), 1);
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.subgroups.title}
         subtitle={t.subgroups.subtitle}
+        exportCaption={`${sectorLabel(sector, locale)} · ${t.metrics[metric].short} · ${genderLabel(gender, locale)}`}
       >
         {!controlled && (
           <div className="flex flex-wrap gap-2">
@@ -43,7 +44,7 @@ export function Subgroups({
             <MetricTabsS value={metric} onChange={setMetric} surface="subgroups" />
           </div>
         )}
-      </PanelHeader>
+      </ChartHeader>
 
       <ControlGroup className="mb-4">
         {SECTORS.map((s) => (
@@ -95,9 +96,7 @@ export function Subgroups({
           })}
         </ul>
       )}
-      <p className="pt-4 text-xs text-muted-foreground">
-        {t.subgroups.footnote}
-      </p>
-    </Panel>
+      <ChartFootnote>{t.subgroups.footnote}</ChartFootnote>
+    </ChartPanel>
   );
 }

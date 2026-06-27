@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { SectionHeading } from "@/components/dashboard/section-heading";
-import { ServicePipelinePanels } from "@/components/lab/lab";
-import { GapsOverview } from "@/components/sectors/gaps-overview";
+import { GenderGap } from "@/components/sectors/gender-gap";
+import { ArmyStream } from "@/components/sectors/army-stream";
+import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
+import { SectorBars3D } from "@/components/sectors/sector-bars-3d";
+import { SectorOverview } from "@/components/sectors/sector-overview";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { sectionMetadata } from "@/lib/section-meta";
@@ -9,7 +12,7 @@ import { sectionMetadata } from "@/lib/section-meta";
 type Props = { params: Promise<{ lang: string }> };
 
 export const generateMetadata = ({ params }: Props): Promise<Metadata> =>
-  sectionMetadata(params, "sectors");
+  sectionMetadata(params, "overview");
 
 export default async function Page({ params }: Props) {
   const { lang } = await params;
@@ -18,10 +21,16 @@ export default async function Page({ params }: Props) {
 
   return (
     <div>
-      <SectionHeading title={t.sectorsTab.title} subtitle={t.sectorsTab.subtitle} />
+      <SectionHeading
+        title={t.overviewTab.title}
+        subtitle={t.overviewTab.subtitle}
+      />
       <div className="space-y-6">
-        <GapsOverview />
-        <ServicePipelinePanels />
+        <SectorOverview />
+        <SectorBars3D />
+        <ArmyStream />
+        <SectorHeatmap />
+        <GenderGap />
       </div>
     </div>
   );

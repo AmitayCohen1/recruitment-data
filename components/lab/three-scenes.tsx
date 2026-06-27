@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Html, Line } from "@react-three/drei";
 import { Pause, Play, X } from "lucide-react";
-import { ChipLegend, Panel, PanelHeader } from "@/components/ui/panel";
+import { ChartHeader, ChartLegend, ChartPanel } from "@/components/ui/panel";
 import { GenderToggle } from "@/components/sectors/controls";
 import {
   ControlGroup,
@@ -237,6 +237,52 @@ const AX = 5;
 const ax = (v: number) => (v / 100) * 2 * AX - AX;
 const DIM = new THREE.Color("#0b0f17");
 
+/* Classic 3-axis frame: three lines rising from the origin corner (0,0,0),
+ * each with an arrowhead and graduated ticks — instead of a full bounding box. */
+type V3 = [number, number, number];
+const AXIS_COL = "#cbd5e1"; // slate-300 — neutral so it won't clash with sector dots
+
+function AxisArrow({ at, rot }: { at: V3; rot: V3 }) {
+  return (
+    <mesh position={at} rotation={rot}>
+      <coneGeometry args={[0.13, 0.4, 16]} />
+      <meshBasicMaterial color={AXIS_COL} transparent opacity={0.8} />
+    </mesh>
+  );
+}
+
+function CloudAxes() {
+  const O: V3 = [-AX, -AX, -AX]; // origin = 0% on every metric
+  const ex: V3 = [AX, -AX, -AX]; // X → enlist
+  const ey: V3 = [-AX, AX, -AX]; // Y → combat
+  const ez: V3 = [-AX, -AX, AX]; // Z → officer
+  const ticks = [25, 50, 75, 100];
+  const tk = 0.25;
+  return (
+    <>
+      <Line points={[O, ex]} color={AXIS_COL} lineWidth={1.6} transparent opacity={0.6} />
+      <Line points={[O, ey]} color={AXIS_COL} lineWidth={1.6} transparent opacity={0.6} />
+      <Line points={[O, ez]} color={AXIS_COL} lineWidth={1.6} transparent opacity={0.6} />
+      <AxisArrow at={ex} rot={[0, 0, -Math.PI / 2]} />
+      <AxisArrow at={ey} rot={[0, 0, 0]} />
+      <AxisArrow at={ez} rot={[Math.PI / 2, 0, 0]} />
+      {ticks.map((v) => {
+        const a = ax(v);
+        return (
+          <React.Fragment key={v}>
+            <Line points={[[a, -AX, -AX], [a, -AX + tk, -AX]]} color={AXIS_COL} lineWidth={1} transparent opacity={0.4} />
+            <Line points={[[-AX, a, -AX], [-AX + tk, a, -AX]]} color={AXIS_COL} lineWidth={1} transparent opacity={0.4} />
+            <Line points={[[-AX, -AX, a], [-AX + tk, -AX, a]]} color={AXIS_COL} lineWidth={1} transparent opacity={0.4} />
+          </React.Fragment>
+        );
+      })}
+      <Html position={[-AX - 0.15, -AX - 0.15, -AX - 0.15]} center className="pointer-events-none">
+        <span className="text-[11px] tabular-nums text-white/45">0%</span>
+      </Html>
+    </>
+  );
+}
+
 type CloudMeta = {
   key: number;
   school: string;
@@ -311,10 +357,7 @@ function PointCloud({
 
   return (
     <>
-      <lineSegments>
-        <edgesGeometry args={[new THREE.BoxGeometry(2 * AX, 2 * AX, 2 * AX)]} />
-        <lineBasicMaterial color="#ffffff" transparent opacity={0.12} />
-      </lineSegments>
+      <CloudAxes />
 
       <instancedMesh
         ref={ref}
@@ -986,7 +1029,7 @@ function hasWebGL(): boolean {
 
 function SectorLegend({ locale }: { locale: Locale }) {
   return (
-    <ChipLegend
+    <ChartLegend
       items={Object.entries(SECTOR_COLOR).map(([s, c]) => ({
         label: sectorLabel(s, locale),
         color: c,
@@ -1011,13 +1054,13 @@ export function SchoolCloudScene() {
   const cloud = React.useMemo(() => schoolCloud(g, true), [g]);
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.three.cloudTitle}
-        subtitle={t.three.cloudSubtitle(cloud.length)}
+        subtitle={t.three.cloudSubtitle}
       >
         <GenderToggle value={gender} onChange={setGender} />
-      </PanelHeader>
+      </ChartHeader>
       <SectorLegend locale={locale} />
       {webgl === false ? (
         <p className="py-12 text-center text-sm text-muted-foreground">
@@ -1026,7 +1069,7 @@ export function SchoolCloudScene() {
       ) : (
         webgl && <CloudScene points={cloud} />
       )}
-    </Panel>
+    </ChartPanel>
   );
 }
 
@@ -1046,10 +1089,10 @@ export function SectorBarsScene() {
   const bars = React.useMemo(() => sectorBars(g), [g]);
 
   return (
-    <Panel>
-      <PanelHeader title={t.three.barTitle} subtitle={t.three.barSubtitle}>
+    <ChartPanel>
+      <ChartHeader title={t.three.barTitle} subtitle={t.three.barSubtitle}>
         <GenderToggle value={gender} onChange={setGender} />
-      </PanelHeader>
+      </ChartHeader>
       <SectorLegend locale={locale} />
       {webgl === false ? (
         <p className="py-12 text-center text-sm text-muted-foreground">
@@ -1062,7 +1105,7 @@ export function SectorBarsScene() {
           </Stage>
         )
       )}
-    </Panel>
+    </ChartPanel>
   );
 }
 
@@ -1081,13 +1124,13 @@ export function SectorTerrainScene() {
   const terrain = React.useMemo(() => schoolCloud(g), [g]); // latest year only
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.three.sectorTerrainTitle}
         subtitle={t.three.sectorTerrainSubtitle}
       >
         <GenderToggle value={gender} onChange={setGender} />
-      </PanelHeader>
+      </ChartHeader>
       {webgl === false ? (
         <p className="py-12 text-center text-sm text-muted-foreground">
           {t.three.webglError}
@@ -1095,6 +1138,6 @@ export function SectorTerrainScene() {
       ) : (
         webgl && <SectorTerrainPanel key={g} points={terrain} t={t} />
       )}
-    </Panel>
+    </ChartPanel>
   );
 }

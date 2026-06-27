@@ -558,14 +558,15 @@ export function sectorBars(gender: Gender): SectorBar[] {
 }
 
 /* ------------------------------------------------------------------ *
- *  9) Outliers — fit combat ≈ a·enlist + b across municipalities, then
- *     rank by residual: who serves combat far above/below what their
- *     enlistment rate predicts. The buck-the-trend story.
+ *  9) Outliers — fit outcome ≈ a·enlist + b across municipalities, then
+ *     rank by residual: who lands far above/below what their enlistment
+ *     rate predicts. The buck-the-trend story.
  * ------------------------------------------------------------------ */
+export type OutlierMetric = Exclude<MetricKey, "enlist">;
 export type OutlierPoint = {
   council: string;
   enlist: number;
-  combat: number;
+  value: number;
   n: number;
   fitted: number;
   resid: number;
@@ -573,6 +574,7 @@ export type OutlierPoint = {
 
 export function outliers(
   gender: Gender,
+  metric: OutlierMetric = "combat",
   minSchools = 4,
   year = LATEST,
 ): {
@@ -584,21 +586,21 @@ export function outliers(
   under: OutlierPoint[];
 } {
   const base = cityRows(ROWS, gender, year)
-    .filter((c) => c.n >= minSchools && c.enlist != null && c.combat != null)
+    .filter((c) => c.n >= minSchools && c.enlist != null && c[metric] != null)
     .map((c) => ({
       council: c.council,
       enlist: c.enlist as number,
-      combat: c.combat as number,
+      value: c[metric] as number,
       n: c.n,
     }));
 
   const N = base.length;
   const mx = base.reduce((a, b) => a + b.enlist, 0) / Math.max(1, N);
-  const my = base.reduce((a, b) => a + b.combat, 0) / Math.max(1, N);
+  const my = base.reduce((a, b) => a + b.value, 0) / Math.max(1, N);
   let sxy = 0;
   let sxx = 0;
   for (const p of base) {
-    sxy += (p.enlist - mx) * (p.combat - my);
+    sxy += (p.enlist - mx) * (p.value - my);
     sxx += (p.enlist - mx) ** 2;
   }
   const slope = sxx ? sxy / sxx : 0;
@@ -610,7 +612,7 @@ export function outliers(
       return {
         ...p,
         fitted: Math.round(fitted * 10) / 10,
-        resid: Math.round((p.combat - fitted) * 10) / 10,
+        resid: Math.round((p.value - fitted) * 10) / 10,
       };
     })
     .sort((a, b) => b.resid - a.resid);

@@ -6,10 +6,9 @@ import Image from "next/image";
 import {
   PieChart,
   Scale,
-  Search,
-  Download,
+  GraduationCap,
   Building2,
-  FlaskConical,
+  Database,
 } from "lucide-react";
 import "../globals.css";
 import cover from "@/public/cover.png";
@@ -26,7 +25,6 @@ import { LanguageToggle } from "@/components/i18n/language-toggle";
 import { TabNav, type NavItem } from "@/components/dashboard/tab-nav";
 import { Notes } from "@/components/dashboard/notes";
 import { SectionTracker } from "@/components/analytics/section-tracker";
-import { TOTAL_SCHOOLS } from "@/lib/data";
 
 const heebo = Heebo({
   variable: "--font-heebo",
@@ -91,12 +89,11 @@ export default async function RootLayout({
   const t = getDictionary(lang);
 
   const navItems: NavItem[] = [
-    { id: "sectors", label: t.tabs.sectors, icon: <PieChart className="size-4" /> },
-    { id: "gaps", label: t.tabs.gaps, icon: <Scale className="size-4" /> },
+    { id: "overview", label: t.tabs.overview, icon: <PieChart className="size-4" /> },
+    { id: "sectors", label: t.tabs.sectors, icon: <Scale className="size-4" /> },
     { id: "cities", label: t.tabs.cities, icon: <Building2 className="size-4" /> },
-    { id: "schools", label: t.tabs.search, icon: <Search className="size-4" /> },
-    { id: "lab", label: t.tabs.lab, icon: <FlaskConical className="size-4" /> },
-    { id: "sources", label: t.tabs.sources, icon: <Download className="size-4" /> },
+    { id: "schools", label: t.tabs.search, icon: <GraduationCap className="size-4" /> },
+    { id: "sources", label: t.tabs.sources, icon: <Database className="size-4" /> },
   ];
 
   return (
@@ -129,7 +126,7 @@ export default async function RootLayout({
                   {t.hero.title}
                 </h1>
                 <p className="mt-2.5 max-w-2xl text-sm leading-6 text-white/80 drop-shadow-md sm:text-base sm:leading-7">
-                  {t.hero.subtitle(TOTAL_SCHOOLS.toLocaleString(htmlLang(lang)))}
+                  {t.hero.subtitle}
                 </p>
                 <p className="mt-3.5 text-sm font-medium text-white drop-shadow-md sm:text-base">
                   {t.hero.feedback}{" "}

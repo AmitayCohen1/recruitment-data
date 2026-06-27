@@ -1,7 +1,7 @@
 "use client";
 
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-import { Panel, PanelHeader, ChipLegend } from "@/components/ui/panel";
+import { ChartHeader, ChartLegend, ChartPanel } from "@/components/ui/panel";
 import {
   ChartContainer,
   ChartTooltip,
@@ -28,16 +28,16 @@ export function SectorTrend({
   const t = useT();
   const locale = useLocale();
   const data = trend(metric, gender);
-  const label = t.metrics[metric].label;
   const config = Object.fromEntries(
     SECTORS.map((s) => [s, { label: sectorLabel(s, locale), color: SECTOR_COLOR[s] }]),
   ) satisfies ChartConfig;
 
   return (
-    <Panel>
-      <PanelHeader
+    <ChartPanel>
+      <ChartHeader
         title={t.trend.title}
-        subtitle={t.trend.subtitle(label, genderLabel(gender, locale))}
+        subtitle={t.trend.subtitle}
+        exportCaption={`${t.metrics[metric].short} · ${genderLabel(gender, locale)}`}
       />
       <ChartContainer config={config} className="h-[300px] w-full">
         <LineChart data={data} margin={{ left: 4, right: 16, top: 12, bottom: 4 }}>
@@ -73,9 +73,9 @@ export function SectorTrend({
           ))}
         </LineChart>
       </ChartContainer>
-      <ChipLegend
+      <ChartLegend
         items={SECTORS.map((s) => ({ label: sectorLabel(s, locale), color: SECTOR_COLOR[s] }))}
       />
-    </Panel>
+    </ChartPanel>
   );
 }

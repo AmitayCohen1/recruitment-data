@@ -1,44 +1,52 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader, PanelInsight } from "@/components/ui/panel";
+import {
+  ChartFootnote,
+  ChartHeader,
+  ChartPanel,
+} from "@/components/ui/panel";
+import { GenderToggle } from "@/components/sectors/controls";
 import { useLocale } from "@/components/i18n/locale-provider";
 import { genderLabel } from "@/lib/i18n/labels";
 import type { Gender } from "@/lib/data";
 import type { SGender } from "@/lib/sectors";
 
-/** Lab shares ONE gender filter (set in the tab's top FilterBar) across every
- *  panel, passed down through this context so each panel reads the same value
- *  instead of owning its own toggle. */
-export const LabGenderCtx = React.createContext<{ g: Gender; gender: SGender }>({
-  g: "m",
-  gender: "בנים",
-});
+/** Lab shares ONE gender value across every panel, but each card renders the
+ *  control in its own header to match the dashboard's card-local filter rule. */
+export const LabGenderCtx = React.createContext<{
+  g: Gender;
+  gender: SGender;
+  setGender: (gender: SGender) => void;
+}>({ g: "m", gender: "בנים", setGender: () => undefined });
 
 export function GenderPanel({
   title,
   subtitle,
-  insight,
   note,
+  surface,
   children,
 }: {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
-  insight?: React.ReactNode;
-  /** accepted for call-site compatibility; analytics now live on the shared toggle */
   surface?: string;
   /** muted caption under the chart — e.g. a data-method disclosure */
   note?: React.ReactNode;
   children: (g: Gender, gender: SGender) => React.ReactNode;
 }) {
-  const { g, gender } = React.useContext(LabGenderCtx);
+  const { g, gender, setGender } = React.useContext(LabGenderCtx);
   const locale = useLocale();
   return (
-    <Panel>
-      <PanelHeader title={title} subtitle={subtitle} exportCaption={genderLabel(gender, locale)} />
+    <ChartPanel>
+      <ChartHeader
+        title={title}
+        subtitle={subtitle}
+        exportCaption={genderLabel(gender, locale)}
+      >
+        <GenderToggle value={gender} onChange={setGender} surface={surface} />
+      </ChartHeader>
       {children(g, gender)}
-      {note && <p className="mt-3 text-xs text-muted-foreground/70">{note}</p>}
-      {insight && <PanelInsight>{insight}</PanelInsight>}
-    </Panel>
+      {note && <ChartFootnote>{note}</ChartFootnote>}
+    </ChartPanel>
   );
 }
