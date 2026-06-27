@@ -2,13 +2,17 @@
 
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { cn } from "@/lib/utils";
+import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { track } from "@/lib/analytics";
-import { R_SECTORS, REGION_COLOR, regionView } from "@/lib/regions";
-import { NEUTRAL, type SGender, type SMetric } from "@/lib/sectors";
+import { R_SECTORS, regionView } from "@/lib/regions";
+import { type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
-import { regionLabel, sectorFilterLabel } from "@/lib/i18n/labels";
+import { regionLabel, sectorFilterLabel, genderLabel } from "@/lib/i18n/labels";
+
+// Every bar encodes the same metric — length carries the value, so one accent
+// keeps the ranking readable without rainbow noise. Order is shown by the rank number.
+const ACCENT = "#38bdf8"; // sky
 
 export function RegionView({
   metric: metricProp,
@@ -42,26 +46,21 @@ export function RegionView({
       </PanelHeader>
 
       {/* which sector's regions — this chart's own axis selector */}
-      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+      <ControlGroup className="mb-4">
         {R_SECTORS.map((s) => (
-          <button
+          <SegmentButton
             key={s}
             type="button"
+            active={sector === s}
             onClick={() => {
               if (sector !== s) track("sector_filter", { surface: "region", sector: s });
               setSector(s);
             }}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              sector === s
-                ? "bg-white/10 text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
           >
             {sectorFilterLabel(s, locale)}
-          </button>
+          </SegmentButton>
         ))}
-      </div>
+      </ControlGroup>
 
       {rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
@@ -70,24 +69,20 @@ export function RegionView({
       ) : (
         <ul className="space-y-3">
           {rows.map((r, i) => {
-            const color = REGION_COLOR[r.region] ?? NEUTRAL;
             return (
               <li key={r.region} className="flex items-center gap-3">
                 <span className="w-5 shrink-0 text-center text-xs tabular-nums text-muted-foreground">
                   {i + 1}
                 </span>
-                <span
-                  className="w-24 shrink-0 truncate text-sm sm:w-32"
-                  style={{ color }}
-                >
+                <span className="w-24 shrink-0 truncate text-sm text-foreground sm:w-32">
                   {regionLabel(r.region, locale)}
                 </span>
-                <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/[0.04]">
+                <div className="relative h-8 flex-1 overflow-hidden rounded-lg bg-white/4">
                   <div
                     className="absolute inset-y-0 right-0 rounded-lg"
                     style={{
                       width: `${(r.value / max) * 100}%`,
-                      background: color,
+                      background: ACCENT,
                     }}
                   />
                 </div>

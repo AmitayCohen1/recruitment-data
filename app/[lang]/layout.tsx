@@ -10,7 +10,6 @@ import {
   Download,
   Building2,
   FlaskConical,
-  Boxes,
 } from "lucide-react";
 import "../globals.css";
 import cover from "@/public/cover.png";
@@ -97,7 +96,6 @@ export default async function RootLayout({
     { id: "cities", label: t.tabs.cities, icon: <Building2 className="size-4" /> },
     { id: "schools", label: t.tabs.search, icon: <Search className="size-4" /> },
     { id: "lab", label: t.tabs.lab, icon: <FlaskConical className="size-4" /> },
-    { id: "three", label: t.tabs.three, icon: <Boxes className="size-4" /> },
     { id: "sources", label: t.tabs.sources, icon: <Download className="size-4" /> },
   ];
 

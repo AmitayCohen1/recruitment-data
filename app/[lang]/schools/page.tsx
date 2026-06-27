@@ -3,6 +3,7 @@ import { Explorer } from "@/components/dashboard/explorer";
 import { Leaderboards } from "@/components/sectors/leaderboards";
 import { SchoolCharts } from "@/components/schools/school-charts";
 import { SchoolCloud } from "@/components/schools/school-cloud";
+import { SchoolTerrain } from "@/components/schools/school-terrain";
 import { SectionHeading } from "@/components/dashboard/section-heading";
 import { compactRows, zeroRows } from "@/lib/data";
 import { isLocale, type Locale } from "@/lib/i18n/config";
@@ -27,6 +28,7 @@ export default async function Page({ params }: Props) {
         {/* charts on top — the visual story */}
         <SchoolCharts />
         <SchoolCloud />
+        <SchoolTerrain />
         <Leaderboards />
         {/* the lookup table at the bottom — drill into any school */}
         <Explorer rows={rows} zeroRows={zeros} />

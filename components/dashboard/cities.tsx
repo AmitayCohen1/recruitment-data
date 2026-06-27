@@ -5,14 +5,24 @@ import { ArrowDown, ArrowUp, Plus, Search, X } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { GenderToggle } from "@/components/sectors/controls";
+import {
+  Button,
+  ControlGroup,
+  FilterChip,
+  FilterInput,
+  FilterSelect,
+  SegmentButton,
+} from "@/components/ui/control";
 import { cn } from "@/lib/utils";
 import {
   LATEST,
+  FIRST,
   type CompactRow,
   type Gender,
   type MetricKey,
 } from "@/lib/data";
-import { cityRows, splitFeatured, BIG_CITIES, cityColor } from "@/lib/cities";
+import { cityRows, splitFeatured, BIG_CITIES, cityColor, type CityRow } from "@/lib/cities";
+import { Delta } from "@/components/ui/delta";
 import { SECTORS, type SGender } from "@/lib/sectors";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { sectorFilterLabel } from "@/lib/i18n/labels";
@@ -23,7 +33,6 @@ const RANK_METRICS: MetricKey[] = ["enlist", "combat", "officer"];
 const ALL = "הכל";
 /** Quiet floor for the "all" ranking, so single-school towns don't top it. */
 const MIN_SCHOOLS = 2;
-const LIMIT = 50;
 
 function pct(v: number | null) {
   return v === null ? "—" : `${v.toFixed(1)}%`;
@@ -34,7 +43,7 @@ function cellColor(v: number | null) {
   return v === null ? "text-muted-foreground" : "text-foreground";
 }
 
-type SortKey = "council" | "n" | "enlist" | "combat" | "officer" | "meaning";
+type SortKey = "council" | "n" | "enlist" | "combat" | "officer";
 
 const TABLE_COLS: { key: SortKey; metric: boolean }[] = [
   { key: "council", metric: false },
@@ -42,7 +51,6 @@ const TABLE_COLS: { key: SortKey; metric: boolean }[] = [
   { key: "enlist", metric: true },
   { key: "combat", metric: true },
   { key: "officer", metric: true },
-  { key: "meaning", metric: true },
 ];
 
 function colLabels(key: SortKey, t: Dictionary): [string, string] {
@@ -57,8 +65,6 @@ function colLabels(key: SortKey, t: Dictionary): [string, string] {
       return [t.metrics.combat.long, t.metrics.combat.short];
     case "officer":
       return [t.metrics.officer.long, t.metrics.officer.short];
-    case "meaning":
-      return [t.cities.colMeaning, t.cities.colMeaningShort];
   }
 }
 
@@ -68,6 +74,7 @@ function Bar({
   value,
   max,
   accent = ACCENT,
+  swatch,
   rank,
   note,
 }: {
@@ -75,6 +82,8 @@ function Bar({
   value: number | null;
   max: number;
   accent?: string;
+  /** Identity color shown as a small dot next to the label; the bar stays neutral. */
+  swatch?: string;
   rank?: number;
   note?: string;
 }) {
@@ -85,14 +94,22 @@ function Bar({
           {rank}
         </span>
       )}
-      <div className="flex w-24 shrink-0 flex-col sm:w-36">
-        <span className="truncate text-sm text-foreground">{label}</span>
-        {note && <span className="text-[10px] text-muted-foreground">{note}</span>}
+      <div className="flex w-24 shrink-0 items-center gap-1.5 sm:w-36">
+        {swatch && (
+          <span
+            className="size-2 shrink-0 rounded-full"
+            style={{ background: swatch }}
+          />
+        )}
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-sm text-foreground">{label}</span>
+          {note && <span className="text-[10px] text-muted-foreground">{note}</span>}
+        </div>
       </div>
-      <div className="relative h-7 flex-1 overflow-hidden rounded-md bg-white/[0.04]">
+      <div className="relative h-7 flex-1 overflow-hidden rounded-md bg-white/4">
         {value != null && (
           <div
-            className="absolute inset-y-0 start-0 rounded-md"
+            className="absolute inset-y-0 inset-s-0 rounded-md"
             style={{ width: `${(value / max) * 100}%`, background: accent }}
           />
         )}
@@ -180,6 +197,13 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
     [rows, g, sectorFilter, featuredNames],
   );
 
+  // First-year (2018) city averages, for the change badge in the ranking table.
+  const baseline = React.useMemo(() => {
+    const m = new Map<string, CityRow>();
+    for (const c of cityRows(rows, g, FIRST, sectorFilter)) m.set(c.council, c);
+    return m;
+  }, [rows, g, sectorFilter]);
+
   // Shared scale so the featured bars and the ranking are comparable.
   const max = React.useMemo(() => {
     const vals = [...featured, ...rest]
@@ -227,20 +251,6 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
     return () => clearTimeout(id);
   }, [q]);
 
-  const inputCls =
-    "h-9 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
-  const pill =
-    "inline-flex flex-wrap items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1";
-  const pillBtn = (active: boolean) =>
-    cn(
-      // fixed height + centered keeps the active highlight aligned in
-      // html-to-image PNG export, where emoji metrics shift the box.
-      "flex h-8 items-center justify-center rounded-md px-3 text-sm font-medium leading-none transition-colors",
-      active
-        ? "bg-white/10 text-foreground shadow-sm"
-        : "text-muted-foreground hover:text-foreground",
-    );
-
   return (
     <Panel>
       <PanelHeader title={t.cities.title}>
@@ -249,71 +259,69 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
 
       {/* controls: metric drives the ranking + trend; sector scopes which schools count */}
       <div className="mb-5 flex flex-wrap items-center gap-2">
-        <div className={pill}>
+        <ControlGroup>
           {RANK_METRICS.map((m) => (
-            <button
+            <SegmentButton
               key={m}
               type="button"
+              active={metric === m}
               onClick={() => {
                 setMetric(m);
                 track("cities_metric", { metric: m });
               }}
-              className={pillBtn(metric === m)}
+              // Fixed height keeps emoji metric labels aligned in PNG export.
+              className="flex h-8 items-center justify-center leading-none"
             >
               {t.metrics[m].short}
-            </button>
+            </SegmentButton>
           ))}
-        </div>
-        <div className={pill}>
+        </ControlGroup>
+        <ControlGroup>
           {[ALL, ...SECTORS].map((s) => (
-            <button
+            <SegmentButton
               key={s}
               type="button"
+              active={sector === s}
               onClick={() => {
                 setSector(s);
                 track("cities_sector", { sector: s });
               }}
-              className={pillBtn(sector === s)}
+              className="flex h-8 items-center justify-center leading-none"
             >
               {sectorFilterLabel(s, locale)}
-            </button>
+            </SegmentButton>
           ))}
-        </div>
+        </ControlGroup>
       </div>
 
       {/* city manager — removable chips + add picker. Controls which cities
           are featured in the bar list below. */}
       <div className="mb-6 flex flex-wrap items-center gap-1.5">
         {featuredNames.map((c) => (
-          <span
+          <FilterChip
             key={c}
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] py-1 pe-1 ps-2.5 text-xs text-foreground"
+            type="button"
+            onClick={() => removeCity(c)}
+            aria-label={t.cities.removeCity}
+            title={t.cities.removeCity}
           >
             <span
               className="size-2 rounded-full"
               style={{ background: colorFor(c) }}
             />
             {c}
-            <button
-              type="button"
-              onClick={() => removeCity(c)}
-              aria-label={t.cities.removeCity}
-              title={t.cities.removeCity}
-              className="rounded-full p-0.5 text-muted-foreground transition hover:bg-white/10 hover:text-foreground"
-            >
-              <X className="size-3" />
-            </button>
-          </span>
+            <X className="size-3 text-muted-foreground" />
+          </FilterChip>
         ))}
         <div className="relative">
-          <Plus className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-          <select
+          <Plus className="pointer-events-none absolute inset-s-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <FilterSelect
             value=""
             onChange={(e) => {
               addCity(e.target.value);
               e.currentTarget.value = "";
             }}
-            className="h-7 rounded-full border border-dashed border-white/15 bg-transparent ps-7 pe-2 text-xs text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+            className="h-7 rounded-full border-dashed border-white/15 bg-transparent ps-7 pe-2 text-xs text-muted-foreground hover:text-foreground"
           >
             <option value="" className="bg-popover">
               {t.cities.addCity}
@@ -323,16 +331,17 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
                 {c}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         </div>
         {!isDefault && (
-          <button
+          <Button
             type="button"
+            variant="link"
             onClick={() => setFeaturedNames([...BIG_CITIES])}
-            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            className="text-xs"
           >
             {t.cities.reset}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -348,7 +357,7 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
               label={c.council}
               value={c[metric]}
               max={max}
-              accent={colorFor(c.council)}
+              swatch={colorFor(c.council)}
               note={c.n > 0 ? t.cities.schoolsCount(c.n) : t.cities.noData}
             />
           </div>
@@ -361,15 +370,16 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
           {t.cities.restHeading}
         </span>
         <div className="relative w-full sm:w-64">
-          <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Search className="absolute inset-s-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <FilterInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t.cities.searchPlaceholder}
-            className={cn(inputCls, "w-full ps-9")}
+            className="w-full ps-9"
           />
         </div>
       </div>
+      <p className="mb-2 text-xs text-muted-foreground">{t.delta.legend(FIRST)}</p>
       <div className="overflow-x-auto rounded-xl border border-white/10">
         <table className="w-full text-sm">
           <thead>
@@ -406,7 +416,7 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {ranked.slice(0, LIMIT).map((c) => (
+            {ranked.map((c) => (
               <tr
                 key={c.council}
                 className="border-b border-white/5 last:border-0 hover:bg-white/3"
@@ -417,26 +427,35 @@ export function Cities({ rows }: { rows: CompactRow[] }) {
                 <td className="px-2.5 py-2.5 text-center tabular-nums text-muted-foreground sm:px-3">
                   {c.n}
                 </td>
-                {(["enlist", "combat", "officer", "meaning"] as const).map((m) => (
-                  <td
-                    key={m}
-                    className={cn(
-                      "px-2.5 py-2.5 text-center tabular-nums sm:px-3",
-                      cellColor(c[m]),
-                    )}
-                  >
-                    {pct(c[m])}
-                  </td>
-                ))}
+                {(["enlist", "combat", "officer"] as const).map((m) => {
+                  const base = baseline.get(c.council);
+                  const cur = c[m];
+                  const bv = base?.[m] ?? null;
+                  return (
+                    <td
+                      key={m}
+                      className={cn(
+                        "px-2.5 py-2.5 text-center tabular-nums sm:px-3",
+                        cellColor(cur),
+                      )}
+                    >
+                      <div className="flex flex-col items-center leading-tight">
+                        <span>{pct(cur)}</span>
+                        <Delta
+                          value={cur != null && bv != null ? cur - bv : null}
+                          title={t.delta.vs(FIRST)}
+                        />
+                      </div>
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <p className="pt-3 text-center text-xs text-muted-foreground">
-        {ranked.length > LIMIT
-          ? t.cities.resultsNote(LIMIT, ranked.length)
-          : t.cities.countNote(ranked.length)}
+        {t.cities.countNote(ranked.length)}
       </p>
     </Panel>
   );

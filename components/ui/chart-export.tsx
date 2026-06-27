@@ -5,19 +5,52 @@ import { Check, Download, Share2, Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { useT } from "@/components/i18n/locale-provider";
 import { Dialog } from "@/components/ui/dialog";
+import { Button, IconButton } from "@/components/ui/control";
 
-/** Capture the given panel node to a PNG blob (excludes this control itself). */
+/** Capture the given panel node to a PNG blob (excludes any [data-export-ignore]).
+ *  html-to-image's first pass frequently misses async resources (web fonts,
+ *  emoji, freshly-laid-out flex/% widths), which shows up as garbled or
+ *  ballooned elements. Waiting for fonts and rendering twice — discarding the
+ *  warm-up pass — yields a complete, stable frame. */
 async function nodeToBlob(node: HTMLElement): Promise<Blob | null> {
   const { toBlob } = await import("html-to-image");
-  const bg =
-    getComputedStyle(document.body).backgroundColor || "#0a0a0b";
-  return toBlob(node, {
-    pixelRatio: 2,
-    backgroundColor: bg,
-    cacheBust: true,
-    filter: (n) =>
-      !(n instanceof HTMLElement && n.dataset.exportIgnore !== undefined),
+  const bg = getComputedStyle(document.body).backgroundColor || "#0a0a0b";
+
+  // Reveal [data-export-only] captions (e.g. "which metric/gender") for the
+  // duration of the capture — they're hidden on screen so they don't duplicate
+  // the live toggle, but the exported image should carry that context.
+  const exportOnly = Array.from(
+    node.querySelectorAll<HTMLElement>("[data-export-only]"),
+  );
+  exportOnly.forEach((el) => {
+    el.style.display = "block";
   });
+
+  try {
+    // make sure fonts/emoji are ready and layout has settled before capture
+    if (document.fonts?.ready) {
+      try {
+        await document.fonts.ready;
+      } catch {
+        /* fonts API unsupported — proceed */
+      }
+    }
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    const opts = {
+      pixelRatio: 2,
+      backgroundColor: bg,
+      cacheBust: true,
+      filter: (n: HTMLElement) =>
+        !(n instanceof HTMLElement && n.dataset.exportIgnore !== undefined),
+    };
+
+    // warm-up pass primes embedded fonts/images; the second pass is the keeper
+    await toBlob(node, opts);
+    return await toBlob(node, opts);
+  } finally {
+    exportOnly.forEach((el) => el.style.removeProperty("display"));
+  }
 }
 
 export function ChartExport({
@@ -133,27 +166,23 @@ export function ChartExport({
     }
   }
 
-  // One large, touch-friendly row per action inside the modal.
-  const item =
-    "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start text-base font-medium text-foreground transition-colors hover:bg-white/5 disabled:opacity-50";
-
   return (
     <div data-export-ignore>
-      <button
+      <IconButton
         type="button"
         onClick={() => {
           setXIntent(null);
           setOpen(true);
         }}
         aria-label={t.chartExport.ariaLabel}
-        className="inline-flex size-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted-foreground transition-colors hover:text-foreground"
+        size="sm"
       >
         {busy ? (
           <Loader2 className="size-4 animate-spin" />
         ) : (
           <Share2 className="size-4" />
         )}
-      </button>
+      </IconButton>
 
       <Dialog
         open={open}
@@ -162,20 +191,38 @@ export function ChartExport({
         className="max-w-sm"
       >
         <div className="flex flex-col gap-1">
-          <button type="button" className={item} onClick={download} disabled={busy}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto w-full justify-start px-4 py-3 text-start text-base"
+            onClick={download}
+            disabled={busy}
+          >
             <Download className="size-5 shrink-0 text-muted-foreground" />
             {t.chartExport.downloadPng}
-          </button>
-          <button type="button" className={item} onClick={share} disabled={busy}>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto w-full justify-start px-4 py-3 text-start text-base"
+            onClick={share}
+            disabled={busy}
+          >
             <Share2 className="size-5 shrink-0 text-muted-foreground" />
             {t.chartExport.share}
-          </button>
-          <button type="button" className={item} onClick={tweet} disabled={busy}>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto w-full justify-start px-4 py-3 text-start text-base"
+            onClick={tweet}
+            disabled={busy}
+          >
             <span className="w-5 shrink-0 text-center text-lg text-muted-foreground">
               𝕏
             </span>
             {t.chartExport.shareX} {busy && "…"}
-          </button>
+          </Button>
           {xIntent && (
             <a
               href={xIntent}

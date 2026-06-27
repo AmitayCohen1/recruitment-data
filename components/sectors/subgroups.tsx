@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { cn } from "@/lib/utils";
+import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { track } from "@/lib/analytics";
 import {
   SECTORS,
@@ -45,25 +45,22 @@ export function Subgroups({
         )}
       </PanelHeader>
 
-      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-xl border border-white/10 bg-white/3 p-1">
+      <ControlGroup className="mb-4">
         {SECTORS.map((s) => (
-          <button
+          <SegmentButton
             key={s}
             type="button"
+            active={sector === s}
             onClick={() => {
               if (sector !== s) track("sector_filter", { surface: "subgroups", sector: s });
               setSector(s);
             }}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              sector === s ? "text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
-            )}
             style={sector === s ? { background: `${SECTOR_COLOR[s]}22`, color: SECTOR_COLOR[s] } : undefined}
           >
             {sectorLabel(s, locale)}
-          </button>
+          </SegmentButton>
         ))}
-      </div>
+      </ControlGroup>
 
       {rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">

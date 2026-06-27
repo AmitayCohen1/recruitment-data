@@ -13,7 +13,7 @@ import {
 } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
-import { sectorLabel } from "@/lib/i18n/labels";
+import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 
 function Donut({
   value,
@@ -82,6 +82,7 @@ export function SectorDonuts({
       <PanelHeader
         title={t.sectorDonuts.title}
         subtitle={t.sectorDonuts.subtitle}
+        exportCaption={`${t.metrics[metric].short} · ${genderLabel(gender, locale)}`}
       >
         {!controlled && (
           <div className="flex flex-wrap gap-2">

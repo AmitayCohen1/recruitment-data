@@ -5,10 +5,19 @@ import { ArrowDown, ArrowUp, MoreHorizontal, Search } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Popover } from "@/components/ui/popover";
+import { Delta } from "@/components/ui/delta";
+import {
+  ControlGroup,
+  FilterInput,
+  FilterSelect,
+  SegmentButton,
+  iconButtonVariants,
+} from "@/components/ui/control";
 import { cn } from "@/lib/utils";
 import {
   YEARS,
   LATEST,
+  FIRST,
   type CompactRow,
   type Gender,
 } from "@/lib/data";
@@ -17,14 +26,13 @@ import { genderLabelFromCode } from "@/lib/i18n/labels";
 import { htmlLang } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
-type SortKey = "e" | "cb" | "o" | "m" | "s";
+type SortKey = "e" | "cb" | "o" | "s";
 
 const COLUMNS: { key: SortKey; metric: boolean }[] = [
   { key: "s", metric: false },
   { key: "e", metric: true },
   { key: "cb", metric: true },
   { key: "o", metric: true },
-  { key: "m", metric: true },
 ];
 
 /** Localized [long, short] header labels per column. */
@@ -38,8 +46,6 @@ function colLabels(key: SortKey, t: Dictionary): [string, string] {
       return [t.metrics.combat.long, t.metrics.combat.short];
     case "o":
       return [t.metrics.officer.long, t.metrics.officer.short];
-    case "m":
-      return [t.explorer.colMeaning, t.explorer.colMeaningShort];
   }
 }
 
@@ -47,14 +53,13 @@ function pct(v: number | null) {
   return v === null ? "—" : `${v.toFixed(1)}%`;
 }
 
+/** Neutral cell color: real values white, missing muted. Green/red is reserved
+ *  for the trend badge only, so the colors mean exactly one thing. */
 function pctColor(v: number | null) {
-  if (v === null) return "text-muted-foreground";
-  if (v >= 80) return "text-emerald-400 font-medium";
-  if (v >= 50) return "text-foreground";
-  return "text-rose-400";
+  return v === null ? "text-muted-foreground" : "text-foreground";
 }
 
-const LIMIT = 150;
+const LIMIT = 50;
 
 export function Explorer({
   rows,
@@ -96,6 +101,27 @@ export function Explorer({
     return out;
   }, [rows, zeroRows, showZero, year, gender, q, sort, dir]);
 
+  // Baseline (first year, 2018) value per school+gender, for the change badge.
+  const baseline = React.useMemo(() => {
+    const m = new Map<string, CompactRow>();
+    for (const r of [...rows, ...zeroRows]) {
+      if (r.y === FIRST) m.set(`${r.k}-${r.g}`, r);
+    }
+    return m;
+  }, [rows, zeroRows]);
+  const showDelta = year !== FIRST;
+  const diff = (cur: number | null, base: number | null) =>
+    cur != null && base != null ? cur - base : null;
+
+  const MetricCell = ({ v, base }: { v: number | null; base: number | null }) => (
+    <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(v))}>
+      <div className="flex flex-col items-center leading-tight">
+        <span>{pct(v)}</span>
+        {showDelta && <Delta value={diff(v, base)} title={t.delta.vs(FIRST)} />}
+      </div>
+    </td>
+  );
+
   const setSortKey = (k: SortKey) => {
     if (k === sort) setDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
@@ -113,9 +139,6 @@ export function Explorer({
     return () => clearTimeout(id);
   }, [q]);
 
-  const inputCls =
-    "h-9 rounded-lg border border-white/10 bg-white/[0.03] px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50";
-
   return (
     <Panel>
       <PanelHeader
@@ -126,66 +149,62 @@ export function Explorer({
       <div className="mb-4 space-y-2">
         {/* search — its own full-width row */}
         <div className="relative">
-          <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Search className="absolute inset-s-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <FilterInput
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t.explorer.searchPlaceholder}
-            className={cn(inputCls, "w-full ps-9")}
+            className="w-full ps-9"
           />
         </div>
 
         {/* controls row — primary filters inline, secondary tucked into a popover */}
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <FilterSelect
             value={year}
             onChange={(e) => {
               const y = Number(e.target.value);
               setYear(y);
               track("explorer_year", { year: y });
             }}
-            className={inputCls}
           >
             {[...YEARS].reverse().map((y) => (
               <option key={y} value={y} className="bg-popover">
                 {y}
               </option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <div className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/3 p-1">
+          <ControlGroup>
             {(["all", "m", "f"] as const).map((g) => (
-              <button
+              <SegmentButton
                 key={g}
                 type="button"
+                active={gender === g}
                 onClick={() => {
                   setGender(g);
                   track("explorer_gender", { gender: g });
                 }}
-                className={cn(
-                  "rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3",
-                  gender === g
-                    ? "bg-white/10 text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+                className="px-2.5 sm:px-3"
               >
                 {g === "all"
                   ? t.explorer.genderAll
                   : g === "m"
                     ? t.explorer.genderBoys
                     : t.explorer.genderGirls}
-              </button>
+              </SegmentButton>
             ))}
-          </div>
+          </ControlGroup>
 
           {zeroRows.length > 0 && (
             <Popover
               ariaLabel={t.explorer.moreFilters}
               triggerClassName={cn(
-                "relative inline-flex size-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:text-foreground",
+                iconButtonVariants(),
+                "relative",
                 showZero
                   ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
-                  : "border-white/10 bg-white/3",
+                  : undefined,
               )}
               trigger={
                 <>
@@ -209,6 +228,10 @@ export function Explorer({
           )}
         </div>
       </div>
+
+      {showDelta && (
+        <p className="mb-2 text-xs text-muted-foreground">{t.delta.legend(FIRST)}</p>
+      )}
 
       <div className="overflow-x-auto rounded-xl border border-white/10">
         <table className="w-full text-sm">
@@ -262,18 +285,16 @@ export function Explorer({
                     <div className="text-xs text-muted-foreground">{r.c}</div>
                   )}
                 </td>
-                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.e))}>
-                  {pct(r.e)}
-                </td>
-                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.cb))}>
-                  {pct(r.cb)}
-                </td>
-                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.o))}>
-                  {pct(r.o)}
-                </td>
-                <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(r.m))}>
-                  {pct(r.m)}
-                </td>
+                {(() => {
+                  const base = baseline.get(`${r.k}-${r.g}`);
+                  return (
+                    <>
+                      <MetricCell v={r.e} base={base?.e ?? null} />
+                      <MetricCell v={r.cb} base={base?.cb ?? null} />
+                      <MetricCell v={r.o} base={base?.o ?? null} />
+                    </>
+                  );
+                })()}
                 {gender === "all" && (
                   <td className="px-2.5 py-2.5 sm:px-3 text-center text-muted-foreground">
                     {genderLabelFromCode(r.g, locale)}

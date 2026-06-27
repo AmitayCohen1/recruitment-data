@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { cn } from "@/lib/utils";
+import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import { effective, SECTOR_COLOR, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
@@ -31,25 +31,20 @@ export function EffectiveRate({
           {!controlled && (
             <GenderToggle value={gender} onChange={setGender} surface="effective-rate" />
           )}
-          <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+          <ControlGroup>
             {(["combat", "officer"] as EffMetric[]).map((k) => (
-              <button
+              <SegmentButton
                 key={k}
                 type="button"
+                active={metric === k}
                 onClick={() => setMetric(k)}
-                className={cn(
-                  // fixed height + centered keeps the active highlight aligned in
-                  // html-to-image PNG export, where emoji metrics shift the box.
-                  "flex h-8 items-center justify-center rounded-lg px-3 text-sm font-medium leading-none transition-colors",
-                  metric === k
-                    ? "bg-white/10 text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+                // Fixed height keeps the active highlight aligned in PNG export.
+                className="flex h-8 items-center justify-center leading-none"
               >
                 {k === "combat" ? t.metrics.combat.short : t.metrics.officer.short}
-              </button>
+              </SegmentButton>
             ))}
-          </div>
+          </ControlGroup>
         </div>
       </PanelHeader>
 
@@ -59,7 +54,7 @@ export function EffectiveRate({
           return (
             <li
               key={r.sector}
-              className="rounded-xl border border-white/5 bg-white/[0.02] p-3"
+              className="rounded-xl border border-white/5 bg-white/2 p-3"
             >
               <div className="mb-2 flex items-baseline justify-between gap-3">
                 <span className="flex items-baseline gap-2 truncate text-sm font-medium">
@@ -79,7 +74,7 @@ export function EffectiveRate({
                   </span>
                 </span>
               </div>
-              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
+              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-white/4">
                 <div
                   className="absolute inset-y-0 right-0 rounded-full"
                   style={{ width: `${(r.value / max) * 100}%`, background: color }}

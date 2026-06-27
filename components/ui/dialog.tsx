@@ -4,6 +4,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { IconButton } from "@/components/ui/control";
 
 /** A hand-rolled modal dialog matching shadcn/ui's Dialog look — dimmed overlay,
  *  centered card, close button, fade/zoom transition. Built without Radix to keep
@@ -83,14 +84,15 @@ export function Dialog({
           className,
         )}
       >
-        <button
+        <IconButton
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute end-4 top-4 rounded-md p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+          size="sm"
+          className="absolute inset-e-4 top-4"
         >
           <X className="size-4" />
-        </button>
+        </IconButton>
         {(title || description) && (
           <div className="mb-5 pe-8">
             {title && (

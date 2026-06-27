@@ -2,13 +2,22 @@
 
 import * as React from "react";
 import { scaleLinear } from "d3-scale";
-import { ArrowDown, ArrowUp, Pause, Play } from "lucide-react";
-import { GenderPanel } from "@/components/lab/gender-panel";
+import { ArrowDown, ArrowUp, Pause, Play, X } from "lucide-react";
+import { Panel, PanelHeader } from "@/components/ui/panel";
+import { GenderToggle } from "@/components/sectors/controls";
 import { SectionSkeleton } from "@/components/ui/skeleton";
+import {
+  Button,
+  FilterChip,
+  FilterInput,
+  IconButton,
+  MenuItem,
+} from "@/components/ui/control";
 import { cn } from "@/lib/utils";
-import { NEUTRAL } from "@/lib/sectors";
+import { NEUTRAL, type SGender } from "@/lib/sectors";
 import { useT } from "@/components/i18n/locale-provider";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
+import type { Gender } from "@/lib/data";
 import { BIG_CITIES, cityColor } from "@/lib/cities";
 import {
   cityScatter,
@@ -96,25 +105,21 @@ const SC_PAD = 44;
 function QuadrantScatter({
   data,
   t,
+  featured,
+  onToggle,
 }: {
   data: ReturnType<typeof cityScatter>;
   t: Dictionary;
+  /** cities to spotlight (blue + labeled) — shared with the filter bar */
+  featured: Set<string>;
+  onToggle: (c: string) => void;
 }) {
   const { points, medEnlist, medCombat } = data;
-  // Which cities are featured (blue + labeled). Seeded with the big cities, but
-  // the user can click any dot to add or remove it.
-  const [featured, setFeatured] = React.useState<Set<string>>(() => new Set(BIG));
   const [hover, setHover] = React.useState<string | null>(null);
   if (!points.length) return null;
 
   const isF = (c: string) => featured.has(c);
-  const toggle = (c: string) =>
-    setFeatured((prev) => {
-      const next = new Set(prev);
-      if (next.has(c)) next.delete(c);
-      else next.add(c);
-      return next;
-    });
+  const toggle = onToggle;
 
   const xs = points.map((p) => p.enlist);
   const ys = points.map((p) => p.combat);
@@ -315,9 +320,7 @@ function BumpChart({
               <path d={d} fill="none" stroke={color} strokeWidth={2.25} strokeLinejoin="round" />
               {pts.map((p) => (
                 <circle key={p.year} cx={x(p.year)} cy={y(p.rank as number)} r={3.5} fill={color}>
-                  <title>
-                    {s.council} · {p.year} — {t.lab.rank} {p.rank} ({p.value}%)
-                  </title>
+                  <title>{`${s.council} · ${p.year} — ${t.lab.rank} ${p.rank} (${p.value}%)`}</title>
                 </circle>
               ))}
             </g>
@@ -357,9 +360,12 @@ function useTicker(length: number, playing: boolean, ms = 1150) {
 function BubbleRace({
   data,
   t,
+  featured,
 }: {
   data: ReturnType<typeof bubbleRace>;
   t: Dictionary;
+  /** cities to spotlight (blue + labeled) — shared with the filter bar */
+  featured: Set<string>;
 }) {
   const { years, frames, xBounds, yBounds } = data;
   const [playing, setPlaying] = React.useState(true);
@@ -378,14 +384,15 @@ function BubbleRace({
   return (
     <div>
       <div className="mb-3 flex items-center gap-3">
-        <button
+        <IconButton
           type="button"
           onClick={() => setPlaying((p) => !p)}
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-foreground transition hover:bg-white/10"
+          shape="circle"
+          className="text-foreground"
           aria-label={playing ? t.lab.racePause : t.lab.racePlay}
         >
           {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
-        </button>
+        </IconButton>
         <input
           type="range"
           min={0}
@@ -432,25 +439,26 @@ function BubbleRace({
               </text>
             </g>
           ))}
-          {frame.points.map((p) => (
-            <circle
-              key={p.council}
-              cx={px(p.x)}
-              cy={py(p.y)}
-              r={rad(p.n)}
-              fill={p.big ? "#38bdf8" : NEUTRAL}
-              fillOpacity={p.big ? 0.9 : 0.4}
-              stroke={p.big ? "#bae6fd" : "none"}
-              strokeWidth={p.big ? 1 : 0}
-              style={{ transition: "cx 800ms ease, cy 800ms ease, r 400ms ease" }}
-            >
-              <title>
-                {p.council} · {frame.year} — {t.lab.scatterTip(p.x, p.y)}
-              </title>
-            </circle>
-          ))}
+          {frame.points.map((p) => {
+            const on = featured.has(p.council);
+            return (
+              <circle
+                key={p.council}
+                cx={px(p.x)}
+                cy={py(p.y)}
+                r={rad(p.n)}
+                fill={on ? "#38bdf8" : NEUTRAL}
+                fillOpacity={on ? 0.9 : 0.4}
+                stroke={on ? "#bae6fd" : "none"}
+                strokeWidth={on ? 1 : 0}
+                style={{ transition: "cx 800ms ease, cy 800ms ease, r 400ms ease" }}
+              >
+              <title>{`${p.council} · ${frame.year} — ${t.lab.scatterTip(p.x, p.y)}`}</title>
+              </circle>
+            );
+          })}
           {frame.points
-            .filter((p) => p.big)
+            .filter((p) => featured.has(p.council))
             .map((p) => (
               <text
                 key={`l${p.council}`}
@@ -543,9 +551,7 @@ function CityTrajectories({
               <path d={d} fill="none" stroke={color} strokeWidth={hover === tr.council ? 3 : 2} strokeLinejoin="round" strokeOpacity={0.9} />
               {pts.map((p) => (
                 <circle key={p.year} cx={px(p.enlist)} cy={py(p.combat)} r={2.5} fill={color} fillOpacity={0.85}>
-                  <title>
-                    {tr.council} · {p.year} — {t.lab.scatterTip(p.enlist, p.combat)}
-                  </title>
+                  <title>{`${tr.council} · ${p.year} — ${t.lab.scatterTip(p.enlist, p.combat)}`}</title>
                 </circle>
               ))}
               <circle cx={px(first.enlist)} cy={py(first.combat)} r={4} fill="none" stroke={color} strokeWidth={1.5} />
@@ -568,45 +574,194 @@ function CityTrajectories({
   );
 }
 
-/* The city-level charts, gathered onto the Cities tab (moved out of the lab).
- * Pure client-side SVG — render after mount so SSR and first client paint agree. */
+/* ---------- Shared filter bar: gender · city search ---------- */
+function CityFilterBar({
+  gender,
+  onGender,
+  cities,
+  featured,
+  onToggle,
+  onClear,
+  t,
+}: {
+  gender: SGender;
+  onGender: (g: SGender) => void;
+  cities: string[];
+  featured: Set<string>;
+  onToggle: (c: string) => void;
+  onClear: () => void;
+  t: Dictionary;
+}) {
+  const [q, setQ] = React.useState("");
+  const [open, setOpen] = React.useState(false);
+
+  const matches = React.useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    if (!needle) return [];
+    return cities
+      .filter((c) => !featured.has(c) && c.toLowerCase().includes(needle))
+      .slice(0, 8);
+  }, [q, cities, featured]);
+
+  const chips = [...featured].sort((a, b) => a.localeCompare(b, "he"));
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <GenderToggle value={gender} onChange={onGender} surface="city_filter" />
+
+        <div className="relative ms-auto w-full sm:w-64">
+          <FilterInput
+            type="text"
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            placeholder={t.cityFilter.add}
+            className="w-full"
+          />
+          {open && q.trim() && (
+            <div className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 p-1 shadow-xl">
+              {matches.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-muted-foreground">
+                  {t.cityFilter.noResults}
+                </div>
+              ) : (
+                matches.map((c) => (
+                  <MenuItem
+                    key={c}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onToggle(c);
+                      setQ("");
+                    }}
+                  >
+                    <span className="size-2.5 shrink-0 rounded-full" style={{ background: cityColor(c) }} />
+                    <span className="truncate">{c}</span>
+                  </MenuItem>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* spotlighted cities as removable chips */}
+      {chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">{t.cityFilter.selectedLabel}:</span>
+          {chips.map((c) => (
+            <FilterChip
+              key={c}
+              type="button"
+              onClick={() => onToggle(c)}
+            >
+              {c}
+              <X className="size-3 text-muted-foreground" />
+            </FilterChip>
+          ))}
+          <Button
+            type="button"
+            variant="link"
+            onClick={onClear}
+            className="text-xs"
+          >
+            {t.cityFilter.clear}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* The city-level charts, gathered onto the Cities tab (moved out of the lab),
+ * sharing one filter bar (gender + a city spotlight that lights up the scatter
+ * and the bubble race). Pure client-side SVG — render after mount so SSR and
+ * first client paint agree. */
 export function CityCharts() {
   const t = useT();
   const [mounted, setMounted] = React.useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
 
+  const [gender, setGender] = React.useState<SGender>("בנים");
+  // Cities to spotlight across the scatter + race. Seeded with the big cities
+  // (preserves the charts' default look); editable via search, chips and clicks.
+  const [featured, setFeatured] = React.useState<Set<string>>(() => new Set(BIG));
+
+  const g: Gender = gender === "בנים" ? "m" : "f";
+  const scatter = React.useMemo(() => cityScatter(g), [g]);
+  const race = React.useMemo(() => bubbleRace(g, "enlist", "combat"), [g]);
+  const cityNames = React.useMemo(
+    () => [...new Set(scatter.points.map((p) => p.council))],
+    [scatter],
+  );
+
+  const toggleCity = (c: string) =>
+    setFeatured((prev) => {
+      const next = new Set(prev);
+      if (next.has(c)) next.delete(c);
+      else next.add(c);
+      return next;
+    });
+  const clearCities = () => setFeatured(new Set());
+
   if (!mounted) return <SectionSkeleton panels={3} />;
 
   return (
     <div className="space-y-8">
+      {/* one filter bar drives the city spotlight below */}
+      <CityFilterBar
+        gender={gender}
+        onGender={setGender}
+        cities={cityNames}
+        featured={featured}
+        onToggle={toggleCity}
+        onClear={clearCities}
+        t={t}
+      />
+
       {/* cities scatter — enlist vs combat */}
-      <GenderPanel title={t.lab.scatterTitle} subtitle={t.lab.scatterSubtitle} surface="city_scatter" note={t.lab.unweightedNote}>
-        {(g) => <QuadrantScatter data={cityScatter(g)} t={t} />}
-      </GenderPanel>
+      <Panel>
+        <PanelHeader title={t.lab.scatterTitle} subtitle={t.lab.scatterSubtitle} />
+        <QuadrantScatter data={scatter} t={t} featured={featured} onToggle={toggleCity} />
+        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
+      </Panel>
 
       {/* big cities' rank over time */}
-      <GenderPanel title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.bumpSubtitle} surface="city_bump" note={t.lab.unweightedNote}>
-        {(g) => <BumpChart data={bump(g, "combat")} t={t} />}
-      </GenderPanel>
+      <Panel>
+        <PanelHeader title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.bumpSubtitle} />
+        <BumpChart data={bump(g, "combat")} t={t} />
+        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
+      </Panel>
 
       {/* biggest movers */}
-      <GenderPanel title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.moversSubtitle} surface="city_movers" note={t.lab.moversNote}>
-        {(g) => {
+      <Panel>
+        <PanelHeader title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.moversSubtitle} />
+        {(() => {
           const all = movers(g, "combat");
           return <Movers risers={all.slice(0, 6)} fallers={all.slice(-6).reverse()} t={t} />;
-        }}
-      </GenderPanel>
+        })()}
+        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.moversNote}</p>
+      </Panel>
 
       {/* bubble race over the years */}
-      <GenderPanel title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle} surface="city_race" note={t.lab.unweightedNote}>
-        {(g) => <BubbleRace data={bubbleRace(g, "enlist", "combat")} t={t} />}
-      </GenderPanel>
+      <Panel>
+        <PanelHeader title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle} />
+        <BubbleRace data={race} t={t} featured={featured} />
+        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
+      </Panel>
 
       {/* each city's path through the years */}
-      <GenderPanel title={t.lab.trajTitle} subtitle={t.lab.trajSubtitle} surface="city_trajectories" note={t.lab.unweightedNote}>
-        {(g) => <CityTrajectories data={cityTrajectories(g)} t={t} />}
-      </GenderPanel>
+      <Panel>
+        <PanelHeader title={t.lab.trajTitle} subtitle={t.lab.trajSubtitle} />
+        <CityTrajectories data={cityTrajectories(g)} t={t} />
+        <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.unweightedNote}</p>
+      </Panel>
     </div>
   );
 }

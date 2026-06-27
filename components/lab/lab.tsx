@@ -1,36 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { scaleLinear } from "d3-scale";
-import { ArrowDown, ArrowUp, Pause, Play } from "lucide-react";
 import { SectionSkeleton } from "@/components/ui/skeleton";
-import { GenderPanel } from "@/components/lab/gender-panel";
+import { ChipLegend } from "@/components/ui/panel";
+import { GenderPanel, LabGenderCtx } from "@/components/lab/gender-panel";
+import { GenderToggle } from "@/components/sectors/controls";
+import { FilterBar, FilterField } from "@/components/sectors/filter-bar";
 import { cn } from "@/lib/utils";
-import { NEUTRAL, sectorColor } from "@/lib/sectors";
+import { sectorColor, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import {
   waffles,
-  movers,
-  cityScatter,
-  bump,
-  bubbleRace,
-  armyComposition,
   ridgeline,
   sankeyFlow,
   outliers,
-  cityTrajectories,
-  LAB_FIRST,
-  LAB_LAST,
   type Waffle,
-  type CityPoint,
-  type Trajectory,
 } from "@/lib/lab";
-import { BIG_CITIES, cityColor } from "@/lib/cities";
-
-const BIG: readonly string[] = BIG_CITIES;
 
 const WAFFLE_STAGE = {
   enlisted: "#38bdf888",
@@ -95,464 +83,7 @@ function WaffleCard({
   );
 }
 
-/* ---------- 3) Biggest movers ---------- */
-function Movers({
-  risers,
-  fallers,
-  t,
-}: {
-  risers: ReturnType<typeof movers>;
-  fallers: ReturnType<typeof movers>;
-  t: Dictionary;
-}) {
-  const Row = ({ m, up }: { m: (typeof risers)[number]; up: boolean }) => (
-    <div className="flex items-center gap-2 py-2 sm:gap-3">
-      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-        {m.council}
-      </span>
-      <span
-        dir="ltr"
-        className="shrink-0 whitespace-nowrap text-xs text-muted-foreground tabular-nums sm:text-sm"
-      >
-        {m.from}% <span className="opacity-50">→</span> {m.to}%
-      </span>
-      <span
-        className={cn(
-          "inline-flex size-6 shrink-0 items-center justify-center rounded-full",
-          up ? "bg-emerald-400/15 text-emerald-400" : "bg-rose-400/15 text-rose-400",
-        )}
-      >
-        {up ? <ArrowUp className="size-3.5" /> : <ArrowDown className="size-3.5" />}
-      </span>
-      <span
-        className={cn(
-          "w-16 shrink-0 whitespace-nowrap text-end text-sm font-bold tabular-nums",
-          up ? "text-emerald-400" : "text-rose-400",
-        )}
-      >
-        {Math.abs(m.delta)} {t.lab.points}
-      </span>
-    </div>
-  );
-  return (
-    <div className="grid gap-6 sm:grid-cols-2">
-      <div>
-        <div className="mb-1 text-sm font-medium text-emerald-400">
-          {t.lab.risers}
-        </div>
-        <div className="divide-y divide-white/5">
-          {risers.map((m) => (
-            <Row key={m.council} m={m} up />
-          ))}
-        </div>
-      </div>
-      <div>
-        <div className="mb-1 text-sm font-medium text-rose-400">
-          {t.lab.fallers}
-        </div>
-        <div className="divide-y divide-white/5">
-          {fallers.map((m) => (
-            <Row key={m.council} m={m} up={false} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- 4) Two-armies quadrant scatter ---------- */
-const SC_W = 880;
-const SC_H = 440;
-const SC_PAD = 44;
-function QuadrantScatter({
-  data,
-  t,
-}: {
-  data: ReturnType<typeof cityScatter>;
-  t: Dictionary;
-}) {
-  const { points, medEnlist, medCombat } = data;
-  // Which cities are featured (blue + labeled). Seeded with the big cities, but
-  // the user can click any dot to add or remove it.
-  const [featured, setFeatured] = React.useState<Set<string>>(() => new Set(BIG));
-  const [hover, setHover] = React.useState<string | null>(null);
-  if (!points.length) return null;
-
-  const isF = (c: string) => featured.has(c);
-  const toggle = (c: string) =>
-    setFeatured((prev) => {
-      const next = new Set(prev);
-      if (next.has(c)) next.delete(c);
-      else next.add(c);
-      return next;
-    });
-
-  const xs = points.map((p) => p.enlist);
-  const ys = points.map((p) => p.combat);
-  const xMin = Math.max(0, Math.floor((Math.min(...xs) - 3) / 5) * 5);
-  const xMax = Math.min(100, Math.ceil((Math.max(...xs) + 3) / 5) * 5);
-  const yMin = Math.max(0, Math.floor((Math.min(...ys) - 3) / 5) * 5);
-  const yMax = Math.min(100, Math.ceil((Math.max(...ys) + 3) / 5) * 5);
-  const px = (v: number) =>
-    SC_PAD + ((v - xMin) / (xMax - xMin)) * (SC_W - 2 * SC_PAD);
-  const py = (v: number) =>
-    SC_H - SC_PAD - ((v - yMin) / (yMax - yMin)) * (SC_H - 2 * SC_PAD);
-  const rad = (n: number) => 3 + Math.min(8, Math.sqrt(n) * 1.4);
-  const mx = px(medEnlist);
-  const my = py(medCombat);
-  // Draw order: rest, then featured, then the hovered dot on top.
-  const depth = (p: CityPoint) =>
-    hover === p.council ? 2 : isF(p.council) ? 1 : 0;
-  const sorted = [...points].sort((a, b) => depth(a) - depth(b));
-
-  // De-collide the featured labels: stack clustered ones upward, above the dots.
-  const bigLabels = points
-    .filter((p) => isF(p.council))
-    .map((p) => ({
-      council: p.council,
-      x: px(p.enlist),
-      dotY: py(p.combat),
-      r: rad(p.n),
-      y: py(p.combat) - rad(p.n) - 7,
-    }))
-    .sort((a, b) => a.x - b.x || a.y - b.y);
-  const LGAP = 14;
-  const XCLOSE = 90;
-  for (let i = 1; i < bigLabels.length; i++) {
-    for (let j = 0; j < i; j++) {
-      if (
-        Math.abs(bigLabels[i].x - bigLabels[j].x) < XCLOSE &&
-        Math.abs(bigLabels[i].y - bigLabels[j].y) < LGAP
-      ) {
-        bigLabels[i].y = bigLabels[j].y - LGAP;
-      }
-    }
-  }
-
-  const hp = hover ? points.find((p) => p.council === hover) ?? null : null;
-  // Flip the tooltip below the dot when it's too close to the top edge.
-  const tipBelow = hp ? py(hp.combat) < 70 : false;
-
-  return (
-    <div className="overflow-x-auto">
-      <div className="relative min-w-[640px] pb-6 pl-6">
-        <div className="relative">
-          <svg viewBox={`0 0 ${SC_W} ${SC_H}`} className="h-auto w-full">
-            {/* median split */}
-            <line x1={mx} x2={mx} y1={SC_PAD - 8} y2={SC_H - SC_PAD} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-            <line x1={SC_PAD} x2={SC_W - SC_PAD} y1={my} y2={my} stroke="rgba(255,255,255,0.12)" strokeDasharray="4 4" />
-            {sorted.map((p) => {
-              const f = isF(p.council);
-              const h = hover === p.council;
-              const r = rad(p.n);
-              return (
-                <circle
-                  key={p.council}
-                  cx={px(p.enlist)}
-                  cy={py(p.combat)}
-                  r={h ? r + 2 : r}
-                  fill={f ? "#38bdf8" : "#475569"}
-                  fillOpacity={f ? 0.95 : h ? 0.85 : 0.55}
-                  stroke={f ? "#bae6fd" : h ? "#94a3b8" : "none"}
-                  strokeWidth={f || h ? 1 : 0}
-                  className="cursor-pointer"
-                  onMouseEnter={() => setHover(p.council)}
-                  onMouseLeave={() =>
-                    setHover((cur) => (cur === p.council ? null : cur))
-                  }
-                  onClick={() => toggle(p.council)}
-                />
-              );
-            })}
-            {bigLabels.map((l) => (
-              <g
-                key={l.council}
-                className="cursor-pointer"
-                onClick={() => toggle(l.council)}
-              >
-                {l.y < l.dotY - l.r - 9 && (
-                  <line x1={l.x} y1={l.dotY - l.r} x2={l.x} y2={l.y + 3} stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
-                )}
-                <text x={l.x} y={l.y} fill="rgba(255,255,255,0.88)" fontSize="11" textAnchor="middle">
-                  {l.council}
-                </text>
-              </g>
-            ))}
-          </svg>
-
-          {/* hover tooltip — positioned over the dot in viewBox-percent space */}
-          {hp && (
-            <div
-              className="pointer-events-none absolute z-20 w-max rounded-lg border border-white/10 bg-zinc-900/95 px-2.5 py-1.5 text-xs shadow-xl"
-              style={{
-                left: `${(px(hp.enlist) / SC_W) * 100}%`,
-                top: `${(py(hp.combat) / SC_H) * 100}%`,
-                transform: `translate(-50%, ${
-                  tipBelow
-                    ? `${rad(hp.n) + 8}px`
-                    : `calc(-100% - ${rad(hp.n) + 8}px)`
-                })`,
-              }}
-            >
-              <div className="font-bold text-foreground">{hp.council}</div>
-              <div className="text-muted-foreground">
-                {t.lab.scatterTip(hp.enlist, hp.combat)}
-              </div>
-              <div className="text-muted-foreground/70">{t.lab.schools(hp.n)}</div>
-            </div>
-          )}
-        </div>
-
-        {/* quadrant captions — HTML overlay (RTL-safe, never clipped) */}
-        <div className="pointer-events-none absolute inset-0 text-[11px] leading-tight text-muted-foreground/55">
-          <span className="absolute right-2 top-1 text-right">{t.lab.qTopRight}</span>
-          <span className="absolute left-2 top-1 text-left">{t.lab.qTopLeft}</span>
-          <span className="absolute bottom-8 right-2 text-right">{t.lab.qBottomRight}</span>
-          <span className="absolute bottom-8 left-2 text-left">{t.lab.qBottomLeft}</span>
-        </div>
-
-        {/* axis labels */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 text-center text-xs text-muted-foreground">
-          {t.lab.axisEnlist}
-        </div>
-        <div className="pointer-events-none absolute bottom-1/2 left-0 -rotate-90 text-xs text-muted-foreground">
-          {t.lab.axisCombat}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------- 5) Bump chart — rank over the years ---------- */
-const BP_W = 880;
-const BP_H = 360;
-const BP_PADX = 64;
-const BP_TOP = 22;
-const BP_BOT = 34;
-function BumpChart({
-  data,
-  t,
-}: {
-  data: ReturnType<typeof bump>;
-  t: Dictionary;
-}) {
-  const { years, maxRank, series } = data;
-  const x = (year: number) =>
-    BP_PADX + (years.indexOf(year) / (years.length - 1)) * (BP_W - 2 * BP_PADX);
-  const y = (rank: number) =>
-    BP_TOP + ((rank - 1) / Math.max(1, maxRank - 1)) * (BP_H - BP_TOP - BP_BOT);
-
-  // End labels, de-collided vertically (cities often finish at the same rank).
-  const endLabels = series
-    .flatMap((s) => {
-      const pts = s.points.filter((p) => p.rank != null);
-      if (!pts.length) return [];
-      const last = pts[pts.length - 1];
-      return [
-        {
-          council: s.council,
-          color: cityColor(s.council),
-          x: x(last.year),
-          dotY: y(last.rank as number),
-          y: y(last.rank as number),
-        },
-      ];
-    })
-    .sort((a, b) => a.dotY - b.dotY);
-  const GAP = 15;
-  for (let i = 1; i < endLabels.length; i++) {
-    if (endLabels[i].y - endLabels[i - 1].y < GAP) {
-      endLabels[i].y = endLabels[i - 1].y + GAP;
-    }
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${BP_W} ${BP_H}`} className="h-auto w-full min-w-[640px]">
-        {years.map((yr) => (
-          <text key={yr} x={x(yr)} y={BP_H - 12} fill="rgba(255,255,255,0.45)" fontSize="12" textAnchor="middle">
-            {yr}
-          </text>
-        ))}
-        {series.map((s) => {
-          const pts = s.points.filter((p) => p.rank != null);
-          if (!pts.length) return null;
-          const color = cityColor(s.council);
-          const d = pts
-            .map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.year)} ${y(p.rank as number)}`)
-            .join(" ");
-          return (
-            <g key={s.council}>
-              <path d={d} fill="none" stroke={color} strokeWidth={2.25} strokeLinejoin="round" />
-              {pts.map((p) => (
-                <circle key={p.year} cx={x(p.year)} cy={y(p.rank as number)} r={3.5} fill={color}>
-                  <title>
-                    {s.council} · {p.year} — {t.lab.rank} {p.rank} ({p.value}%)
-                  </title>
-                </circle>
-              ))}
-            </g>
-          );
-        })}
-        {endLabels.map((l) => (
-          <g key={l.council}>
-            {Math.abs(l.y - l.dotY) > 1 && (
-              <line x1={l.x} y1={l.dotY} x2={l.x + 6} y2={l.y - 3} stroke={l.color} strokeOpacity={0.4} strokeWidth={1} />
-            )}
-            <text x={l.x + 9} y={l.y} fill={l.color} fontSize="11" fontWeight={600} dominantBaseline="middle">
-              {l.council}
-            </text>
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
-}
-
-/* ---------- 6) Bubble race — Gapminder over the years ---------- */
-const BR_W = 880;
-const BR_H = 470;
-const BR_PAD = 48;
-
-/** Advance an index 0..length-1 on a timer while `playing`, looping. */
-function useTicker(length: number, playing: boolean, ms = 1150) {
-  const [i, setI] = React.useState(0);
-  React.useEffect(() => {
-    if (!playing || length < 2) return;
-    const id = setInterval(() => setI((p) => (p + 1) % length), ms);
-    return () => clearInterval(id);
-  }, [playing, length, ms]);
-  return [i, setI] as const;
-}
-
-function BubbleRace({
-  data,
-  t,
-}: {
-  data: ReturnType<typeof bubbleRace>;
-  t: Dictionary;
-}) {
-  const { years, frames, xBounds, yBounds } = data;
-  const [playing, setPlaying] = React.useState(true);
-  const [idx, setIdx] = useTicker(years.length, playing);
-  const frame = frames[idx];
-  const [xMin, xMax] = xBounds;
-  const [yMin, yMax] = yBounds;
-  const px = (v: number) =>
-    BR_PAD + ((v - xMin) / (xMax - xMin)) * (BR_W - 2 * BR_PAD);
-  const py = (v: number) =>
-    BR_H - BR_PAD - ((v - yMin) / (yMax - yMin)) * (BR_H - 2 * BR_PAD);
-  const rad = (n: number) => 4 + Math.min(20, Math.sqrt(n) * 2.3);
-  const xticks = [xMin, Math.round((xMin + xMax) / 2), xMax];
-  const yticks = [yMin, Math.round((yMin + yMax) / 2), yMax];
-
-  return (
-    <div>
-      <div className="mb-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setPlaying((p) => !p)}
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-foreground transition hover:bg-white/10"
-          aria-label={playing ? t.lab.racePause : t.lab.racePlay}
-        >
-          {playing ? <Pause className="size-4" /> : <Play className="size-4" />}
-        </button>
-        <input
-          type="range"
-          min={0}
-          max={years.length - 1}
-          value={idx}
-          onChange={(e) => {
-            setPlaying(false);
-            setIdx(Number(e.target.value));
-          }}
-          className="h-1 flex-1 cursor-pointer accent-sky-400"
-        />
-        <span className="w-12 shrink-0 text-end text-lg font-bold tabular-nums text-foreground">
-          {frame.year}
-        </span>
-      </div>
-      <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${BR_W} ${BR_H}`} className="h-auto w-full min-w-[640px]">
-          {/* watermark year */}
-          <text
-            x={BR_W / 2}
-            y={BR_H / 2}
-            fill="rgba(255,255,255,0.05)"
-            fontSize="180"
-            fontWeight={800}
-            textAnchor="middle"
-            dominantBaseline="middle"
-          >
-            {frame.year}
-          </text>
-          {/* gridlines */}
-          {xticks.map((v) => (
-            <g key={`x${v}`}>
-              <line x1={px(v)} x2={px(v)} y1={BR_PAD - 10} y2={BR_H - BR_PAD} stroke="rgba(255,255,255,0.07)" />
-              <text x={px(v)} y={BR_H - BR_PAD + 18} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
-                {v}%
-              </text>
-            </g>
-          ))}
-          {yticks.map((v) => (
-            <g key={`y${v}`}>
-              <line x1={BR_PAD} x2={BR_W - BR_PAD} y1={py(v)} y2={py(v)} stroke="rgba(255,255,255,0.07)" />
-              <text x={BR_PAD - 8} y={py(v) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end">
-                {v}%
-              </text>
-            </g>
-          ))}
-          {frame.points.map((p) => (
-            <circle
-              key={p.council}
-              cx={px(p.x)}
-              cy={py(p.y)}
-              r={rad(p.n)}
-              fill={p.big ? "#38bdf8" : NEUTRAL}
-              fillOpacity={p.big ? 0.9 : 0.4}
-              stroke={p.big ? "#bae6fd" : "none"}
-              strokeWidth={p.big ? 1 : 0}
-              style={{ transition: "cx 800ms ease, cy 800ms ease, r 400ms ease" }}
-            >
-              <title>
-                {p.council} · {frame.year} — {t.lab.scatterTip(p.x, p.y)}
-              </title>
-            </circle>
-          ))}
-          {frame.points
-            .filter((p) => p.big)
-            .map((p) => (
-              <text
-                key={`l${p.council}`}
-                x={px(p.x)}
-                y={py(p.y) - rad(p.n) - 4}
-                fill="rgba(255,255,255,0.85)"
-                fontSize="11"
-                textAnchor="middle"
-                style={{ transition: "x 800ms ease, y 800ms ease" }}
-              >
-                {p.council}
-              </text>
-            ))}
-          <text x={BR_W / 2} y={BR_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
-            {t.lab.axisEnlist}
-          </text>
-          <text x={14} y={BR_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${BR_H / 2})`}>
-            {t.lab.axisCombat}
-          </text>
-        </svg>
-      </div>
-    </div>
-  );
-}
-
 /* ---------- 7) Army composition — who fills the army over time ---------- */
-const AC_W = 880;
-const AC_H = 420;
-const AC_PADX = 44;
-const AC_TOP = 16;
-const AC_BOT = 34;
 function hex(n: number) {
   return Math.round(n).toString(16).padStart(2, "0");
 }
@@ -560,106 +91,6 @@ function lerpColor(a: string, b: string, t: number) {
   const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
   const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
   return `#${pa.map((c, i) => hex(c + (pb[i] - c) * t)).join("")}`;
-}
-
-function ArmyComposition({
-  data,
-  t,
-  locale,
-}: {
-  data: ReturnType<typeof armyComposition>;
-  t: Dictionary;
-  locale: Locale;
-}) {
-  const { years, series } = data;
-  const n = years.length;
-  const x = (i: number) => AC_PADX + (i / (n - 1)) * (AC_W - 2 * AC_PADX);
-  const y = (share: number) =>
-    AC_TOP + (1 - share / 100) * (AC_H - AC_TOP - AC_BOT);
-
-  // cumulative stack: walk sectors bottom→top, each band sits on the running base
-  const bands = React.useMemo(() => {
-    const base = new Array(n).fill(0);
-    return series.map((s) => {
-      const lower = [...base];
-      const upper = s.shares.map((sh, i) => lower[i] + sh);
-      for (let i = 0; i < n; i++) base[i] = upper[i];
-      const top = upper.map((v, i) => `${x(i)},${y(v)}`);
-      const bottom = lower.map((v, i) => `${x(i)},${y(v)}`).reverse();
-      return {
-        sector: s.sector,
-        color: s.color,
-        shares: s.shares,
-        counts: s.counts,
-        lower,
-        upper,
-        d: `M ${top.join(" L ")} L ${bottom.join(" L ")} Z`,
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [series, n]);
-
-  return (
-    <div>
-      <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-        {series.map((s) => (
-          <span key={s.sector} className="flex items-center gap-2">
-            <span className="size-3 rounded-full" style={{ background: s.color }} />
-            {sectorLabel(s.sector, locale)}
-          </span>
-        ))}
-      </div>
-      <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${AC_W} ${AC_H}`} className="h-auto w-full min-w-[640px]">
-          {[0, 25, 50, 75, 100].map((p) => (
-            <g key={p}>
-              <line x1={AC_PADX} x2={AC_W - AC_PADX} y1={y(p)} y2={y(p)} stroke="rgba(255,255,255,0.07)" />
-              <text x={AC_PADX - 8} y={y(p) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end" className="tabular-nums">
-                {p}%
-              </text>
-            </g>
-          ))}
-          {bands.map((b) => (
-            <path key={b.sector} d={b.d} fill={b.color} fillOpacity={0.82}>
-              <title>
-                {sectorLabel(b.sector, locale)} · {years[n - 1]} — {b.shares[n - 1]}% (
-                {Math.round(b.counts[n - 1]).toLocaleString()})
-              </title>
-            </path>
-          ))}
-          {/* end-of-band share labels for the latest year — white with a dark
-              halo (paint-order: stroke) so they read on any band color */}
-          {bands.map((b) => {
-            const mid = (b.lower[n - 1] + b.upper[n - 1]) / 2;
-            if (b.upper[n - 1] - b.lower[n - 1] < 6) return null;
-            return (
-              <text
-                key={`v${b.sector}`}
-                x={x(n - 1) - 8}
-                y={y(mid) + 4}
-                fill="#fff"
-                stroke="#0b1220"
-                strokeWidth={2.75}
-                fontSize="12"
-                fontWeight={700}
-                textAnchor="end"
-                className="tabular-nums"
-                style={{ paintOrder: "stroke" }}
-              >
-                {b.shares[n - 1]}%
-              </text>
-            );
-          })}
-          {years.map((yr, i) => (
-            <text key={yr} x={x(i)} y={AC_H - 12} fill="rgba(255,255,255,0.45)" fontSize="12" textAnchor="middle" className="tabular-nums">
-              {yr}
-            </text>
-          ))}
-        </svg>
-      </div>
-      <p className="mt-3 text-xs text-muted-foreground/70">{t.lab.compNote}</p>
-    </div>
-  );
 }
 
 /* ---------- 8) Ridgeline — the distribution shifting year by year ---------- */
@@ -808,14 +239,15 @@ function Sankey({
 
   return (
     <div>
-      <div className="-mt-2 mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-        {sectors.map((s) => (
-          <span key={s} className="flex items-center gap-2">
-            <span className="size-3 rounded-full" style={{ background: sectorColor(s) }} />
-            {sectorLabel(s, locale)}
-          </span>
-        ))}
-        <span className="flex items-center gap-2">
+      <div className="-mt-1 mb-4 flex flex-wrap items-center gap-2">
+        <ChipLegend
+          className="m-0"
+          items={sectors.map((s) => ({
+            label: sectorLabel(s, locale),
+            color: sectorColor(s),
+          }))}
+        />
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/3 px-2.5 py-1 text-sm text-muted-foreground">
           <span className="h-3 w-4 rounded-[2px] border border-dashed border-white/50 bg-white/10" />
           {t.lab.sankeyOfficerLegend}
         </span>
@@ -996,10 +428,7 @@ function Outliers({
                 stroke={k ? "#0b1220" : "none"}
                 strokeWidth={k ? 1 : 0}
               >
-                <title>
-                  {p.council} — {t.lab.scatterTip(p.enlist, p.combat)} ({p.resid > 0 ? "+" : ""}
-                  {p.resid})
-                </title>
+                <title>{`${p.council} — ${t.lab.scatterTip(p.enlist, p.combat)} (${p.resid > 0 ? "+" : ""}${p.resid})`}</title>
               </circle>
             );
           })}
@@ -1031,102 +460,14 @@ function Outliers({
   );
 }
 
-/* ---------- 12) City trajectories — each city's path over the years ---------- */
-const TR_W = 880;
-const TR_H = 470;
-const TR_PAD = 52;
-
-function CityTrajectories({
-  data,
-  t,
-}: {
-  data: ReturnType<typeof cityTrajectories>;
-  t: Dictionary;
-}) {
-  const { trajectories, xBounds, yBounds } = data;
-  const [hover, setHover] = React.useState<string | null>(null);
-  if (!trajectories.length) return null;
-
-  const [xMin, xMax] = xBounds;
-  const [yMin, yMax] = yBounds;
-  const px = scaleLinear().domain([xMin, xMax]).range([TR_PAD, TR_W - TR_PAD]);
-  const py = scaleLinear().domain([yMin, yMax]).range([TR_H - TR_PAD, TR_PAD]);
-  const xticks = [xMin, Math.round((xMin + xMax) / 2), xMax];
-  const yticks = [yMin, Math.round((yMin + yMax) / 2), yMax];
-
-  const ordered = hover
-    ? [
-        ...trajectories.filter((tr) => tr.council !== hover),
-        ...trajectories.filter((tr) => tr.council === hover),
-      ]
-    : trajectories;
-  const dim = (tr: Trajectory) => (hover && hover !== tr.council ? 0.18 : 1);
-
-  return (
-    <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${TR_W} ${TR_H}`} className="h-auto w-full min-w-[640px]">
-        {xticks.map((v) => (
-          <g key={`x${v}`}>
-            <line x1={px(v)} x2={px(v)} y1={TR_PAD - 10} y2={TR_H - TR_PAD} stroke="rgba(255,255,255,0.07)" />
-            <text x={px(v)} y={TR_H - TR_PAD + 18} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle" className="tabular-nums">
-              {v}%
-            </text>
-          </g>
-        ))}
-        {yticks.map((v) => (
-          <g key={`y${v}`}>
-            <line x1={TR_PAD} x2={TR_W - TR_PAD} y1={py(v)} y2={py(v)} stroke="rgba(255,255,255,0.07)" />
-            <text x={TR_PAD - 8} y={py(v) + 4} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="end" className="tabular-nums">
-              {v}%
-            </text>
-          </g>
-        ))}
-
-        {ordered.map((tr) => {
-          const color = cityColor(tr.council);
-          const pts = tr.points;
-          const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${px(p.enlist)} ${py(p.combat)}`).join(" ");
-          const first = pts[0];
-          const last = pts[pts.length - 1];
-          return (
-            <g
-              key={tr.council}
-              style={{ opacity: dim(tr) }}
-              className="cursor-pointer"
-              onMouseEnter={() => setHover(tr.council)}
-              onMouseLeave={() => setHover((c) => (c === tr.council ? null : c))}
-            >
-              <path d={d} fill="none" stroke={color} strokeWidth={hover === tr.council ? 3 : 2} strokeLinejoin="round" strokeOpacity={0.9} />
-              {pts.map((p) => (
-                <circle key={p.year} cx={px(p.enlist)} cy={py(p.combat)} r={2.5} fill={color} fillOpacity={0.85}>
-                  <title>
-                    {tr.council} · {p.year} — {t.lab.scatterTip(p.enlist, p.combat)}
-                  </title>
-                </circle>
-              ))}
-              <circle cx={px(first.enlist)} cy={py(first.combat)} r={4} fill="none" stroke={color} strokeWidth={1.5} />
-              <circle cx={px(last.enlist)} cy={py(last.combat)} r={5} fill={color} />
-              <text x={px(last.enlist) + 8} y={py(last.combat) + 4} fill={color} fontSize="11" fontWeight={600}>
-                {tr.council}
-              </text>
-            </g>
-          );
-        })}
-
-        <text x={TR_W / 2} y={TR_H - 6} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle">
-          {t.lab.axisEnlist}
-        </text>
-        <text x={14} y={TR_H / 2} fill="rgba(255,255,255,0.5)" fontSize="12" textAnchor="middle" transform={`rotate(-90 14 ${TR_H / 2})`}>
-          {t.lab.axisCombat}
-        </text>
-      </svg>
-    </div>
-  );
-}
-
 export function Lab() {
   const t = useT();
   const locale = useLocale();
+
+  // One gender filter for the whole tab — set in the top bar, read by every
+  // panel via LabGenderCtx (no per-panel toggles).
+  const [gender, setGender] = React.useState<SGender>("בנים");
+  const g = gender === "בנים" ? "m" : "f";
 
   // These views are pure client-side SVG (no chart lib); render after mount so
   // the SSR HTML and first client paint can't disagree (same gate as ChartContainer).
@@ -1137,65 +478,58 @@ export function Lab() {
   if (!mounted) return <SectionSkeleton panels={3} />;
 
   return (
-    <div className="space-y-8">
-      {/* 1 — waffle */}
-      <GenderPanel title={t.lab.waffleTitle} subtitle={t.lab.waffleSubtitle} surface="lab_waffle">
-        {(g) => (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {waffles(g).map((d) => (
-              <WaffleCard key={d.sector} d={d} t={t} locale={locale} />
-            ))}
-          </div>
-        )}
-      </GenderPanel>
+    <LabGenderCtx.Provider value={{ g, gender }}>
+      <FilterBar>
+        <FilterField label={t.common.fieldGender}>
+          <GenderToggle value={gender} onChange={setGender} surface="lab" />
+        </FilterField>
+      </FilterBar>
+      <div className="space-y-8 pt-6">
+        {/* 1 — waffle */}
+        <GenderPanel
+          title={t.lab.waffleTitle}
+          subtitle={t.lab.waffleSubtitle}
+          surface="lab_waffle"
+        >
+          {(g) => (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {waffles(g).map((d) => (
+                <WaffleCard key={d.sector} d={d} t={t} locale={locale} />
+              ))}
+            </div>
+          )}
+        </GenderPanel>
 
-      {/* 2 — sankey (the pipeline) */}
-      <GenderPanel title={t.lab.sankeyTitle} subtitle={t.lab.sankeySubtitle} surface="lab_sankey">
-        {(g) => <Sankey data={sankeyFlow(g)} t={t} locale={locale} />}
-      </GenderPanel>
+        {/* 2 — sankey (the pipeline) */}
+        <GenderPanel
+          title={t.lab.sankeyTitle}
+          subtitle={t.lab.sankeySubtitle}
+          insight={t.analysis.sankey}
+          surface="lab_sankey"
+        >
+          {(g) => <Sankey data={sankeyFlow(g)} t={t} locale={locale} />}
+        </GenderPanel>
 
-      {/* 4 — two-armies scatter */}
-      <GenderPanel title={t.lab.scatterTitle} subtitle={t.lab.scatterSubtitle} surface="lab_scatter" note={t.lab.unweightedNote}>
-        {(g) => <QuadrantScatter data={cityScatter(g)} t={t} />}
-      </GenderPanel>
+        {/* 9 — ridgeline */}
+        <GenderPanel
+          title={t.lab.ridgeTitle}
+          subtitle={t.lab.ridgeSubtitle}
+          surface="lab_ridge"
+        >
+          {(g) => <Ridgeline data={ridgeline(g, "combat")} t={t} />}
+        </GenderPanel>
 
-      {/* 5 — bump chart */}
-      <GenderPanel title={t.lab.bumpTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.bumpSubtitle} surface="lab_bump" note={t.lab.unweightedNote}>
-        {(g) => <BumpChart data={bump(g, "combat")} t={t} />}
-      </GenderPanel>
-
-      {/* 6 — movers */}
-      <GenderPanel title={t.lab.moversTitle(LAB_FIRST, LAB_LAST)} subtitle={t.lab.moversSubtitle} surface="lab_movers" note={t.lab.moversNote}>
-        {(g) => {
-          const all = movers(g, "combat");
-          return <Movers risers={all.slice(0, 6)} fallers={all.slice(-6).reverse()} t={t} />;
-        }}
-      </GenderPanel>
-
-      {/* 7 — bubble race */}
-      <GenderPanel title={t.lab.raceTitle} subtitle={t.lab.raceSubtitle} surface="lab_race" note={t.lab.unweightedNote}>
-        {(g) => <BubbleRace data={bubbleRace(g, "enlist", "combat")} t={t} />}
-      </GenderPanel>
-
-      {/* 8 — army composition over time */}
-      <GenderPanel title={t.lab.compTitle} subtitle={t.lab.compSubtitle} surface="lab_composition">
-        {(g) => <ArmyComposition data={armyComposition(g, "nFighters")} t={t} locale={locale} />}
-      </GenderPanel>
-
-      {/* 9 — ridgeline */}
-      <GenderPanel title={t.lab.ridgeTitle} subtitle={t.lab.ridgeSubtitle} surface="lab_ridge">
-        {(g) => <Ridgeline data={ridgeline(g, "combat")} t={t} />}
-      </GenderPanel>
-
-      {/* 10 — outliers */}
-      <GenderPanel title={t.lab.outlierTitle} subtitle={t.lab.outlierSubtitle} surface="lab_outliers" note={t.lab.unweightedNote}>
-        {(g) => <Outliers data={outliers(g)} t={t} />}
-      </GenderPanel>
-
-      {/* 12 — city trajectories */}
-      <GenderPanel title={t.lab.trajTitle} subtitle={t.lab.trajSubtitle} surface="lab_trajectories" note={t.lab.unweightedNote}>
-        {(g) => <CityTrajectories data={cityTrajectories(g)} t={t} />}
-      </GenderPanel>
-    </div>
+        {/* 10 — outliers */}
+        <GenderPanel
+          title={t.lab.outlierTitle}
+          subtitle={t.lab.outlierSubtitle}
+          insight={t.analysis.outliers}
+          surface="lab_outliers"
+          note={t.lab.unweightedNote}
+        >
+          {(g) => <Outliers data={outliers(g)} t={t} />}
+        </GenderPanel>
+      </div>
+    </LabGenderCtx.Provider>
   );
 }

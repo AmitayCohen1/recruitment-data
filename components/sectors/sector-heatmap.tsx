@@ -1,7 +1,8 @@
 "use client";
 
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { matrix, SECTOR_COLOR } from "@/lib/sectors";
+import { matrix, SECTOR_COLOR, SFIRST } from "@/lib/sectors";
+import { Delta } from "@/components/ui/delta";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 
@@ -20,6 +21,20 @@ export function SectorHeatmap() {
   const t = useT();
   const locale = useLocale();
   const rows = [...matrix("בנים"), ...matrix("בנות")];
+  // First-year (2018) matrix, for the change badge per cell.
+  const baseline = new Map(
+    [...matrix("בנים", SFIRST), ...matrix("בנות", SFIRST)].map((r) => [
+      `${r.sector}-${r.gender}`,
+      r,
+    ]),
+  );
+  type HRow = (typeof rows)[number];
+  const deltaFor = (r: HRow, key: "enlist" | "combat" | "officer") => {
+    const b = baseline.get(`${r.sector}-${r.gender}`);
+    const v = (r[key] as number | null) ?? null;
+    const bv = (b?.[key] as number | null) ?? null;
+    return v != null && bv != null ? v - bv : null;
+  };
   // normalize each column by its own max so colors are comparable within a metric
   const maxes = Object.fromEntries(
     COLS.map((c) => [
@@ -60,8 +75,11 @@ export function SectorHeatmap() {
                     }}
                   >
                     <span className="text-xs font-medium">{t.metrics[c.key].long}</span>
-                    <span className="text-sm font-semibold tabular-nums">
-                      {v === null ? "—" : `${v}%`}
+                    <span className="flex flex-col items-end leading-tight">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {v === null ? "—" : `${v}%`}
+                      </span>
+                      <Delta value={deltaFor(r, c.key)} title={t.delta.vs(SFIRST)} />
                     </span>
                   </div>
                 );
@@ -91,17 +109,20 @@ export function SectorHeatmap() {
                 </td>
                 {COLS.map((c) => {
                   const v = (r[c.key] as number) ?? null;
-                  const t = v === null ? 0 : v / maxes[c.key];
+                  const ht = v === null ? 0 : v / maxes[c.key];
                   return (
                     <td
                       key={c.key}
                       className="rounded-md px-2 py-1.5 text-center font-semibold tabular-nums"
                       style={{
-                        background: heat(t),
-                        color: t > 0.5 ? "white" : "var(--foreground)",
+                        background: heat(ht),
+                        color: ht > 0.5 ? "white" : "var(--foreground)",
                       }}
                     >
-                      {v === null ? "—" : `${v}%`}
+                      <div className="flex flex-col items-center leading-tight">
+                        <span>{v === null ? "—" : `${v}%`}</span>
+                        <Delta value={deltaFor(r, c.key)} title={t.delta.vs(SFIRST)} />
+                      </div>
                     </td>
                   );
                 })}
@@ -113,6 +134,7 @@ export function SectorHeatmap() {
       <p className="pt-3 text-xs text-muted-foreground">
         {t.heatmap.footnote}
       </p>
+      <p className="pt-1 text-xs text-muted-foreground">{t.delta.legend(SFIRST)}</p>
     </Panel>
   );
 }

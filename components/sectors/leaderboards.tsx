@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChipLegend, Panel, PanelHeader } from "@/components/ui/panel";
 import { topSchools, type Gender, type MetricKey } from "@/lib/data";
 import { SCHOOL_SECTOR, SECTOR_COLOR, sectorColor, type SGender, type SMetric } from "@/lib/sectors";
 import { GenderToggle, MetricTabsS } from "./controls";
@@ -88,14 +88,15 @@ export function Leaderboards({
         <List metric={metric} gender={g} dir="top" title={t.leaderboards.topTitle} />
         <List metric={metric} gender={g} dir="bottom" title={t.leaderboards.bottomTitle} />
       </div>
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
-        <span>{t.leaderboards.legend}</span>
-        {Object.entries(SECTOR_COLOR).map(([s, c]) => (
-          <span key={s} className="flex items-center gap-1">
-            <span className="size-2 rounded-full" style={{ background: c }} />
-            {sectorLabel(s, locale)}
-          </span>
-        ))}
+      <div className="mt-5">
+        <p className="mb-2 text-xs text-muted-foreground">{t.leaderboards.legend}</p>
+        <ChipLegend
+          className="m-0 text-xs"
+          items={Object.entries(SECTOR_COLOR).map(([s, c]) => ({
+            label: sectorLabel(s, locale),
+            color: c,
+          }))}
+        />
       </div>
     </Panel>
   );

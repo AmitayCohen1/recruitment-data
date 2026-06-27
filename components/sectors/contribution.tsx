@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
-import { cn } from "@/lib/utils";
+import { Panel, PanelHeader, PanelInsight } from "@/components/ui/panel";
+import { ControlGroup, SegmentButton } from "@/components/ui/control";
 import {
   contribution,
   ABS_METRICS,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/sectors";
 import { GenderToggle } from "./controls";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
-import { sectorLabel } from "@/lib/i18n/labels";
+import { sectorLabel, genderLabel } from "@/lib/i18n/labels";
 
 export function Contribution({
   gender: genderProp,
@@ -31,28 +31,24 @@ export function Contribution({
       <PanelHeader
         title={t.contribution.title}
         subtitle={t.contribution.subtitle(noun)}
+        exportCaption={`${t.absMetrics[metric]} · ${genderLabel(gender, locale)}`}
       >
         <div className="flex flex-wrap gap-2">
           {!controlled && (
             <GenderToggle value={gender} onChange={setGender} surface="contribution" />
           )}
-          <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
+          <ControlGroup>
             {ABS_METRICS.map((m) => (
-              <button
+              <SegmentButton
                 key={m.key}
                 type="button"
+                active={metric === m.key}
                 onClick={() => setMetric(m.key)}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  metric === m.key
-                    ? "bg-white/10 text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
               >
                 {t.absMetrics[m.key]}
-              </button>
+              </SegmentButton>
             ))}
-          </div>
+          </ControlGroup>
         </div>
       </PanelHeader>
 
@@ -111,6 +107,7 @@ export function Contribution({
       <p className="pt-4 text-xs leading-5 text-muted-foreground">
         {t.contribution.footnote}
       </p>
+      <PanelInsight>{t.analysis.contribution}</PanelInsight>
     </Panel>
   );
 }

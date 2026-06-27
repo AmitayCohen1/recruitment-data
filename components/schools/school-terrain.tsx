@@ -5,19 +5,18 @@ import dynamic from "next/dynamic";
 import { useT } from "@/components/i18n/locale-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 
-/** Three.js / WebGL is heavy and touches `window`, so the scenes load
- *  client-only (no SSR) and only once this tab is on screen. */
-const ThreeScenes = dynamic(
-  () => import("./three-scenes").then((m) => m.ThreeScenes),
+/** Three.js / WebGL is heavy and touches `window`, so the terrain loads
+ *  client-only (no SSR) and only after first paint, so the rest of the
+ *  Schools tab stays snappy and never pays for WebGL up front. */
+const SectorTerrainScene = dynamic(
+  () => import("@/components/lab/three-scenes").then((m) => m.SectorTerrainScene),
   { ssr: false },
 );
 
-export function ThreeLab() {
+export function SchoolTerrain() {
   const t = useT();
   const [show, setShow] = React.useState(false);
 
-  // Defer mounting the WebGL canvases until after first paint so switching
-  // to this tab stays snappy; the rest of the dashboard never pays for them.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setShow(true), []);
 
@@ -32,5 +31,5 @@ export function ThreeLab() {
     );
   }
 
-  return <ThreeScenes />;
+  return <SectorTerrainScene />;
 }

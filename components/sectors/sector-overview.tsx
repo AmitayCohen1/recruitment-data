@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import { SectorDonuts } from "./sector-donuts";
-import { SectorTrend } from "./sector-trend";
 import { GenderToggle, MetricTabsS } from "./controls";
 import { FilterBar, FilterField } from "./filter-bar";
 import type { SGender, SMetric } from "@/lib/sectors";
 import { useT } from "@/components/i18n/locale-provider";
 
-/** Sector overview: a shared gender+metric toolbar drives the per-sector donut
- *  snapshot and the 2018→2024 trend line — filter once, both update. */
+/** Sector overview: a shared gender+metric toolbar drives the per-sector
+ *  snapshot, so filters stay aligned across the visible overview charts. */
 export function SectorOverview() {
   const t = useT();
   const [metric, setMetric] = React.useState<SMetric>("enlist");

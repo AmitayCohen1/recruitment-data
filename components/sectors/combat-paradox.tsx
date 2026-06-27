@@ -12,7 +12,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { Panel, PanelHeader, PanelInsight } from "@/components/ui/panel";
 import { ChartContainer } from "@/components/ui/chart";
 import { sectorScatter, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
@@ -142,6 +142,7 @@ export function CombatParadox({
       <p className="pt-2 text-xs leading-5 text-muted-foreground">
         {t.combatParadox.footnote}
       </p>
+      <PanelInsight>{t.analysis.combatParadox}</PanelInsight>
     </Panel>
   );
 }

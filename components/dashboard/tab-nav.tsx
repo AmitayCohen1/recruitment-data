@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { track } from "@/lib/analytics";
+import { Button } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
 
 export type NavItem = {
@@ -44,12 +45,13 @@ export function TabNav({ lang, items }: { lang: string; items: NavItem[] }) {
     <div className="sticky top-0 z-20 -mx-4 mb-6 bg-background/80 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
       {/* mobile: dropdown */}
       <div ref={menuRef} className="relative sm:hidden">
-        <button
+        <Button
           type="button"
           aria-haspopup="listbox"
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
-          className="flex h-12 w-full items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 text-base font-semibold"
+          size="lg"
+          className="w-full justify-between rounded-2xl"
         >
           <span className="flex items-center gap-2">
             {activeItem?.icon && <span aria-hidden>{activeItem.icon}</span>}
@@ -61,7 +63,7 @@ export function TabNav({ lang, items }: { lang: string; items: NavItem[] }) {
               open && "rotate-180",
             )}
           />
-        </button>
+        </Button>
         {open && (
           <div
             role="listbox"

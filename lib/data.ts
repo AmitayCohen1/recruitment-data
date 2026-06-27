@@ -22,6 +22,7 @@ export const YEARS = Array.from(new Set(ROWS.map((r) => r.year))).sort(
   (a, b) => a - b,
 );
 export const LATEST = YEARS[YEARS.length - 1];
+export const FIRST = YEARS[0];
 
 /** Top or bottom N schools for one gender + metric (latest year). */
 export function topSchools(

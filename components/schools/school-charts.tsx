@@ -13,6 +13,14 @@ import { X } from "lucide-react";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { SectionSkeleton } from "@/components/ui/skeleton";
 import { GenderToggle } from "@/components/sectors/controls";
+import {
+  Button,
+  ControlGroup,
+  FilterChip,
+  FilterInput,
+  MenuItem,
+  SegmentButton,
+} from "@/components/ui/control";
 import { SECTOR_COLOR, sectorColor, type SGender } from "@/lib/sectors";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
@@ -118,10 +126,7 @@ function Beeswarm({
               stroke={isPin ? "#fff" : "none"}
               strokeWidth={isPin ? 1.4 : 0}
             >
-              <title>
-                {n.d.school}
-                {n.d.council ? ` · ${n.d.council}` : ""} — {n.d.value}%
-              </title>
+              <title>{`${n.d.school}${n.d.council ? ` · ${n.d.council}` : ""} — ${n.d.value}%`}</title>
             </circle>
           );
         })}
@@ -339,40 +344,31 @@ function SchoolFilterBar({
         <GenderToggle value={gender} onChange={onGender} surface="schools_filter" />
 
         {/* sector chips — double as legend + filter */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <button
+        <ControlGroup>
+          <SegmentButton
             type="button"
+            active={sector == null}
             onClick={() => onSector(null)}
-            className={
-              "rounded-lg px-2.5 py-1 text-sm transition-colors " +
-              (sector == null
-                ? "bg-white/10 text-foreground"
-                : "text-muted-foreground hover:text-foreground")
-            }
           >
             {t.schoolFilter.allSectors}
-          </button>
+          </SegmentButton>
           {sectors.map((s) => (
-            <button
+            <SegmentButton
               key={s}
               type="button"
+              active={sector === s}
               onClick={() => onSector(sector === s ? null : s)}
-              className={
-                "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm transition-colors " +
-                (sector === s
-                  ? "bg-white/10 text-foreground"
-                  : "text-muted-foreground hover:text-foreground")
-              }
+              className="flex items-center gap-1.5"
             >
               <span className="size-2.5 rounded-full" style={{ background: SECTOR_COLOR[s] }} />
               {sectorLabel(s, locale)}
-            </button>
+            </SegmentButton>
           ))}
-        </div>
+        </ControlGroup>
 
         {/* school search */}
         <div className="relative ms-auto w-full sm:w-64">
-          <input
+          <FilterInput
             type="text"
             value={q}
             onChange={(e) => {
@@ -382,7 +378,7 @@ function SchoolFilterBar({
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             placeholder={t.schoolFilter.add}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-white/20"
+            className="w-full"
           />
           {open && q.trim() && (
             <div className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 p-1 shadow-xl">
@@ -392,7 +388,7 @@ function SchoolFilterBar({
                 </div>
               ) : (
                 matches.map((s) => (
-                  <button
+                  <MenuItem
                     key={s.key}
                     type="button"
                     onMouseDown={(e) => {
@@ -400,7 +396,6 @@ function SchoolFilterBar({
                       onAdd(s.key, s.school);
                       setQ("");
                     }}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-start text-sm hover:bg-white/10"
                   >
                     <span
                       className="size-2.5 shrink-0 rounded-full"
@@ -412,7 +407,7 @@ function SchoolFilterBar({
                         {s.council}
                       </span>
                     )}
-                  </button>
+                  </MenuItem>
                 ))
               )}
             </div>
@@ -425,23 +420,23 @@ function SchoolFilterBar({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">{t.schoolFilter.selectedLabel}:</span>
           {[...selected.entries()].map(([key, name]) => (
-            <button
+            <FilterChip
               key={key}
               type="button"
               onClick={() => onRemove(key)}
-              className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] py-0.5 ps-2.5 pe-1.5 text-xs hover:bg-white/10"
             >
               {name}
               <X className="size-3 text-muted-foreground" />
-            </button>
+            </FilterChip>
           ))}
-          <button
+          <Button
             type="button"
+            variant="link"
             onClick={onClear}
-            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            className="text-xs"
           >
             {t.schoolFilter.clear}
-          </button>
+          </Button>
         </div>
       )}
     </div>

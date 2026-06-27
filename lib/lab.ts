@@ -446,16 +446,15 @@ export function schoolCloud(gender: Gender, allYears = false): CloudPoint[] {
 }
 
 /* ------------------------------------------------------------------ *
- *  Parallel coordinates — one polyline per school across all four
- *  metrics (enlist → combat → officer → meaning), latest year. Unlike
- *  the scatter, this view shows the full multivariate profile, so the
- *  low-spread officer/meaning axes still read honestly side by side.
+ *  Parallel coordinates — one polyline per school across the three
+ *  metrics (enlist → combat → officer), latest year. Unlike the
+ *  scatter, this view shows the full multivariate profile, so the
+ *  low-spread officer axis still reads honestly side by side.
  * ------------------------------------------------------------------ */
 export const PARALLEL_AXES: { key: MetricKey; label?: string }[] = [
   { key: "enlist" },
   { key: "combat" },
   { key: "officer" },
-  { key: "meaning" },
 ];
 
 export type SchoolProfile = {

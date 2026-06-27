@@ -5,8 +5,16 @@ import * as THREE from "three";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Html, Line } from "@react-three/drei";
 import { Pause, Play, X } from "lucide-react";
-import { Panel, PanelHeader } from "@/components/ui/panel";
+import { ChipLegend, Panel, PanelHeader } from "@/components/ui/panel";
 import { GenderToggle } from "@/components/sectors/controls";
+import {
+  ControlGroup,
+  FilterChip,
+  FilterInput,
+  IconButton,
+  MenuItem,
+  SegmentButton,
+} from "@/components/ui/control";
 import { useT, useLocale } from "@/components/i18n/locale-provider";
 import { sectorLabel } from "@/lib/i18n/labels";
 import { SECTOR_COLOR, sectorColor, type SGender } from "@/lib/sectors";
@@ -441,24 +449,24 @@ function CloudScene({ points }: { points: CloudPoint[] }) {
     <div>
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start">
         <div className="relative w-full sm:max-w-xs">
-          <input
+          <FilterInput
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t.three.cloudSearch}
-            className="h-9 w-full rounded-lg border border-white/10 bg-white/4 px-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-white/25 focus:outline-none"
+            className="w-full"
           />
           {q && (
             <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-white/10 bg-zinc-900 shadow-xl">
               {results.length ? (
                 results.map((r) => (
-                  <button
+                  <MenuItem
                     key={r.key}
                     type="button"
                     onClick={() => {
                       togglePin(r.key);
                       setQuery("");
                     }}
-                    className="flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-sm hover:bg-white/10"
+                    className="justify-between py-2"
                   >
                     <span className="truncate text-foreground">{r.school}</span>
                     {r.council && (
@@ -466,7 +474,7 @@ function CloudScene({ points }: { points: CloudPoint[] }) {
                         {r.council}
                       </span>
                     )}
-                  </button>
+                  </MenuItem>
                 ))
               ) : (
                 <div className="px-3 py-2 text-sm text-muted-foreground">
@@ -479,16 +487,16 @@ function CloudScene({ points }: { points: CloudPoint[] }) {
         {pinnedSchools.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {pinnedSchools.map((s) => (
-              <button
+              <FilterChip
                 key={s.key}
                 type="button"
                 onClick={() => togglePin(s.key)}
-                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium text-white"
+                className="text-white"
                 style={{ borderColor: sectorColor(s.sector) }}
               >
                 {s.school}
                 <X className="size-3" />
-              </button>
+              </FilterChip>
             ))}
           </div>
         )}
@@ -797,8 +805,9 @@ function PlaneAxes({ size, t, small = false }: { size: number; t: Dictionary; sm
 }
 
 /* VARIANT A — four small sector landscapes in a 2×2 grid, one shared scene. */
-const TILE = 5.2;
-const TILE_GAP = 0.9;
+const TILE = 4.8;
+const TILE_GAP = 2.2;
+const TILE_MAXH = 1.7;
 function SectorTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
   const locale: Locale = useLocale();
   const bySector = React.useMemo(() => groupBySector(points), [points]);
@@ -820,10 +829,11 @@ function SectorTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) 
               points={bySector.get(name) ?? []}
               tint={color}
               size={TILE}
-              maxH={2.6}
+              maxH={TILE_MAXH}
             />
-            <PlaneAxes size={TILE} t={t} small />
-            <Html position={[0, 3.0, 0]} center className="pointer-events-none">
+            {/* axes on one reference tile only — all tiles share the same axes */}
+            {i === 0 && <PlaneAxes size={TILE} t={t} small />}
+            <Html position={[0, TILE_MAXH + 0.5, 0]} center className="pointer-events-none">
               <span className="whitespace-nowrap rounded bg-zinc-900/70 px-1.5 py-0.5 text-[12px] font-semibold text-white">
                 {sectorLabel(name, locale)}
               </span>
@@ -840,26 +850,43 @@ function SectorTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) 
  * its own Stage (keyed) so the camera framing fits that layout. */
 function SectorTerrainPanel({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
   const locale: Locale = useLocale();
-  const [mode, setMode] = React.useState<"grid" | "overlay">("grid");
-  const tab = (active: boolean) =>
-    `rounded-md px-3 py-1 text-sm font-medium transition ${
-      active ? "bg-white/15 text-white" : "text-muted-foreground hover:text-foreground"
-    }`;
+  // Three ways to read the same density surface: all schools as one combined
+  // landscape, the four sectors side by side, or the four overlaid as layers.
+  const [mode, setMode] = React.useState<"single" | "grid" | "overlay">("grid");
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="inline-flex rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
-          <button type="button" onClick={() => setMode("grid")} className={tab(mode === "grid")}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <ControlGroup>
+          <SegmentButton
+            type="button"
+            active={mode === "single"}
+            onClick={() => setMode("single")}
+          >
+            {t.three.terrainViewSingle}
+          </SegmentButton>
+          <SegmentButton
+            type="button"
+            active={mode === "grid"}
+            onClick={() => setMode("grid")}
+          >
             {t.three.terrainViewGrid}
-          </button>
-          <button type="button" onClick={() => setMode("overlay")} className={tab(mode === "overlay")}>
+          </SegmentButton>
+          <SegmentButton
+            type="button"
+            active={mode === "overlay"}
+            onClick={() => setMode("overlay")}
+          >
             {t.three.terrainViewOverlay}
-          </button>
-        </div>
-        <SectorLegend locale={locale} />
+          </SegmentButton>
+        </ControlGroup>
+        {mode === "single" ? <DensityLegend t={t} /> : <SectorLegend locale={locale} />}
       </div>
-      {mode === "grid" ? (
-        <Stage key="grid" camera={[2, 16, 15]} hint={t.three.terrainHint} t={t}>
+      {mode === "single" ? (
+        <Stage key="single" camera={[9, 8, 11]} hint={t.three.terrainHint} t={t}>
+          <DensityTerrain points={points} t={t} />
+        </Stage>
+      ) : mode === "grid" ? (
+        <Stage key="grid" camera={[0, 18, 12]} hint={t.three.terrainHint} t={t} spin={false}>
           <SectorTerrains points={points} t={t} />
         </Stage>
       ) : (
@@ -892,14 +919,16 @@ function Stage({
   camera,
   hint,
   t,
+  spin = true,
   children,
 }: {
   camera: [number, number, number];
   hint: string;
   t: Dictionary;
+  spin?: boolean;
   children: React.ReactNode;
 }) {
-  const [rotate, setRotate] = React.useState(true);
+  const [rotate, setRotate] = React.useState(spin);
   return (
     <div className="relative h-[440px] w-full overflow-hidden rounded-xl border border-white/10 bg-black/20 sm:h-[520px]">
       <Canvas
@@ -925,14 +954,15 @@ function Stage({
         />
       </Canvas>
 
-      <button
+      <IconButton
         type="button"
         onClick={() => setRotate((r) => !r)}
         aria-label={rotate ? t.lab.racePause : t.lab.racePlay}
-        className="absolute inset-e-3 top-3 inline-flex size-9 items-center justify-center rounded-full border border-white/10 bg-zinc-900/70 text-foreground backdrop-blur transition hover:bg-zinc-800/80"
+        shape="circle"
+        className="absolute inset-e-3 top-3 bg-zinc-900/70 text-foreground backdrop-blur hover:bg-zinc-800/80"
       >
         {rotate ? <Pause className="size-4" /> : <Play className="size-4" />}
-      </button>
+      </IconButton>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/40 to-transparent px-3 py-2 text-center text-[11px] text-muted-foreground/80">
         {hint}
@@ -956,67 +986,12 @@ function hasWebGL(): boolean {
 
 function SectorLegend({ locale }: { locale: Locale }) {
   return (
-    <div className="-mt-2 mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-      {Object.entries(SECTOR_COLOR).map(([s, c]) => (
-        <span key={s} className="flex items-center gap-2">
-          <span className="size-3 rounded-full" style={{ background: c }} />
-          {sectorLabel(s, locale)}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-export function ThreeScenes() {
-  const t = useT();
-  const [gender, setGender] = React.useState<SGender>("בנים");
-  const g: Gender = gender === "בנים" ? "m" : "f";
-
-  const [webgl, setWebgl] = React.useState<boolean | null>(null);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  React.useEffect(() => setWebgl(hasWebGL()), []);
-
-  const terrain = React.useMemo(() => schoolCloud(g), [g]); // latest year only
-
-  return (
-    <div className="space-y-8">
-      <div className="flex justify-end">
-        <GenderToggle value={gender} onChange={setGender} />
-      </div>
-
-      {/* 3 — density terrain (all schools): height = #schools at each enlist×combat mix */}
-      <Panel>
-        <PanelHeader title={t.three.terrainTitle} subtitle={t.three.terrainSubtitle} />
-        <DensityLegend t={t} />
-        {webgl === false ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            {t.three.webglError}
-          </p>
-        ) : (
-          webgl && (
-            <Stage camera={[9, 8, 11]} hint={t.three.terrainHint} t={t}>
-              <DensityTerrain key={g} points={terrain} t={t} />
-            </Stage>
-          )
-        )}
-      </Panel>
-
-      {/* 4 — same terrain split by sector: toggle side-by-side / together */}
-      <Panel>
-        <PanelHeader
-          title={t.three.sectorTerrainTitle}
-          subtitle={t.three.sectorTerrainSubtitle}
-        />
-        <DensityLegend t={t} />
-        {webgl === false ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            {t.three.webglError}
-          </p>
-        ) : (
-          webgl && <SectorTerrainPanel key={g} points={terrain} t={t} />
-        )}
-      </Panel>
-    </div>
+    <ChipLegend
+      items={Object.entries(SECTOR_COLOR).map(([s, c]) => ({
+        label: sectorLabel(s, locale),
+        color: c,
+      }))}
+    />
   );
 }
 
@@ -1086,6 +1061,39 @@ export function SectorBarsScene() {
             <BarMatrix key={g} bars={bars} t={t} locale={locale} />
           </Stage>
         )
+      )}
+    </Panel>
+  );
+}
+
+/** Standalone sector density terrain (enlist × combat), for the Schools tab.
+ *  Self-contained: owns its gender toggle and WebGL gate; the 3-view switch
+ *  (all schools · side by side · overlaid) lives in SectorTerrainPanel. */
+export function SectorTerrainScene() {
+  const t = useT();
+  const [gender, setGender] = React.useState<SGender>("בנים");
+  const g: Gender = gender === "בנים" ? "m" : "f";
+
+  const [webgl, setWebgl] = React.useState<boolean | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => setWebgl(hasWebGL()), []);
+
+  const terrain = React.useMemo(() => schoolCloud(g), [g]); // latest year only
+
+  return (
+    <Panel>
+      <PanelHeader
+        title={t.three.sectorTerrainTitle}
+        subtitle={t.three.sectorTerrainSubtitle}
+      >
+        <GenderToggle value={gender} onChange={setGender} />
+      </PanelHeader>
+      {webgl === false ? (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          {t.three.webglError}
+        </p>
+      ) : (
+        webgl && <SectorTerrainPanel key={g} points={terrain} t={t} />
       )}
     </Panel>
   );
