@@ -593,17 +593,18 @@ function makeRamp(tint: string): (h: number) => [number, number, number] {
   };
 }
 
-/** Build a density surface geometry from points over the enlist×combat plane.
- *  Height is the smoothed school count, normalized to this set's own max. */
-function buildDensityGeometry(
-  points: { enlist: number; combat: number }[],
-  size: number,
-  maxH: number,
-  colorAt: (h: number) => [number, number, number],
-): THREE.BufferGeometry {
+/** Smoothed school count over the enlist×combat plane (a Gaussian kernel field)
+ *  plus its own peak. Splitting this out from the geometry lets several surfaces
+ *  share one peak as a common scale — so tiles with little data (e.g. Haredi)
+ *  no longer get blown up to full height by their own tiny max. */
+function computeField(points: { enlist: number; combat: number }[]): {
+  field: Float32Array;
+  max: number;
+} {
   const n = TERR_N;
   const field = new Float32Array(n * n);
   const inv = 1 / (2 * TERR_BW * TERR_BW);
+  let max = 0;
   for (let gy = 0; gy < n; gy++) {
     const cy = (gy / (n - 1)) * 100;
     for (let gx = 0; gx < n; gx++) {
@@ -615,15 +616,34 @@ function buildDensityGeometry(
         s += Math.exp(-(dx * dx + dy * dy) * inv);
       }
       field[gy * n + gx] = s;
+      if (s > max) max = s;
     }
   }
-  const max = Math.max(1, ...field);
+  return { field, max };
+}
+
+/** Turn a kernel field into a surface geometry. Two separable channels:
+ *   - `divisor` normalizes SHAPE (defaults to this field's own peak) so every
+ *     sector's spread/cluster pattern stays readable regardless of size.
+ *   - `scale` (0..1) dials overall height/color to encode VOLUME — e.g. a
+ *     sector's school count over the largest sector's, so 109 schools read
+ *     visibly shorter than 290 instead of either flat or full-height. */
+function fieldToGeometry(
+  field: Float32Array,
+  size: number,
+  maxH: number,
+  colorAt: (h: number) => [number, number, number],
+  divisor?: number,
+  scale = 1,
+): THREE.BufferGeometry {
+  const n = TERR_N;
+  const max = Math.max(1, divisor ?? field.reduce((a, b) => Math.max(a, b), 0));
   const g = new THREE.PlaneGeometry(size, size, n - 1, n - 1);
   g.rotateX(-Math.PI / 2);
   const pos = g.attributes.position as THREE.BufferAttribute;
   const colors = new Float32Array(pos.count * 3);
   for (let i = 0; i < pos.count; i++) {
-    const h = field[i] / max;
+    const h = Math.min(1, (field[i] / max) * scale);
     pos.setY(i, h * maxH);
     const [r, gg, b] = colorAt(h);
     colors[i * 3] = r;
@@ -638,23 +658,27 @@ function buildDensityGeometry(
 /** A single rising density surface (lit mesh + faint wireframe), reused by
  *  every terrain variant. Owns its own grow-from-flat reveal. */
 function TerrainSurface({
-  points,
+  field,
   tint = "main",
   size = TERR_SIZE,
   maxH = TERR_MAXH,
   opacity = 1,
+  divisor,
+  scale = 1,
 }: {
-  points: { enlist: number; combat: number }[];
+  field: Float32Array;
   tint?: string;
   size?: number;
   maxH?: number;
   opacity?: number;
+  divisor?: number;
+  scale?: number;
 }) {
   const groupRef = React.useRef<THREE.Group>(null);
   const grow = React.useRef(0);
   const geometry = React.useMemo(
-    () => buildDensityGeometry(points, size, maxH, makeRamp(tint)),
-    [points, size, maxH, tint],
+    () => fieldToGeometry(field, size, maxH, makeRamp(tint), divisor, scale),
+    [field, size, maxH, tint, divisor, scale],
   );
   React.useEffect(() => {
     grow.current = 0;
@@ -747,12 +771,13 @@ function DensityTerrain({ points, t }: { points: CloudPoint[]; t: Dictionary }) 
   const fx = (e: number) => -half + (e / 100) * TERR_SIZE;
   const fz = (c: number) => -half + (c / 100) * TERR_SIZE;
   const peak = React.useMemo(() => peakCombo(points), [points]);
+  const field = React.useMemo(() => computeField(points).field, [points]);
   return (
     <>
       <gridHelper args={[TERR_SIZE + 1.5, 18, "#ffffff", "#ffffff"]}>
         <lineBasicMaterial transparent opacity={0.05} />
       </gridHelper>
-      <TerrainSurface points={points} tint="main" />
+      <TerrainSurface field={field} tint="main" />
 
       {/* axis titles */}
       <Html position={[half + 0.9, 0.1, 0]} center className="pointer-events-none">
@@ -854,7 +879,6 @@ const TILE_MAXH = 1.7;
 function SectorTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
   const locale: Locale = useLocale();
   const bySector = React.useMemo(() => groupBySector(points), [points]);
-  const sectors = Object.entries(SECTOR_COLOR);
   const off = (TILE + TILE_GAP) / 2;
   const spots: [number, number][] = [
     [-off, -off],
@@ -862,23 +886,41 @@ function SectorTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) 
     [-off, off],
     [off, off],
   ];
+  // Shape is normalized per tile (own peak) so each sector's pattern stays
+  // readable; overall height is scaled by the sector's school count over the
+  // largest sector's, so a sparse sector (e.g. Haredi) reads visibly shorter
+  // instead of a full-height mountain — without collapsing to flat.
+  const tiles = React.useMemo(
+    () =>
+      Object.entries(SECTOR_COLOR).map(([name, color]) => {
+        const pts = bySector.get(name) ?? [];
+        return { name, color, n: pts.length, ...computeField(pts) };
+      }),
+    [bySector],
+  );
+  const maxN = Math.max(1, ...tiles.map((tile) => tile.n));
   return (
     <>
-      {sectors.map(([name, color], i) => {
+      {tiles.map((tile, i) => {
         const [ox, oz] = spots[i] ?? [0, 0];
         return (
-          <group key={name} position={[ox, 0, oz]}>
+          <group key={tile.name} position={[ox, 0, oz]}>
             <TerrainSurface
-              points={bySector.get(name) ?? []}
-              tint={color}
+              field={tile.field}
+              divisor={tile.max}
+              scale={tile.n / maxN}
+              tint={tile.color}
               size={TILE}
               maxH={TILE_MAXH}
             />
             {/* axes on one reference tile only — all tiles share the same axes */}
             {i === 0 && <PlaneAxes size={TILE} t={t} small />}
             <Html position={[0, TILE_MAXH + 0.5, 0]} center className="pointer-events-none">
-              <span className="whitespace-nowrap rounded bg-zinc-900/70 px-1.5 py-0.5 text-[12px] font-semibold text-white">
-                {sectorLabel(name, locale)}
+              <span className="whitespace-nowrap rounded bg-zinc-900/70 px-1.5 py-0.5 text-center text-[12px] font-semibold text-white">
+                {sectorLabel(tile.name, locale)}
+                <span className="block text-[10px] font-normal text-white/55 tabular-nums">
+                  {t.three.schools(tile.n)}
+                </span>
               </span>
             </Html>
           </group>
@@ -944,13 +986,31 @@ function SectorTerrainPanel({ points, t }: { points: CloudPoint[]; t: Dictionary
 /* VARIANT C — all four sector surfaces overlaid, translucent. */
 function OverlayTerrains({ points, t }: { points: CloudPoint[]; t: Dictionary }) {
   const bySector = React.useMemo(() => groupBySector(points), [points]);
+  // Same per-tile shape + count-scaled height as the grid, so overlaid layers
+  // stay comparable without flattening the smaller sectors.
+  const layers = React.useMemo(
+    () =>
+      Object.entries(SECTOR_COLOR).map(([name, color]) => {
+        const pts = bySector.get(name) ?? [];
+        return { name, color, n: pts.length, ...computeField(pts) };
+      }),
+    [bySector],
+  );
+  const maxN = Math.max(1, ...layers.map((l) => l.n));
   return (
     <>
       <gridHelper args={[TERR_SIZE + 1.5, 18, "#ffffff", "#ffffff"]}>
         <lineBasicMaterial transparent opacity={0.05} />
       </gridHelper>
-      {Object.entries(SECTOR_COLOR).map(([name, color]) => (
-        <TerrainSurface key={name} points={bySector.get(name) ?? []} tint={color} opacity={0.5} />
+      {layers.map((l) => (
+        <TerrainSurface
+          key={l.name}
+          field={l.field}
+          divisor={l.max}
+          scale={l.n / maxN}
+          tint={l.color}
+          opacity={0.5}
+        />
       ))}
       <PlaneAxes size={TERR_SIZE} t={t} />
     </>

@@ -2,15 +2,31 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { Drawer } from "vaul";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/control";
 
-/** A hand-rolled modal dialog matching shadcn/ui's Dialog look — dimmed overlay,
- *  centered card, close button, fade/zoom transition. Built without Radix to keep
- *  the dep tree lean, consistent with the other hand-rolled surfaces (see popover
- *  and chart-export). Closes on overlay click and Escape; locks body scroll while
- *  open. Controlled via `open` / `onClose`. */
+/** True below the `sm` breakpoint. Drives the mobile-vs-desktop presentation. */
+function useIsMobile() {
+  const [mobile, setMobile] = React.useState(false);
+  React.useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const sync = () => setMobile(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return mobile;
+}
+
+/** A modal surface with two presentations behind one API:
+ *  - Phones: the genuine vaul Drawer — a bottom sheet with real drag physics,
+ *    velocity flick-to-dismiss, a grab handle, and background scaling.
+ *  - ≥sm: a centered, zooming card (hand-rolled to match shadcn's Dialog look,
+ *    no Radix, consistent with the other hand-rolled surfaces).
+ *  Closes on overlay click and Escape; locks body scroll while open. Controlled
+ *  via `open` / `onClose`. */
 export function Dialog({
   open,
   onClose,
@@ -26,8 +42,10 @@ export function Dialog({
   children: React.ReactNode;
   className?: string;
 }) {
-  // `render` keeps the node mounted through the exit transition; `shown` drives
-  // the enter/exit animation (toggled a frame after mount).
+  const isMobile = useIsMobile();
+
+  // Desktop enter/exit animation: `render` keeps the node mounted through the
+  // exit transition; `shown` toggles a frame after mount to drive the zoom.
   const [render, setRender] = React.useState(open);
   const [shown, setShown] = React.useState(false);
 
@@ -43,9 +61,10 @@ export function Dialog({
     return () => clearTimeout(id);
   }, [open]);
 
-  // Escape to close + lock background scroll while open.
+  // Escape to close + lock background scroll (desktop card only — vaul handles
+  // both itself on mobile).
   React.useEffect(() => {
-    if (!open) return;
+    if (!open || isMobile) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -56,9 +75,50 @@ export function Dialog({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
-  }, [open, onClose]);
+  }, [open, isMobile, onClose]);
 
-  if (!render || typeof document === "undefined") return null;
+  if (typeof document === "undefined") return null;
+
+  // ── Mobile: the real vaul Drawer ──────────────────────────────────────────
+  if (isMobile) {
+    return (
+      <Drawer.Root
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) onClose();
+        }}
+        shouldScaleBackground
+      >
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" />
+          <Drawer.Content
+            // `className` is intentionally not forwarded here: callers pass a
+            // desktop width cap (e.g. max-w-sm) that would pin this full-width
+            // sheet to a narrow, left-aligned strip.
+            className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl border-t border-white/10 bg-background px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 outline-none"
+          >
+            <Drawer.Handle className="mb-4 mt-1" />
+            {title ? (
+              <Drawer.Title className="text-lg font-semibold tracking-tight text-foreground">
+                {title}
+              </Drawer.Title>
+            ) : (
+              <Drawer.Title className="sr-only">Dialog</Drawer.Title>
+            )}
+            {description && (
+              <Drawer.Description className="mt-1.5 text-sm text-muted-foreground">
+                {description}
+              </Drawer.Description>
+            )}
+            <div className={title || description ? "mt-5" : ""}>{children}</div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    );
+  }
+
+  // ── Desktop: centered, zooming card ───────────────────────────────────────
+  if (!render) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

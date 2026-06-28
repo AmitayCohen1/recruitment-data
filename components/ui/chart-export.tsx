@@ -16,6 +16,17 @@ async function nodeToBlob(node: HTMLElement): Promise<Blob | null> {
   const { toBlob } = await import("html-to-image");
   const bg = getComputedStyle(document.body).backgroundColor || "#0a0a0b";
 
+  // iOS Safari caps a canvas at ~16.7M px; at pixelRatio 2 a tall panel blows
+  // past that and toBlob silently returns null. Cap the *output* area so the
+  // capture always succeeds, only dropping below 2x when the node is huge.
+  const { width, height } = node.getBoundingClientRect();
+  const area = Math.max(1, width * height);
+  const MAX_OUTPUT_AREA = 12_000_000;
+  const pixelRatio = Math.max(
+    1,
+    Math.min(2, Math.sqrt(MAX_OUTPUT_AREA / area)),
+  );
+
   // Reveal [data-export-only] captions (e.g. "which metric/gender") for the
   // duration of the capture — they're hidden on screen so they don't duplicate
   // the live toggle, but the exported image should carry that context.
@@ -35,10 +46,12 @@ async function nodeToBlob(node: HTMLElement): Promise<Blob | null> {
         /* fonts API unsupported — proceed */
       }
     }
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise((r) =>
+      requestAnimationFrame(() => requestAnimationFrame(r)),
+    );
 
     const opts = {
-      pixelRatio: 2,
+      pixelRatio,
       backgroundColor: bg,
       cacheBust: true,
       filter: (n: HTMLElement) =>
@@ -66,16 +79,33 @@ export function ChartExport({
   const [busy, setBusy] = React.useState(false);
   // when set, the X screenshot is on the clipboard and this is the composer URL
   const [xIntent, setXIntent] = React.useState<string | null>(null);
+  // Capture begins the instant the menu opens and lands here. By the time the
+  // user taps an action the PNG is ready, so navigator.share / window.open run
+  // inside the tap's activation window — mobile rejects them otherwise.
+  const captureRef = React.useRef<Promise<Blob | null> | null>(null);
 
   const filename = `${name}.png`.replace(/\s+/g, "-");
 
-  async function download() {
+  function openMenu() {
+    setXIntent(null);
     const node = getNode();
-    if (!node) return;
+    captureRef.current = node ? nodeToBlob(node) : Promise.resolve(null);
+    setOpen(true);
+  }
+
+  // Awaits the pre-capture (usually already resolved); falls back to a fresh
+  // capture if the menu was somehow opened without one.
+  function getBlob(): Promise<Blob | null> {
+    if (captureRef.current) return captureRef.current;
+    const node = getNode();
+    return node ? nodeToBlob(node) : Promise.resolve(null);
+  }
+
+  async function download() {
     track("chart_share", { method: "download", chart: name });
     setBusy(true);
     try {
-      const blob = await nodeToBlob(node);
+      const blob = await getBlob();
       if (blob) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -91,11 +121,9 @@ export function ChartExport({
   }
 
   async function share() {
-    const node = getNode();
-    if (!node) return;
     setBusy(true);
     try {
-      const blob = await nodeToBlob(node);
+      const blob = await getBlob();
       if (!blob) return;
       const file = new File([blob], filename, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
@@ -125,11 +153,10 @@ export function ChartExport({
     const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       text,
     )}&url=${encodeURIComponent(window.location.href)}`;
-    const node = getNode();
 
     setBusy(true);
     try {
-      const blob = node ? await nodeToBlob(node) : null;
+      const blob = await getBlob();
 
       // Best path (mobile / native file sharing): attach the PNG to the share
       // sheet so the user can post it to X with the image included.
@@ -170,10 +197,7 @@ export function ChartExport({
     <div data-export-ignore>
       <IconButton
         type="button"
-        onClick={() => {
-          setXIntent(null);
-          setOpen(true);
-        }}
+        onClick={openMenu}
         aria-label={t.chartExport.ariaLabel}
         size="sm"
       >
