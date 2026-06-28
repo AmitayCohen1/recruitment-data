@@ -95,7 +95,7 @@ export function Dialog({
             // `className` is intentionally not forwarded here: callers pass a
             // desktop width cap (e.g. max-w-sm) that would pin this full-width
             // sheet to a narrow, left-aligned strip.
-            className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl border-t border-white/10 bg-background px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 outline-none"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] min-h-[50vh] flex-col overflow-y-auto rounded-t-2xl border-t border-white/10 bg-background px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 outline-none"
           >
             <Drawer.Handle className="mb-4 mt-1" />
             {title ? (
@@ -110,7 +110,14 @@ export function Dialog({
                 {description}
               </Drawer.Description>
             )}
-            <div className={title || description ? "mt-5" : ""}>{children}</div>
+            <div
+              className={cn(
+                "flex flex-1 flex-col justify-center",
+                (title || description) && "mt-5",
+              )}
+            >
+              {children}
+            </div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>

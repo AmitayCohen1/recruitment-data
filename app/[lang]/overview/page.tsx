@@ -6,7 +6,6 @@ import { SectorBars3D } from "@/components/sectors/sector-bars-3d";
 import { ArmyStream } from "@/components/sectors/army-stream";
 import { SectorHeatmap } from "@/components/sectors/sector-heatmap";
 import { GenderGap } from "@/components/sectors/gender-gap";
-import { SchoolTerrain } from "@/components/schools/school-terrain";
 import { sectionMetadata } from "@/lib/section-meta";
 
 type Props = { params: Promise<{ lang: string }> };
@@ -25,7 +24,6 @@ export default function Page() {
         <SectorHeatmap />
         <GenderGap />
         <GapsOverview />
-        <SchoolTerrain />
       </div>
     </div>
   );

@@ -84,10 +84,18 @@ function Beeswarm({
   selected: Set<number>;
   sector: string | null;
 }) {
-  const x = scaleLinear().domain([0, 100]).range([BEE_PAD, BEE_W - BEE_PAD]);
+  const x = scaleLinear()
+    .domain([0, 100])
+    .range([BEE_PAD, BEE_W - BEE_PAD]);
   const nodes = React.useMemo(() => {
-    const xs = scaleLinear().domain([0, 100]).range([BEE_PAD, BEE_W - BEE_PAD]);
-    const ns: BeeNode[] = dots.map((d) => ({ x: xs(d.value), y: BEE_H / 2, d }));
+    const xs = scaleLinear()
+      .domain([0, 100])
+      .range([BEE_PAD, BEE_W - BEE_PAD]);
+    const ns: BeeNode[] = dots.map((d) => ({
+      x: xs(d.value),
+      y: BEE_H / 2,
+      d,
+    }));
     const sim: Simulation<BeeNode, undefined> = forceSimulation(ns)
       .force("x", forceX<BeeNode>((n) => xs(n.d.value)).strength(0.9))
       .force("y", forceY<BeeNode>(BEE_H / 2).strength(0.06))
@@ -99,17 +107,33 @@ function Beeswarm({
 
   // draw emphasized dots last so they sit on top of the faded crowd
   const ordered = React.useMemo(() => {
-    const rank = (n: BeeNode) => (emphasisOf(n.d, selected, sector) === "on" ? 1 : 0);
+    const rank = (n: BeeNode) =>
+      emphasisOf(n.d, selected, sector) === "on" ? 1 : 0;
     return [...nodes].sort((a, b) => rank(a) - rank(b));
   }, [nodes, selected, sector]);
 
   return (
     <div className="overflow-x-auto">
-      <svg viewBox={`0 0 ${BEE_W} ${BEE_H}`} className="h-auto w-full min-w-[640px]">
+      <svg
+        viewBox={`0 0 ${BEE_W} ${BEE_H}`}
+        className="h-auto w-full min-w-[640px]"
+      >
         {[0, 25, 50, 75, 100].map((tick) => (
           <g key={tick}>
-            <line x1={x(tick)} x2={x(tick)} y1={BEE_PAD - 8} y2={BEE_H - BEE_PAD} stroke="rgba(255,255,255,0.06)" />
-            <text x={x(tick)} y={BEE_H - 6} fill="rgba(255,255,255,0.45)" fontSize="11" textAnchor="middle">
+            <line
+              x1={x(tick)}
+              x2={x(tick)}
+              y1={BEE_PAD - 8}
+              y2={BEE_H - BEE_PAD}
+              stroke="rgba(255,255,255,0.06)"
+            />
+            <text
+              x={x(tick)}
+              y={BEE_H - 6}
+              fill="rgba(255,255,255,0.45)"
+              fontSize="11"
+              textAnchor="middle"
+            >
               {tick}%
             </text>
           </g>
@@ -204,7 +228,11 @@ function SchoolFilterBar({
   return (
     <div className="w-full space-y-3 sm:min-w-[min(34rem,100%)]">
       <div className="flex flex-wrap items-center gap-3">
-        <GenderToggle value={gender} onChange={onGender} surface="schools_filter" />
+        <GenderToggle
+          value={gender}
+          onChange={onGender}
+          surface="schools_filter"
+        />
 
         {/* metric toggle — which rate the distribution is drawn by */}
         <ControlGroup>
@@ -237,71 +265,72 @@ function SchoolFilterBar({
               onClick={() => onSector(sector === s ? null : s)}
               className="flex items-center gap-1.5"
             >
-              <span className="size-2.5 rounded-full" style={{ background: SECTOR_COLOR[s] }} />
+              <span
+                className="size-2.5 rounded-full"
+                style={{ background: SECTOR_COLOR[s] }}
+              />
               {sectorLabel(s, locale)}
             </SegmentButton>
           ))}
         </ControlGroup>
+      </div>
 
-        {/* school search */}
-        <div className="relative ms-auto w-full sm:w-64">
-          <FilterInput
-            type="text"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setTimeout(() => setOpen(false), 150)}
-            placeholder={t.schoolFilter.add}
-            className="w-full"
-          />
-          {open && q.trim() && (
-            <div className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 p-1 shadow-xl">
-              {matches.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">
-                  {t.schoolFilter.noResults}
-                </div>
-              ) : (
-                matches.map((s) => (
-                  <MenuItem
-                    key={s.key}
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      onAdd(s.key, s.school);
-                      setQ("");
-                    }}
-                  >
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ background: sectorColor(s.sector) }}
-                    />
-                    <span className="truncate">{s.school}</span>
-                    {s.council && (
-                      <span className="ms-auto shrink-0 text-xs text-muted-foreground/70">
-                        {s.council}
-                      </span>
-                    )}
-                  </MenuItem>
-                ))
-              )}
-            </div>
-          )}
-        </div>
+      {/* school search — its own row, aligned to the start edge */}
+      <div className="relative w-full sm:w-64">
+        <FilterInput
+          type="text"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder={t.schoolFilter.add}
+          className="w-full"
+        />
+        {open && q.trim() && (
+          <div className="absolute z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-white/10 bg-zinc-900/95 p-1 shadow-xl">
+            {matches.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                {t.schoolFilter.noResults}
+              </div>
+            ) : (
+              matches.map((s) => (
+                <MenuItem
+                  key={s.key}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onAdd(s.key, s.school);
+                    setQ("");
+                  }}
+                >
+                  <span
+                    className="size-2.5 shrink-0 rounded-full"
+                    style={{ background: sectorColor(s.sector) }}
+                  />
+                  <span className="truncate">{s.school}</span>
+                  {s.council && (
+                    <span className="ms-auto shrink-0 text-xs text-muted-foreground/70">
+                      {s.council}
+                    </span>
+                  )}
+                </MenuItem>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* pinned schools as removable chips */}
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">{t.schoolFilter.selectedLabel}:</span>
+          <span className="text-xs text-muted-foreground">
+            {t.schoolFilter.selectedLabel}:
+          </span>
           {[...selected.entries()].map(([key, name]) => (
-            <FilterChip
-              key={key}
-              type="button"
-              onClick={() => onRemove(key)}
-            >
+            <FilterChip key={key} type="button" onClick={() => onRemove(key)}>
               {name}
               <X className="size-3 text-muted-foreground" />
             </FilterChip>
@@ -333,12 +362,17 @@ export function SchoolCharts() {
   const [gender, setGender] = React.useState<SGender>("בנים");
   const [metric, setMetric] = React.useState<MetricKey>("combat");
   const [sector, setSector] = React.useState<string | null>(null);
-  const [selected, setSelected] = React.useState<Map<number, string>>(new Map());
+  const [selected, setSelected] = React.useState<Map<number, string>>(
+    new Map(),
+  );
 
   const g: Gender = gender === "בנים" ? "m" : "f";
   const dots = React.useMemo(() => schoolDots(g, metric), [g, metric]);
   const profiles = React.useMemo(() => schoolProfiles(g), [g]);
-  const selectedKeys = React.useMemo(() => new Set(selected.keys()), [selected]);
+  const selectedKeys = React.useMemo(
+    () => new Set(selected.keys()),
+    [selected],
+  );
 
   const addSchool = (key: number, name: string) =>
     setSelected((prev) => new Map(prev).set(key, name));

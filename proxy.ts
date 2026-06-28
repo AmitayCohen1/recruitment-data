@@ -18,6 +18,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip Next internals and any path with a file extension (static assets).
-  matcher: ["/((?!_next|.*\\.).*)"],
+  // Skip Next internals, API route handlers, and any path with a file
+  // extension (static assets). `/api/*` is locale-agnostic, so it must not be
+  // rewritten to `/he/api/*`.
+  matcher: ["/((?!_next|api|.*\\.).*)"],
 };

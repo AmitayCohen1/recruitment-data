@@ -447,46 +447,6 @@ export function schoolProfiles(gender: Gender): SchoolProfile[] {
 }
 
 /* ------------------------------------------------------------------ *
- *  City trajectories — each tracked city's PATH through (enlist,
- *  combat) space, one node per year. The static, see-all-years
- *  counterpart to the animated bubble race.
- * ------------------------------------------------------------------ */
-export type TrajPoint = { year: number; enlist: number; combat: number };
-export type Trajectory = { council: string; points: TrajPoint[] };
-
-export function cityTrajectories(
-  gender: Gender,
-  cities: readonly string[] = BIG_CITIES,
-  minSchools = 3,
-): { trajectories: Trajectory[]; xBounds: [number, number]; yBounds: [number, number] } {
-  const want = new Set(cities);
-  const byCity = new Map<string, TrajPoint[]>();
-  for (const year of YEARS) {
-    for (const c of cityRows(ROWS, gender, year)) {
-      if (!want.has(c.council) || c.n < minSchools) continue;
-      if (c.enlist == null || c.combat == null) continue;
-      const arr = byCity.get(c.council) ?? [];
-      arr.push({ year, enlist: c.enlist as number, combat: c.combat as number });
-      byCity.set(c.council, arr);
-    }
-  }
-  const trajectories = [...byCity.entries()]
-    .map(([council, points]) => ({ council, points }))
-    .filter((tr) => tr.points.length >= 2);
-  const xs = trajectories.flatMap((tr) => tr.points.map((p) => p.enlist));
-  const ys = trajectories.flatMap((tr) => tr.points.map((p) => p.combat));
-  const pad = (lo: number, hi: number): [number, number] => [
-    Math.max(0, Math.floor((lo - 3) / 5) * 5),
-    Math.min(100, Math.ceil((hi + 3) / 5) * 5),
-  ];
-  return {
-    trajectories,
-    xBounds: xs.length ? pad(Math.min(...xs), Math.max(...xs)) : [0, 100],
-    yBounds: ys.length ? pad(Math.min(...ys), Math.max(...ys)) : [0, 100],
-  };
-}
-
-/* ------------------------------------------------------------------ *
  * 14) Sector bars — the core comparison (one bar per sector × metric),
  *     enlistee/cohort-weighted rates. Classic grouped-bar data, reused
  *     for the 3D bar matrix.
@@ -589,3 +549,4 @@ export function outliers(
     under: points.slice(-6).reverse(),
   };
 }
+

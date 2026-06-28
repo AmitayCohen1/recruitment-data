@@ -6,6 +6,12 @@ import { usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { Button } from "@/components/ui/control";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export type NavItem = {
@@ -28,75 +34,58 @@ export function TabNav({
 }) {
   const pathname = usePathname();
   const current = pathname.split("/").filter(Boolean)[1] ?? items[0]?.id;
-  const [open, setOpen] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-  const activeItem = [...items, ...hiddenItems].find((t) => t.id === current) ?? items[0];
+  const activeItem =
+    [...items, ...hiddenItems].find((t) => t.id === current) ?? items[0];
 
   const href = (id: string) => `/${lang}/${id}`;
   const onSelect = (item: NavItem) => {
     track("tab_view", { tab: item.label });
-    setOpen(false);
   };
-
-  React.useEffect(() => {
-    if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onClick);
-    return () => document.removeEventListener("pointerdown", onClick);
-  }, [open]);
 
   return (
     <div className="sticky top-0 z-20 -mx-4 mb-6 bg-background/80 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
-      {/* mobile: dropdown */}
-      <div ref={menuRef} className="relative sm:hidden">
-        <Button
-          type="button"
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
-          size="lg"
-          className="w-full justify-between rounded-2xl"
-        >
-          <span className="flex items-center gap-2">
-            {activeItem?.icon && <span aria-hidden>{activeItem.icon}</span>}
-            {activeItem?.label}
-          </span>
-          <ChevronDown
-            className={cn(
-              "size-5 text-muted-foreground transition-transform",
-              open && "rotate-180",
-            )}
-          />
-        </Button>
-        {open && (
-          <div
-            role="listbox"
-            className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-white/10 bg-background shadow-xl shadow-black/40"
+      {/* mobile: dropdown menu */}
+      <div className="sm:hidden">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              size="lg"
+              className="group w-full justify-between rounded-2xl"
+            >
+              <span className="flex items-center gap-2">
+                {activeItem?.icon && <span aria-hidden>{activeItem.icon}</span>}
+                {activeItem?.label}
+              </span>
+              <ChevronDown className="size-5 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="w-[var(--radix-dropdown-menu-trigger-width)]"
           >
             {items.map((t) => (
-              <Link
+              <DropdownMenuItem
                 key={t.id}
-                href={href(t.id)}
-                role="option"
-                aria-selected={current === t.id}
-                onClick={() => onSelect(t)}
-                className={cn(
-                  "flex w-full items-center gap-2 px-4 py-3.5 text-right text-base font-medium transition-colors",
+                asChild
+                className={
                   current === t.id
-                    ? "bg-white/15 text-white"
-                    : "text-muted-foreground hover:bg-white/5",
-                )}
+                    ? "bg-white/15 text-white focus:bg-white/15"
+                    : "text-muted-foreground"
+                }
               >
-                {t.icon && <span aria-hidden>{t.icon}</span>}
-                {t.label}
-              </Link>
+                <Link
+                  href={href(t.id)}
+                  aria-current={current === t.id ? "page" : undefined}
+                  onClick={() => onSelect(t)}
+                >
+                  {t.icon && <span aria-hidden>{t.icon}</span>}
+                  {t.label}
+                </Link>
+              </DropdownMenuItem>
             ))}
-          </div>
-        )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* desktop: underline tabs */}

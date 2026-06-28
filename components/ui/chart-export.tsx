@@ -1,11 +1,28 @@
 "use client";
 
 import * as React from "react";
-import { Check, Download, Share2, Loader2 } from "lucide-react";
+import { Download, Share2, Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics";
-import { useT } from "@/components/i18n/locale-provider";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { Dialog } from "@/components/ui/dialog";
 import { Button, IconButton } from "@/components/ui/control";
+
+/** Upload a chart PNG to Vercel Blob (via our route handler) and return its
+ *  public URL, or null if storage isn't configured / the upload failed. */
+async function uploadShareImage(blob: Blob): Promise<string | null> {
+  try {
+    const res = await fetch("/api/share-image", {
+      method: "POST",
+      headers: { "content-type": "image/png" },
+      body: blob,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { url?: unknown };
+    return typeof data.url === "string" ? data.url : null;
+  } catch {
+    return null;
+  }
+}
 
 /** Capture the given panel node to a PNG blob (excludes any [data-export-ignore]).
  *  html-to-image's first pass frequently misses async resources (web fonts,
@@ -74,11 +91,10 @@ export function ChartExport({
   name: string;
 }) {
   const t = useT();
+  const locale = useLocale();
   const shareText = t.chartExport.shareText;
   const [open, setOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
-  // when set, the X screenshot is on the clipboard and this is the composer URL
-  const [xIntent, setXIntent] = React.useState<string | null>(null);
   // Capture begins the instant the menu opens and lands here. By the time the
   // user taps an action the PNG is ready, so navigator.share / window.open run
   // inside the tap's activation window — mobile rejects them otherwise.
@@ -87,7 +103,6 @@ export function ChartExport({
   const filename = `${name}.png`.replace(/\s+/g, "-");
 
   function openMenu() {
-    setXIntent(null);
     const node = getNode();
     captureRef.current = node ? nodeToBlob(node) : Promise.resolve(null);
     setOpen(true);
@@ -147,47 +162,38 @@ export function ChartExport({
     }
   }
 
+  // Post to X with the chart shown as the link's card image. X's composer can't
+  // accept an uploaded image, so instead we host the PNG and tweet a link to a
+  // /share page whose twitter:image is that PNG — X unfurls it as the card.
   async function tweet() {
     track("chart_share", { method: "x", chart: name });
     const text = `${shareText} — ${name}`;
-    const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      text,
-    )}&url=${encodeURIComponent(window.location.href)}`;
 
+    // Open the tab synchronously (inside the tap) so mobile doesn't block it as
+    // a popup; we redirect it to X once the upload — which is async — finishes.
+    const win = window.open("", "_blank");
     setBusy(true);
     try {
       const blob = await getBlob();
+      const uploaded = blob ? await uploadShareImage(blob) : null;
 
-      // Best path (mobile / native file sharing): attach the PNG to the share
-      // sheet so the user can post it to X with the image included.
-      if (blob) {
-        const file = new File([blob], filename, { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], text, title: shareText });
-          setOpen(false);
-          return;
-        }
-
-        // Desktop: X's web intent can't carry an image, so copy the screenshot
-        // to the clipboard and let the user paste it into the composer.
-        if (typeof ClipboardItem !== "undefined") {
-          try {
-            await navigator.clipboard.write([
-              new ClipboardItem({ "image/png": blob }),
-            ]);
-            setXIntent(intent); // reveals the "open X & paste" hint; keep menu open
-            return;
-          } catch {
-            /* clipboard image unsupported — fall through to text-only */
-          }
-        }
+      let shareUrl = window.location.href;
+      if (uploaded) {
+        const u = new URL(`/${locale}/share`, window.location.origin);
+        u.searchParams.set("img", uploaded);
+        u.searchParams.set("t", name);
+        shareUrl = u.toString();
       }
 
-      // Last resort: text + link only (no image).
-      window.open(intent, "_blank", "noopener");
+      const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+        text,
+      )}&url=${encodeURIComponent(shareUrl)}`;
+
+      if (win) win.location.href = intent;
+      else window.location.href = intent; // popup blocked → use the current tab
       setOpen(false);
     } catch {
-      /* user cancelled / unsupported — ignore */
+      win?.close();
     } finally {
       setBusy(false);
     }
@@ -214,54 +220,39 @@ export function ChartExport({
         title={t.chartExport.ariaLabel}
         className="max-w-sm"
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2 sm:gap-1">
           <Button
             type="button"
             variant="ghost"
-            className="h-auto w-full justify-start px-4 py-3 text-start text-base"
+            className="h-auto w-full justify-start gap-4 rounded-2xl px-4 py-5 text-start text-lg sm:gap-3 sm:rounded-xl sm:py-3 sm:text-base"
             onClick={download}
             disabled={busy}
           >
-            <Download className="size-5 shrink-0 text-muted-foreground" />
+            <Download className="size-7 shrink-0 text-muted-foreground sm:size-5" />
             {t.chartExport.downloadPng}
           </Button>
           <Button
             type="button"
             variant="ghost"
-            className="h-auto w-full justify-start px-4 py-3 text-start text-base"
+            className="h-auto w-full justify-start gap-4 rounded-2xl px-4 py-5 text-start text-lg sm:gap-3 sm:rounded-xl sm:py-3 sm:text-base"
             onClick={share}
             disabled={busy}
           >
-            <Share2 className="size-5 shrink-0 text-muted-foreground" />
+            <Share2 className="size-7 shrink-0 text-muted-foreground sm:size-5" />
             {t.chartExport.share}
           </Button>
           <Button
             type="button"
             variant="ghost"
-            className="h-auto w-full justify-start px-4 py-3 text-start text-base"
+            className="h-auto w-full justify-start gap-4 rounded-2xl px-4 py-5 text-start text-lg sm:gap-3 sm:rounded-xl sm:py-3 sm:text-base"
             onClick={tweet}
             disabled={busy}
           >
-            <span className="w-5 shrink-0 text-center text-lg text-muted-foreground">
+            <span className="w-7 shrink-0 text-center text-2xl text-muted-foreground sm:w-5 sm:text-lg">
               𝕏
             </span>
             {t.chartExport.shareX} {busy && "…"}
           </Button>
-          {xIntent && (
-            <a
-              href={xIntent}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => {
-                setXIntent(null);
-                setOpen(false);
-              }}
-              className="mt-2 flex items-start gap-2 rounded-xl bg-emerald-400/10 px-4 py-3 text-sm leading-5 text-emerald-200"
-            >
-              <Check className="mt-0.5 size-4 shrink-0" />
-              <span>{t.chartExport.copied}</span>
-            </a>
-          )}
         </div>
       </Dialog>
     </div>

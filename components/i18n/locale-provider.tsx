@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import type { Locale } from "@/lib/i18n/config";
+import { DirectionProvider } from "@radix-ui/react-direction";
+import { dirOf, type Locale } from "@/lib/i18n/config";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 
 type LocaleContextValue = {
@@ -25,8 +26,12 @@ export function LocaleProvider({
     () => ({ locale, dict: getDictionary(locale) }),
     [locale],
   );
+  // Feed the locale's writing direction to Radix so popovers/menus align and
+  // flip correctly in RTL (Hebrew) as well as LTR.
   return (
-    <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
+    <LocaleContext.Provider value={value}>
+      <DirectionProvider dir={dirOf(locale)}>{children}</DirectionProvider>
+    </LocaleContext.Provider>
   );
 }
 

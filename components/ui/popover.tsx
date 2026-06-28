@@ -1,72 +1,50 @@
 "use client";
 
 import * as React from "react";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { cn } from "@/lib/utils";
 
-/** A small hand-rolled popover matching the dashboard surfaces (see chart-export).
- *  Closes on outside-pointer / Escape. `children` may be a render function that
- *  receives a `close` callback for items that should dismiss the popover. */
-export function Popover({
-  trigger,
-  triggerClassName,
-  ariaLabel,
-  align = "end",
-  panelClassName,
-  children,
-}: {
-  trigger: React.ReactNode;
-  triggerClassName?: string;
-  ariaLabel?: string;
-  align?: "start" | "end";
-  panelClassName?: string;
-  children: React.ReactNode | ((close: () => void) => React.ReactNode);
-}) {
-  const [open, setOpen] = React.useState(false);
-  const ref = React.useRef<HTMLDivElement>(null);
+/** shadcn/Radix Popover. Portaled (never clipped by overflow ancestors), with
+ *  collision-aware positioning, focus management, Escape/outside-click, and RTL
+ *  alignment via the app's DirectionProvider. Styled to match the dashboard
+ *  surfaces. */
+function Popover(props: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />;
+}
 
-  React.useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("pointerdown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+function PopoverTrigger(
+  props: React.ComponentProps<typeof PopoverPrimitive.Trigger>,
+) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
+}
 
+function PopoverContent({
+  className,
+  align = "center",
+  sideOffset = 6,
+  ...props
+}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        className={triggerClassName}
-      >
-        {trigger}
-      </button>
-      {open && (
-        <div
-          role="dialog"
-          className={cn(
-            "absolute top-full z-30 mt-1.5 rounded-xl border border-white/10 bg-background p-3 shadow-xl shadow-black/40",
-            // In RTL the trigger usually sits at the row's (visual) left end,
-            // so anchor the panel there and let it open toward the content.
-            align === "end" ? "left-0" : "right-0",
-            panelClassName,
-          )}
-        >
-          {typeof children === "function"
-            ? children(() => setOpen(false))
-            : children}
-        </div>
-      )}
-    </div>
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        data-slot="popover-content"
+        align={align}
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 w-auto rounded-xl border border-white/10 bg-background p-3 text-foreground shadow-xl shadow-black/40 outline-none",
+          "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          className,
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
   );
 }
+
+function PopoverAnchor(
+  props: React.ComponentProps<typeof PopoverPrimitive.Anchor>,
+) {
+  return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />;
+}
+
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor };

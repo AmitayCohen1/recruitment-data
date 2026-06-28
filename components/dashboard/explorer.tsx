@@ -4,7 +4,11 @@ import * as React from "react";
 import { ArrowDown, ArrowUp, MoreHorizontal, Search } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { Panel, PanelHeader } from "@/components/ui/panel";
-import { Popover } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Delta } from "@/components/ui/delta";
 import {
   ControlGroup,
@@ -14,13 +18,7 @@ import {
   iconButtonVariants,
 } from "@/components/ui/control";
 import { cn } from "@/lib/utils";
-import {
-  YEARS,
-  LATEST,
-  FIRST,
-  type CompactRow,
-  type Gender,
-} from "@/lib/data";
+import { YEARS, LATEST, FIRST, type CompactRow, type Gender } from "@/lib/data";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { genderLabelFromCode } from "@/lib/i18n/labels";
 import { htmlLang } from "@/lib/i18n/config";
@@ -113,8 +111,19 @@ export function Explorer({
   const diff = (cur: number | null, base: number | null) =>
     cur != null && base != null ? cur - base : null;
 
-  const MetricCell = ({ v, base }: { v: number | null; base: number | null }) => (
-    <td className={cn("px-2.5 py-2.5 sm:px-3 text-center tabular-nums", pctColor(v))}>
+  const MetricCell = ({
+    v,
+    base,
+  }: {
+    v: number | null;
+    base: number | null;
+  }) => (
+    <td
+      className={cn(
+        "px-2.5 py-2.5 sm:px-3 text-center tabular-nums",
+        pctColor(v),
+      )}
+    >
       <div className="flex flex-col items-center leading-tight">
         <span>{pct(v)}</span>
         {showDelta && <Delta value={diff(v, base)} title={t.delta.vs(FIRST)} />}
@@ -135,16 +144,16 @@ export function Explorer({
   React.useEffect(() => {
     const term = q.trim();
     if (term === "") return;
-    const id = setTimeout(() => track("explorer_search", { length: term.length }), 800);
+    const id = setTimeout(
+      () => track("explorer_search", { length: term.length }),
+      800,
+    );
     return () => clearTimeout(id);
   }, [q]);
 
   return (
     <Panel>
-      <PanelHeader
-        title={t.explorer.title}
-        subtitle={t.explorer.subtitle}
-      />
+      <PanelHeader title={t.explorer.title} subtitle={t.explorer.subtitle} />
 
       <div className="mb-4 space-y-2">
         {/* search — its own full-width row */}
@@ -197,40 +206,42 @@ export function Explorer({
           </ControlGroup>
 
           {zeroRows.length > 0 && (
-            <Popover
-              ariaLabel={t.explorer.moreFilters}
-              triggerClassName={cn(
-                iconButtonVariants(),
-                "relative",
-                showZero
-                  ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
-                  : undefined,
-              )}
-              trigger={
-                <>
-                  <MoreHorizontal className="size-4" />
-                  {showZero && (
-                    <span className="absolute -left-0.5 -top-0.5 size-2 rounded-full bg-emerald-400 ring-2 ring-background" />
-                  )}
-                </>
-              }
-            >
-              <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-foreground">
-                <input
-                  type="checkbox"
-                  checked={showZero}
-                  onChange={(e) => setShowZero(e.target.checked)}
-                  className="size-4 accent-emerald-400"
-                />
-                {t.explorer.showZero}
-              </label>
+            <Popover>
+              <PopoverTrigger
+                aria-label={t.explorer.moreFilters}
+                className={cn(
+                  iconButtonVariants(),
+                  "relative",
+                  showZero
+                    ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
+                    : undefined,
+                )}
+              >
+                <MoreHorizontal className="size-4" />
+                {showZero && (
+                  <span className="absolute -left-0.5 -top-0.5 size-2 rounded-full bg-emerald-400 ring-2 ring-background" />
+                )}
+              </PopoverTrigger>
+              <PopoverContent align="end">
+                <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={showZero}
+                    onChange={(e) => setShowZero(e.target.checked)}
+                    className="size-4 accent-emerald-400"
+                  />
+                  {t.explorer.showZero}
+                </label>
+              </PopoverContent>
             </Popover>
           )}
         </div>
       </div>
 
       {showDelta && (
-        <p className="mb-2 text-xs text-muted-foreground">{t.delta.legend(FIRST)}</p>
+        <p className="mb-2 text-xs text-muted-foreground">
+          {t.delta.legend(FIRST)}
+        </p>
       )}
 
       <div className="overflow-x-auto rounded-xl border border-white/10">
@@ -240,30 +251,30 @@ export function Explorer({
               {COLUMNS.map((c) => {
                 const [long, short] = colLabels(c.key, t);
                 return (
-                <th
-                  key={c.key}
-                  className={cn(
-                    "cursor-pointer select-none whitespace-nowrap px-2.5 py-2.5 sm:px-3 font-medium",
-                    c.metric ? "text-center" : "text-start",
-                  )}
-                  onClick={() => setSortKey(c.key)}
-                >
-                  <span
+                  <th
+                    key={c.key}
                     className={cn(
-                      "inline-flex items-center gap-1",
-                      c.metric && "justify-center",
+                      "cursor-pointer select-none whitespace-nowrap px-2.5 py-2.5 sm:px-3 font-medium",
+                      c.metric ? "text-center" : "text-start",
                     )}
+                    onClick={() => setSortKey(c.key)}
                   >
-                    <span className="sm:hidden">{short}</span>
-                    <span className="hidden sm:inline">{long}</span>
-                    {sort === c.key &&
-                      (dir === "asc" ? (
-                        <ArrowUp className="size-3" />
-                      ) : (
-                        <ArrowDown className="size-3" />
-                      ))}
-                  </span>
-                </th>
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1",
+                        c.metric && "justify-center",
+                      )}
+                    >
+                      <span className="sm:hidden">{short}</span>
+                      <span className="hidden sm:inline">{long}</span>
+                      {sort === c.key &&
+                        (dir === "asc" ? (
+                          <ArrowUp className="size-3" />
+                        ) : (
+                          <ArrowDown className="size-3" />
+                        ))}
+                    </span>
+                  </th>
                 );
               })}
               {gender === "all" && (
